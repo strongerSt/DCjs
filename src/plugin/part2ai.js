@@ -11,21 +11,24 @@ function decoder(p, a, c, k, e, d) {
 
 function plugin(code) {
     function decodeEval(encoded) {
-        const pattern = /eval\(function\(p,a,c,k,e,d\)\{[\s\S]*?return p\}(?:\(|\.)([^)]*)\))/;
-        const matches = encoded.match(pattern);
-        
-        if (!matches) return encoded;
-        
         try {
-            const args = matches[1].split(',').map(arg => {
+            // 修复正则表达式
+            const evalPattern = /eval\(function\s*\(p,a,c,k,e,d\)\s*\{[\s\S]*?\}\s*\(([\s\S]*?)\)\)/;
+            const match = encoded.match(evalPattern);
+            
+            if (!match) return encoded;
+            
+            const params = match[1].split(',').map(param => {
                 try {
-                    return Function('return ' + arg)();
+                    return Function('return ' + param)();
                 } catch (e) {
-                    return arg;
+                    return param;
                 }
             });
             
-            return decoder(...args);
+            // 应用解码
+            return decoder(...params);
+            
         } catch (e) {
             console.error('Decode error:', e);
             return encoded;
@@ -36,13 +39,14 @@ function plugin(code) {
         let result = code;
         let prevResult;
         let count = 0;
-        const MAX_ITERATIONS = 10;
+        const MAX_ITERATIONS = 5;
         
-        // 循环解码直到无法继续或达到最大次数
+        // 循环解码
         do {
             prevResult = result;
             result = decodeEval(result);
             count++;
+            console.log(`Iteration ${count}, length: ${result.length}`);
         } while (result !== prevResult && count < MAX_ITERATIONS);
         
         // 清理结果
@@ -53,7 +57,7 @@ function plugin(code) {
             .replace(/\\n/g, '\n')
             .replace(/\\t/g, '\t');
         
-        // 如果包含Part2AI相关内容，添加配置
+        // 添加配置
         if (result.includes('Part2AI') || result.includes('RCAnonymousID')) {
             result = `
 // Part2AI Configuration
@@ -65,6 +69,7 @@ ${result}`;
         }
         
         return result;
+        
     } catch (e) {
         console.error('Plugin error:', e);
         return code;

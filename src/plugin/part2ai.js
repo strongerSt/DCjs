@@ -1,63 +1,51 @@
 function decoder(p, a, c, k, e, d) {
-    const lookup = {};
+    e = function(c) {
+        return (c < a ? '' : e(parseInt(c / a))) + ((c = c % a) > 35 ? String.fromCharCode(c + 29) : c.toString(36));
+    };
+    d = {};
+    
     while (c--) {
         if (k[c]) {
-            const pattern = new RegExp('\\b' + c.toString(a) + '\\b', 'g');
-            p = p.replace(pattern, k[c]);
-        }
-    }
-    return p;
-}
-
-function plugin(code) {
-    function decodeEval(encoded) {
-        try {
-            // 修复正则表达式
-            const evalPattern = /eval\(function\s*\(p,a,c,k,e,d\)\s*\{[\s\S]*?\}\s*\(([\s\S]*?)\)\)/;
-            const match = encoded.match(evalPattern);
-            
-            if (!match) return encoded;
-            
-            const params = match[1].split(',').map(param => {
-                try {
-                    return Function('return ' + param)();
-                } catch (e) {
-                    return param;
-                }
-            });
-            
-            // 应用解码
-            return decoder(...params);
-            
-        } catch (e) {
-            console.error('Decode error:', e);
-            return encoded;
+            d[e(c)] = k[c];
         }
     }
     
+    return p.replace(/\b\w+\b/g, function(w) {
+        return d.hasOwnProperty(w) ? d[w] : w;
+    });
+}
+
+function plugin(code) {
     try {
         let result = code;
-        let prevResult;
-        let count = 0;
-        const MAX_ITERATIONS = 5;
         
-        // 循环解码
-        do {
-            prevResult = result;
-            result = decodeEval(result);
-            count++;
-            console.log(`Iteration ${count}, length: ${result.length}`);
-        } while (result !== prevResult && count < MAX_ITERATIONS);
+        // 提取每一层的参数
+        const evalRegex = /'([^']+)'/g;
+        let match;
         
-        // 清理结果
-        result = result
-            .replace(/\\'/g, "'")
-            .replace(/\\"/g, '"')
-            .replace(/\\\\/g, '\\')
-            .replace(/\\n/g, '\n')
-            .replace(/\\t/g, '\t');
+        // 收集所有匹配的字符串
+        let matches = [];
+        while ((match = evalRegex.exec(result)) !== null) {
+            matches.push(match[1]);
+        }
         
-        // 添加配置
+        // 尝试解码最后一个匹配（通常是最内层的编码）
+        if (matches.length > 0) {
+            const lastMatch = matches[matches.length - 1];
+            
+            // 分割参数
+            const parts = lastMatch.split('|');
+            if (parts.length > 0) {
+                let words = parts;
+                let str = matches[0];
+                let base = 36; // 默认基数
+                let count = words.length;
+                
+                result = decoder(str, base, count, words);
+            }
+        }
+        
+        // 添加 Part2AI 配置
         if (result.includes('Part2AI') || result.includes('RCAnonymousID')) {
             result = `
 // Part2AI Configuration

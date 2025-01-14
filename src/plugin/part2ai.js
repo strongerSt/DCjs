@@ -1,76 +1,59 @@
-function plugin(code) {
-    function decode(p, a, c, k, e, d) {
-        e = function(c) {
-            return (c < a ? '' : e(parseInt(c / a))) + ((c = c % a) > 35 ? String.fromCharCode(c + 29) : c.toString(36));
-        };
-        d = {};
-        if (!''.replace(/^/, String)) {
-            while (c--) {
-                d[e(c)] = k[c] || e(c);
-            }
-            k = [function(e) {
-                return d[e];
-            }];
-            e = function() {
-                return '\\w+';
-            };
-            c = 1;
+function decoder(p, a, c, k, e, d) {
+    const lookup = {};
+    while (c--) {
+        if (k[c]) {
+            const pattern = new RegExp('\\b' + c.toString(a) + '\\b', 'g');
+            p = p.replace(pattern, k[c]);
         }
-        while (c--) {
-            if (k[c]) {
-                p = p.replace(new RegExp('\\b' + e(c) + '\\b', 'g'), k[c]);
-            }
-        }
-        return p;
     }
+    return p;
+}
 
+function plugin(code) {
+    function decodeEval(encoded) {
+        const pattern = /eval\(function\(p,a,c,k,e,d\)\{[\s\S]*?return p\}(?:\(|\.)([^)]*)\))/;
+        const matches = encoded.match(pattern);
+        
+        if (!matches) return encoded;
+        
+        try {
+            const args = matches[1].split(',').map(arg => {
+                try {
+                    return Function('return ' + arg)();
+                } catch (e) {
+                    return arg;
+                }
+            });
+            
+            return decoder(...args);
+        } catch (e) {
+            console.error('Decode error:', e);
+            return encoded;
+        }
+    }
+    
     try {
         let result = code;
-        let lastResult = '';
-        let iterations = 0;
-        const maxIterations = 10;
-
-        // 持续解码直到无法再解码或达到最大迭代次数
-        while (result !== lastResult && iterations < maxIterations) {
-            lastResult = result;
-            iterations++;
-
-            // 处理eval包装的代码
-            result = result.replace(/eval\(function\s*\(p,a,c,k,e,d\)[\s\S]*?}\(([\s\S]+?)\)\)/g, 
-                function(match, args) {
-                    try {
-                        // 分割并解析参数
-                        const params = args.split(',').map(arg => {
-                            try {
-                                return eval('(' + arg + ')');
-                            } catch (e) {
-                                return arg;
-                            }
-                        });
-
-                        // 应用解码函数
-                        return decode(...params);
-                    } catch (e) {
-                        console.error('Decode error:', e);
-                        return match;
-                    }
-                }
-            );
-
-            // 尝试解码字符串数组形式的混淆
-            if (result.match(/^['"][\s\S]+['"]$/)) {
-                try {
-                    const evalResult = eval('(' + result + ')');
-                    if (typeof evalResult === 'string' && evalResult !== result) {
-                        result = evalResult;
-                    }
-                } catch (e) {
-                    console.error('String eval error:', e);
-                }
-            }
-        }
-
-        // 如果是Part2AI相关代码，添加配置
+        let prevResult;
+        let count = 0;
+        const MAX_ITERATIONS = 10;
+        
+        // 循环解码直到无法继续或达到最大次数
+        do {
+            prevResult = result;
+            result = decodeEval(result);
+            count++;
+        } while (result !== prevResult && count < MAX_ITERATIONS);
+        
+        // 清理结果
+        result = result
+            .replace(/\\'/g, "'")
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\')
+            .replace(/\\n/g, '\n')
+            .replace(/\\t/g, '\t');
+        
+        // 如果包含Part2AI相关内容，添加配置
         if (result.includes('Part2AI') || result.includes('RCAnonymousID')) {
             result = `
 // Part2AI Configuration
@@ -80,7 +63,7 @@ const productName = "Part2AI_Lite_Lifetime_Subscription";
 
 ${result}`;
         }
-
+        
         return result;
     } catch (e) {
         console.error('Plugin error:', e);

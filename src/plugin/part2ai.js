@@ -1,42 +1,27 @@
 // src/plugin/part2ai.js
-const escodegen = require('escodegen');
-const esprima = require('esprima');
 
-function unpack(code) {
-    return code.replace(/eval\(function\s*\(p,a,c,k,e,d\)[\s\S]*?}\(([\s\S]+?)\)\)/, function(match, p) {
-        try {
-            let params = p.split(',').map(param => {
-                try {
-                    return eval('(' + param + ')');
-                } catch(e) {
-                    return param;
-                }
-            });
-            
-            let [str, base, count, names, ...rest] = params;
-            let dict = {};
-            
-            // 构建字典
-            while(count--) {
-                let key = encode(count, base);
-                dict[key] = names[count] || key;
-            }
-            
-            // 替换所有编码过的字符串
-            return str.replace(/\b\w+\b/g, match => dict[match] || match);
-        } catch(e) {
-            console.error('Unpacking error:', e);
-            return match;
+function decoder(p, a, c, k, e, d) {
+    e = function(c) {
+        return (c < a ? '' : e(parseInt(c / a))) + ((c = c % a) > 35 ? String.fromCharCode(c + 29) : c.toString(36));
+    };
+    if (!''.replace(/^/, String)) {
+        while (c--) {
+            d[e(c)] = k[c] || e(c);
         }
-    });
-}
-
-function encode(num, base) {
-    if(num < base) {
-        return num < 36 ? num.toString(36) : String.fromCharCode(num + 29);
+        k = [function(e) {
+            return d[e];
+        }];
+        e = function() {
+            return '\\w+';
+        };
+        c = 1;
     }
-    num = parseInt(num / base);
-    return encode(num, base) + (num % base < 36 ? (num % base).toString(36) : String.fromCharCode((num % base) + 29));
+    while (c--) {
+        if (k[c]) {
+            p = p.replace(new RegExp('\\b' + e(c) + '\\b', 'g'), k[c]);
+        }
+    }
+    return p;
 }
 
 function plugin(code) {
@@ -44,16 +29,19 @@ function plugin(code) {
         let result = code;
         
         // 处理多层eval
-        while(result.includes('eval(function(p,a,c,k,e,d)')) {
-            let newResult = unpack(result);
-            if(newResult === result) {
-                break;
-            }
-            result = newResult;
+        while (result.includes('eval(function(p,a,c,k,e,d)')) {
+            result = result.replace(/eval\((function\(p,a,c,k,e,d\)[\s\S]*?})\(([\s\S]*?)\)\)/, (match, func, args) => {
+                try {
+                    return decoder.apply(null, args.split(','));
+                } catch (e) {
+                    console.error('Decode error:', e);
+                    return match;
+                }
+            });
         }
         
         // 如果是Part2AI代码，添加配置
-        if(result.includes('Part2AI')) {
+        if (result.includes('Part2AI')) {
             result = `
 // Part2AI Configuration
 const appVersion = "Part2AI Lite";
@@ -61,27 +49,10 @@ const productType = "app_store";
 const productName = "Part2AI_Lite_Lifetime_Subscription";
 
 ${result}`;
-            
-            // 尝试美化代码
-            try {
-                const ast = esprima.parse(result);
-                result = escodegen.generate(ast, {
-                    format: {
-                        indent: {
-                            style: '    ',
-                            base: 0
-                        },
-                        newline: '\n'
-                    },
-                    comment: true
-                });
-            } catch(e) {
-                console.error('Beautification failed:', e);
-            }
         }
         
         return result;
-    } catch(e) {
+    } catch (e) {
         console.error('Plugin error:', e);
         return code;
     }

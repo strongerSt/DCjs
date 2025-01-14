@@ -1,63 +1,71 @@
-function decoder(p, a, c, k, e, d) {
-    e = function(c) {
-        return (c < a ? '' : e(parseInt(c / a))) + ((c = c % a) > 35 ? String.fromCharCode(c + 29) : c.toString(36));
-    };
+function decode(p, a, c, k, e, d) {
     d = {};
-    
+    e = function(c) {
+        return (c < a ? '' : e(parseInt(c / a))) +
+            ((c = c % a) > 35 ? String.fromCharCode(c + 29) : c.toString(36));
+    };
+
+    if (!''.replace(/^/, String)) {
+        while (c--) {
+            d[e(c)] = k[c] || e(c);
+        }
+        k = [function(e) {
+            return d[e];
+        }];
+        e = function() {
+            return '\\w+';
+        };
+        c = 1;
+    }
+
     while (c--) {
         if (k[c]) {
-            d[e(c)] = k[c];
+            p = p.replace(new RegExp('\\b' + e(c) + '\\b', 'g'), k[c]);
         }
     }
-    
-    return p.replace(/\b\w+\b/g, function(w) {
-        return d.hasOwnProperty(w) ? d[w] : w;
-    });
+    return p;
 }
 
 function plugin(code) {
     try {
         let result = code;
-        
-        // 提取每一层的参数
-        const evalRegex = /'([^']+)'/g;
-        let match;
-        
-        // 收集所有匹配的字符串
-        let matches = [];
-        while ((match = evalRegex.exec(result)) !== null) {
-            matches.push(match[1]);
-        }
-        
-        // 尝试解码最后一个匹配（通常是最内层的编码）
-        if (matches.length > 0) {
-            const lastMatch = matches[matches.length - 1];
-            
-            // 分割参数
-            const parts = lastMatch.split('|');
-            if (parts.length > 0) {
-                let words = parts;
-                let str = matches[0];
-                let base = 36; // 默认基数
-                let count = words.length;
-                
-                result = decoder(str, base, count, words);
-            }
-        }
-        
-        // 添加 Part2AI 配置
-        if (result.includes('Part2AI') || result.includes('RCAnonymousID')) {
-            result = `
-// Part2AI Configuration
-const appVersion = "Part2AI Lite";
-const productType = "app_store";
-const productName = "Part2AI_Lite_Lifetime_Subscription";
+        // 移除头部注释和配置
+        result = result.replace(/^\/\/.*\n/gm, '');
+        result = result.replace(/^\/\/ Part2AI.*\n/gm, '');
 
-${result}`;
+        // 提取并处理eval函数
+        const pattern = /eval\(function\(p,a,c,k,e,d\)\{([\s\S]+?)\}\(([\s\S]+?)\)\)/g;
+        
+        while (pattern.test(result)) {
+            result = result.replace(pattern, (match, body, args) => {
+                try {
+                    // 分割参数
+                    const params = args.split(',').map(arg => {
+                        try {
+                            return Function(`return ${arg}`)();
+                        } catch {
+                            return arg;
+                        }
+                    });
+                    
+                    // 使用decode函数解码
+                    return decode(params[0], params[1], params[2], params[3].split('|'));
+                } catch (e) {
+                    console.error('Decode error:', e);
+                    return match;
+                }
+            });
         }
-        
+
+        // 清理代码
+        result = result
+            .replace(/\\'/g, "'")
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\')
+            .replace(/\\n/g, '\n')
+            .replace(/\\t/g, '\t');
+
         return result;
-        
     } catch (e) {
         console.error('Plugin error:', e);
         return code;

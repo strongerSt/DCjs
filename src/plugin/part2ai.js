@@ -2,6 +2,7 @@ const { parse } = require('@babel/parser');
 const generate = require('@babel/generator').default;
 const traverse = require('@babel/traverse').default;
 const t = require('@babel/types');
+const prettier = require('prettier');
 
 function decode(p, a, c, k, d = {}) {
     const e = function(c) {
@@ -21,21 +22,17 @@ function decode(p, a, c, k, d = {}) {
 
 function processEval(evalContent) {
     try {
-        // 提取参数
         const match = evalContent.match(/}\(([\s\S]+?)\)$/);
         if (!match) return evalContent;
 
-        // 解析参数
         const args = match[1].split(',').map(arg => {
             try {
-                // 使用 Function 替代 eval
                 return new Function(`return ${arg}`)();
             } catch {
                 return arg;
             }
         });
 
-        // 确保我们有足够的参数
         if (args.length >= 4) {
             return decode(args[0], parseInt(args[1]), parseInt(args[2]), args[3]);
         }
@@ -47,6 +44,30 @@ function processEval(evalContent) {
     }
 }
 
+function formatCode(code) {
+    try {
+        // 使用 prettier 格式化代码
+        return prettier.format(code, {
+            parser: 'babel',
+            semi: true,
+            singleQuote: true,
+            trailingComma: 'es5',
+            bracketSpacing: true,
+            arrowParens: 'avoid'
+        });
+    } catch (e) {
+        console.error('Prettier format error:', e);
+        
+        // 如果 prettier 失败，尝试基本的格式化
+        return code.replace(/([^;{])\n/g, '$1;\n')  // 添加缺失的分号
+                   .replace(/\n\s*\n/g, '\n')      // 删除多余的空行
+                   .replace(/;\s*;/g, ';')         // 删除多余的分号
+                   .replace(/\{\s*\n/g, '{\n')     // 修复花括号格式
+                   .replace(/\n\s*\}/g, '\n}')     // 修复花括号格式
+                   .trim();
+    }
+}
+
 function plugin(code) {
     try {
         let result = code;
@@ -54,7 +75,7 @@ function plugin(code) {
         const MAX_ITERATIONS = 3;
 
         // 清理代码
-        result = result.replace(/^\/\/.*$/mg, ''); // 移除注释
+        result = result.replace(/^\/\/.*$/mg, '');
 
         while (count < MAX_ITERATIONS) {
             console.log(`Iteration ${count + 1}`);
@@ -74,26 +95,25 @@ function plugin(code) {
             count++;
         }
 
-        // 分析结果
-        if (result.includes('let names') || result.includes('TextMask') || 
-            result.includes('Part2AI') || result.includes('RCAnonymousID')) {
-            console.log('Found target code');
-        } else {
-            console.log('Target code not found, returning standard template');
-            // 返回标准模板
-            result = generateStandardTemplate();
-        }
+        // 确保每行结束有分号
+        result = result.split('\n')
+            .map(line => {
+                line = line.trim();
+                if (line && !line.endsWith(';') && !line.endsWith('{') && !line.endsWith('}') && !line.endsWith(',')) {
+                    return line + ';';
+                }
+                return line;
+            })
+            .join('\n');
 
-        // 最后的清理和格式化
-        try {
-            const ast = parse(result);
-            result = generate(ast, {
-                retainLines: true,
-                compact: false,
-                quotes: 'single'
-            }).code;
-        } catch (e) {
-            console.error('Format error:', e);
+        // 格式化代码
+        result = formatCode(result);
+
+        // 分析结果
+        if (!(result.includes('let names') || result.includes('TextMask') || 
+              result.includes('Part2AI') || result.includes('RCAnonymousID'))) {
+            console.log('Target code not found, returning standard template');
+            result = generateStandardTemplate();
         }
 
         return result;
@@ -129,6 +149,7 @@ obj.subscriber = {
     original_app_user_id: "$RCAnonymousID:0400000000000000000000000000000",
     last_seen: "2024-03-08T04:44:30Z",
 };
+
 obj.subscriber.non_subscriptions[productType] = [{
     id: "aaaaaaaaaa",
     is_sandbox: false,
@@ -137,13 +158,16 @@ obj.subscriber.non_subscriptions[productType] = [{
     store: "app_store",
     store_transaction_id: "280000000000000",
 }];
+
 obj.subscriber.entitlements[productName] = {
     grace_period_expires_date: null,
     purchase_date: "2024-03-08T04:44:44Z",
     product_identifier: productType,
     expires_date: null,
 };
+
 $.notify("XiaoMao_" + names + " 执行成功！", "", "Nice!已解锁成功，可关掉此脚本。", "https://i.pixiv.re/img-original/img/2022/12/19/00/06/12/103718184_p0.png");
+
 $done({
     body: JSON.stringify(obj)
 });
@@ -152,52 +176,56 @@ function Env(name) {
     const isLoon = typeof $loon !== "undefined";
     const isSurge = typeof $httpClient !== "undefined" && !isLoon;
     const isQX = typeof $task !== "undefined";
+    
     const read = (key) => {
         if (isLoon || isSurge) return $persistentStore.read(key);
-        if (isQX) return $prefs.valueForKey(key)
+        if (isQX) return $prefs.valueForKey(key);
     };
+    
     const write = (key, value) => {
         if (isLoon || isSurge) return $persistentStore.write(key, value);
-        if (isQX) return $prefs.setValueForKey(key, value)
+        if (isQX) return $prefs.setValueForKey(key, value);
     };
+    
     const notify = (title = "XiaoMao", subtitle = "", message = "", url = "", url2 = url) => {
         if (isLoon) $notification.post(title, subtitle, message, url);
-        if (isSurge) $notification.post(title, subtitle, message, {
-            url
-        });
+        if (isSurge) $notification.post(title, subtitle, message, { url });
         if (isQX) $notify(title, subtitle, message, {
             "open-url": url,
             "media-url": url2
-        })
+        });
     };
+    
     const get = (url, callback) => {
         if (isLoon || isSurge) $httpClient.get(url, callback);
         if (isQX) {
-            url.method = \`GET\`;
-            $task.fetch(url).then((resp) => callback(null, {}, resp.body))
+            url.method = "GET";
+            $task.fetch(url).then((resp) => callback(null, {}, resp.body));
         }
     };
+    
     const post = (url, callback) => {
         if (isLoon || isSurge) $httpClient.post(url, callback);
         if (isQX) {
-            url.method = \`POST\`;
-            $task.fetch(url).then((resp) => callback(null, {}, resp.body))
+            url.method = "POST";
+            $task.fetch(url).then((resp) => callback(null, {}, resp.body));
         }
     };
+    
     const put = (url, callback) => {
         if (isLoon || isSurge) $httpClient.put(url, callback);
         if (isQX) {
             url.method = "PUT";
-            $task.fetch(url).then((resp) => callback(null, {}, resp.body))
+            $task.fetch(url).then((resp) => callback(null, {}, resp.body));
         }
     };
+    
     const toObj = (str) => JSON.parse(str);
     const toStr = (obj) => JSON.stringify(obj);
-    const queryStr = (obj) => {
-        return Object.keys(obj).map((key) => \`\${key}=\${obj[key]}\`).join("&")
-    };
+    const queryStr = (obj) => Object.keys(obj).map((key) => \`\${key}=\${obj[key]}\`).join("&");
     const log = (message) => console.log(message);
     const done = (value = {}) => $done(value);
+    
     return {
         name,
         read,
@@ -211,7 +239,7 @@ function Env(name) {
         queryStr,
         log,
         done,
-    }
+    };
 }`;
 }
 

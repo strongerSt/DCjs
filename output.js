@@ -1,4 +1,4 @@
-//Wed Jan 15 2025 10:04:57 GMT+0000 (Coordinated Universal Time)
+//Wed Jan 15 2025 10:07:13 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
 let names = "TextMask";

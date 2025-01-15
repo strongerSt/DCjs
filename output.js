@@ -1,9 +1,9 @@
-//Wed Jan 15 2025 10:07:13 GMT+0000 (Coordinated Universal Time)
+//Wed Jan 15 2025 11:14:56 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
-let names = "TextMask";
-let productName = "pro";
-let productType = "tm_lifetime2";
+let names = "";
+let productName = "";
+let productType = "";
 let appVersion = null;
 let notifyState = true;
 let ua = true;
@@ -12,33 +12,33 @@ let $ = new Env(names);
 
 obj.subscriber = {
     non_subscriptions: {},
-    first_seen: "2024-03-08T04:44:30Z",
+    first_seen: "",
     original_application_version: appVersion,
     other_purchases: {
         [productType]: {
-            purchase_date: "2024-03-08T04:44:44Z",
+            purchase_date: "",
         },
     },
     management_url: null,
     subscriptions: {},
     entitlements: {},
-    original_purchase_date: "2024-03-08T04:44:14Z",
-    original_app_user_id: "$RCAnonymousID:0400000000000000000000000000000",
-    last_seen: "2024-03-08T04:44:30Z",
+    original_purchase_date: "",
+    original_app_user_id: "|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||return|function|if|replace|while|String|fromCharCode|toString|eval|parseInt|RegExp|split|new|let|123|url|const|obj|key|callback|isLoon|null|isSurge|03|08T04|productType|isQX|resp|message|value|post|body|subtitle|appVersion|2024|task|str|img|257|names|purchase_date|read|write|typeof|undefined|get|put|notify|method|fetch|then|JSON|subscriber|prefs|30Z|non_subscriptions|parse|entitlements|original_purchase_date|persistentStore|Env|title|notification|log|44Z|httpClient|done|103718184_p0|name|toStr|productName|true|expires_date|store|280000000000000|store_transaction_id|grace_period_expires_date|app_store|false|14Z|aaaaaaaaaa|console|response|queryStr|tm_lifetime2|notifyState|first_seen|management_url|last_seen|0400000000000000000000000000000|RCAnonymousID|id|subscriptions|other_purchases|stringify|is_sandbox|original_app_user_id|ua|loon|original_application_version|执行成功|valueForKey|toObj|setValueForKey|open|media|GET|PUT|Object|keys|map|join|POST|product_identifier|png|TextMask|XiaoMao||00|06|Nice|可关掉此脚本|url2|https|pro|已解锁成功|pixiv|re|original|2022|XiaoMao_",
+    last_seen: "",
 };
 
 obj.subscriber.non_subscriptions[productType] = [{
-    id: "aaaaaaaaaa",
+    id: "",
     is_sandbox: false,
-    purchase_date: "2024-03-08T04:44:44Z",
-    original_purchase_date: "2024-03-08T04:44:44Z",
+    purchase_date: "",
+    original_purchase_date: "",
     store: "app_store",
-    store_transaction_id: "280000000000000",
+    store_transaction_id: "",
 }];
 
 obj.subscriber.entitlements[productName] = {
     grace_period_expires_date: null,
-    purchase_date: "2024-03-08T04:44:44Z",
+    purchase_date: "",
     product_identifier: productType,
     expires_date: null,
 };
@@ -48,6 +48,7 @@ $.notify("XiaoMao_" + names + " 执行成功！", "", "Nice!已解锁成功，�
 $done({
     body: JSON.stringify(obj)
 });
+
 
 function Env(name) {
     const isLoon = typeof $loon !== "undefined";

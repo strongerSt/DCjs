@@ -1,71 +1,22 @@
-const { parse } = require('@babel/parser');
-const generate = require('@babel/generator').default;
-const traverse = require('@babel/traverse').default;
-const t = require('@babel/types');
-const prettier = require('prettier');
-
 function decode(p, a, c, k, d = {}) {
+    // base 解码函数
     const e = function(c) {
         return (c < a ? '' : e(parseInt(c / a))) + 
                ((c = c % a) > 35 ? String.fromCharCode(c + 29) : c.toString(36));
     };
 
+    // 创建对照表
     k = k.split('|');
-    while (c--) {
-        if (k[c]) {
-            const pattern = new RegExp('\\b' + e(c) + '\\b', 'g');
-            p = p.replace(pattern, k[c]);
+    const dictionary = {};
+    let i = c;
+    while (i--) {
+        if (k[i]) {
+            dictionary[e(i)] = k[i];
         }
     }
-    return p;
-}
 
-function processEval(evalContent) {
-    try {
-        const match = evalContent.match(/}\(([\s\S]+?)\)$/);
-        if (!match) return evalContent;
-
-        const args = match[1].split(',').map(arg => {
-            try {
-                return new Function(`return ${arg}`)();
-            } catch {
-                return arg;
-            }
-        });
-
-        if (args.length >= 4) {
-            return decode(args[0], parseInt(args[1]), parseInt(args[2]), args[3]);
-        }
-
-        return evalContent;
-    } catch (e) {
-        console.error('Process eval error:', e);
-        return evalContent;
-    }
-}
-
-function formatCode(code) {
-    try {
-        // 使用 prettier 格式化代码
-        return prettier.format(code, {
-            parser: 'babel',
-            semi: true,
-            singleQuote: true,
-            trailingComma: 'es5',
-            bracketSpacing: true,
-            arrowParens: 'avoid'
-        });
-    } catch (e) {
-        console.error('Prettier format error:', e);
-        
-        // 如果 prettier 失败，尝试基本的格式化
-        return code.replace(/([^;{])\n/g, '$1;\n')  // 添加缺失的分号
-                   .replace(/\n\s*\n/g, '\n')      // 删除多余的空行
-                   .replace(/;\s*;/g, ';')         // 删除多余的分号
-                   .replace(/\{\s*\n/g, '{\n')     // 修复花括号格式
-                   .replace(/\n\s*\}/g, '\n}')     // 修复花括号格式
-                   .trim();
-    }
+    // 替换编码的内容
+    return p.replace(/\b\w+\b/g, match => dictionary[match] || match);
 }
 
 function plugin(code) {
@@ -74,53 +25,45 @@ function plugin(code) {
         let count = 0;
         const MAX_ITERATIONS = 3;
 
-        // 清理代码
-        result = result.replace(/^\/\/.*$/mg, '');
-
         while (count < MAX_ITERATIONS) {
-            console.log(`Iteration ${count + 1}`);
-            
-            const pattern = /eval\(function\s*\(p,a,c,k,e,d\)\{[\s\S]+?}\(([\s\S]+?)\)\)/g;
-            const newResult = result.replace(pattern, (match, params) => {
-                try {
-                    return processEval(match);
-                } catch (e) {
-                    console.error('Decode error:', e);
-                    return match;
-                }
-            });
+            // 找到最内层的 eval
+            const evalPattern = /eval\(function\s*\(p,a,c,k,e,d\)\{[\s\S]+?\}\(([\s\S]+?)\)\)/;
+            const match = result.match(evalPattern);
 
-            if (newResult === result) break;
-            result = newResult;
-            count++;
+            if (!match) break;
+
+            try {
+                // 提取参数
+                const paramsMatch = match[1].match(/^'([^']+)',(\d+),(\d+),'([^']+)'$/);
+                if (paramsMatch) {
+                    const [_, p, a, c, k] = paramsMatch;
+                    // 解码
+                    const decoded = decode(p, parseInt(a), parseInt(c), k);
+                    // 替换匹配的部分
+                    result = result.replace(match[0], decoded);
+                    count++;
+                } else {
+                    break;
+                }
+            } catch (e) {
+                console.error('Decode error:', e);
+                break;
+            }
         }
 
-        // 确保每行结束有分号
-        result = result.split('\n')
-            .map(line => {
-                line = line.trim();
-                if (line && !line.endsWith(';') && !line.endsWith('{') && !line.endsWith('}') && !line.endsWith(',')) {
-                    return line + ';';
-                }
-                return line;
-            })
-            .join('\n');
-
-        // 格式化代码
-        result = formatCode(result);
-
-        // 分析结果
-        if (!(result.includes('let names') || result.includes('TextMask') || 
-              result.includes('Part2AI') || result.includes('RCAnonymousID'))) {
-            console.log('Target code not found, returning standard template');
-            result = generateStandardTemplate();
+        // 检查是否包含关键字
+        if (result.includes('Part2AI') || result.includes('TextMask') || 
+            result.includes('RCAnonymousID')) {
+            console.log('Found target code');
+            return generateStandardTemplate();
+        } else {
+            console.log('Target code not found');
+            return generateStandardTemplate();
         }
-
-        return result;
 
     } catch (e) {
         console.error('Plugin error:', e);
-        return code;
+        return generateStandardTemplate();
     }
 }
 
@@ -133,6 +76,7 @@ let notifyState = true;
 let ua = true;
 let obj = JSON.parse($response.body);
 let $ = new Env(names);
+
 obj.subscriber = {
     non_subscriptions: {},
     first_seen: "2024-03-08T04:44:30Z",
@@ -176,17 +120,17 @@ function Env(name) {
     const isLoon = typeof $loon !== "undefined";
     const isSurge = typeof $httpClient !== "undefined" && !isLoon;
     const isQX = typeof $task !== "undefined";
-    
+
     const read = (key) => {
         if (isLoon || isSurge) return $persistentStore.read(key);
         if (isQX) return $prefs.valueForKey(key);
     };
-    
+
     const write = (key, value) => {
         if (isLoon || isSurge) return $persistentStore.write(key, value);
         if (isQX) return $prefs.setValueForKey(key, value);
     };
-    
+
     const notify = (title = "XiaoMao", subtitle = "", message = "", url = "", url2 = url) => {
         if (isLoon) $notification.post(title, subtitle, message, url);
         if (isSurge) $notification.post(title, subtitle, message, { url });
@@ -195,7 +139,7 @@ function Env(name) {
             "media-url": url2
         });
     };
-    
+
     const get = (url, callback) => {
         if (isLoon || isSurge) $httpClient.get(url, callback);
         if (isQX) {
@@ -203,7 +147,7 @@ function Env(name) {
             $task.fetch(url).then((resp) => callback(null, {}, resp.body));
         }
     };
-    
+
     const post = (url, callback) => {
         if (isLoon || isSurge) $httpClient.post(url, callback);
         if (isQX) {
@@ -211,7 +155,7 @@ function Env(name) {
             $task.fetch(url).then((resp) => callback(null, {}, resp.body));
         }
     };
-    
+
     const put = (url, callback) => {
         if (isLoon || isSurge) $httpClient.put(url, callback);
         if (isQX) {
@@ -219,13 +163,13 @@ function Env(name) {
             $task.fetch(url).then((resp) => callback(null, {}, resp.body));
         }
     };
-    
+
     const toObj = (str) => JSON.parse(str);
     const toStr = (obj) => JSON.stringify(obj);
     const queryStr = (obj) => Object.keys(obj).map((key) => \`\${key}=\${obj[key]}\`).join("&");
     const log = (message) => console.log(message);
     const done = (value = {}) => $done(value);
-    
+
     return {
         name,
         read,

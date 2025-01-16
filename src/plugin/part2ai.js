@@ -6,70 +6,74 @@ const t = require('@babel/types')
 
 module.exports = function(code) {
     try {
-        function unpack(packedCode) {
-            // 创建一个自定义的 eval 函数来捕获结果
-            let unpacked = '';
-            const fakeEval = function(code) {
-                unpacked = code;
-                return code;
-            };
-            
-            // 替换原始代码中的 eval
-            const modifiedCode = packedCode.replace(/eval\s*\(/, 'fakeEval(');
-            
-            // 在安全的上下文中执行
-            const context = {
-                fakeEval: fakeEval,
-                String: String,
-                RegExp: RegExp
-            };
-            
-            try {
-                with(context) {
-                    eval(modifiedCode);
-                }
-                return unpacked;
-            } catch(e) {
-                console.log('解包错误:', e);
-                return null;
-            }
-        }
+        // ... 之前的解密逻辑 ...
 
-        function recursiveUnpack(code, depth = 0) {
-            if (depth > 10) return code; // 防止无限递归
-            
-            console.log(`进行第 ${depth + 1} 层解包...`);
-            
-            try {
-                let result = unpack(code);
-                if (result && result !== code) {
-                    if (result.includes('eval(')) {
-                        return recursiveUnpack(result, depth + 1);
-                    }
-                    return result;
+        function formatCode(code) {
+            const sections = [
+                // 变量声明部分
+                {
+                    pattern: /let\s+[^;]+;/g,
+                    label: '// 变量声明'
+                },
+                // 主要逻辑部分
+                {
+                    pattern: /obj\.subscriber\s*=[\s\S]+?\};/,
+                    label: '// 主要订阅配置'
+                },
+                // 非订阅部分
+                {
+                    pattern: /obj\.subscriber\.non_subscriptions[\s\S]+?\];/,
+                    label: '// 非订阅配置'
+                },
+                // 权限部分
+                {
+                    pattern: /obj\.subscriber\.entitlements[\s\S]+?\};/,
+                    label: '// 权限配置'
+                },
+                // 通知部分
+                {
+                    pattern: /\$\.notify[\s\S]+?\);/,
+                    label: '// 发送通知'
+                },
+                // Env函数
+                {
+                    pattern: /function\s+Env[\s\S]+?}/,
+                    label: '// 环境配置函数'
                 }
-            } catch(e) {
-                console.log(`第 ${depth + 1} 层解包失败:`, e);
-            }
-            
-            return code;
-        }
+            ];
 
-        // 开始解密
-        const result = recursiveUnpack(code);
-        
-        if (result && result !== code) {
-            // 尝试美化代码
+            let formattedCode = code;
+
+            // 添加分节和注释
+            sections.forEach(({pattern, label}) => {
+                formattedCode = formattedCode.replace(pattern, match => `\n${label}\n${match}\n`);
+            });
+
+            // 美化代码结构
             try {
-                let ast = parse(result);
-                return generator(ast, {
-                    retainLines: true,
+                const ast = parse(formattedCode, {
+                    sourceType: 'module'
+                });
+                
+                formattedCode = generator(ast, {
+                    retainLines: false,
+                    compact: false,
                     comments: true,
-                    compact: false
+                    indent: {
+                        style: '    ',
+                        adjustMultilineComment: true
+                    }
                 }).code;
             } catch(e) {
-                return result;
+                console.log('格式化出错:', e);
             }
+
+            return formattedCode;
+        }
+
+        // 在解密后添加格式化
+        if (result && result !== code) {
+            return formatCode(result);
         }
 
         return code;

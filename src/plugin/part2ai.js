@@ -1,63 +1,72 @@
+// src/plugins/part2ai.js
 const { parse } = require('@babel/parser')
 const generator = require('@babel/generator').default
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
+const vm = require('vm')
 
 module.exports = function(code) {
     try {
+        // 创建安全的执行环境
+        const context = vm.createContext({
+            console: console
+        });
+
         // EvalDecode 函数
         function EvalDecode(source) {
-            // 使用局部变量替代 self
-            let _originalEval = eval;
-            let _tempEval = (_code) => {
-                eval = _originalEval;
-                return _code;
-            };
-            eval = _tempEval;
-            return _originalEval(source);
+            try {
+                return vm.runInContext(source, context);
+            } catch (e) {
+                console.log('EvalDecode 错误:', e);
+                return null;
+            }
         }
 
         // 解密函数
         function unpack(code) {
-            let ast = parse(code, { errorRecovery: true })
-            let lines = ast.program.body
-            let data = null
-            for (let line of lines) {
-                if (t.isEmptyStatement(line)) {
-                    continue
+            try {
+                let ast = parse(code, { errorRecovery: true })
+                let lines = ast.program.body
+                let data = null
+                
+                for (let line of lines) {
+                    if (t.isEmptyStatement(line)) continue;
+                    
+                    // 检查是否是 eval 调用
+                    if (t.isCallExpression(line?.expression) && 
+                        line.expression.callee?.name === 'eval') {
+                        
+                        // 获取 eval 的参数
+                        let evalArg = generator(line.expression.arguments[0], { minified: true }).code;
+                        
+                        // 尝试在安全环境中执行
+                        try {
+                            let result = vm.runInContext(evalArg, context);
+                            if (result) return result;
+                        } catch (e) {
+                            console.log('执行 eval 参数错误:', e);
+                        }
+                    }
                 }
-                if (data) {
-                    return null
-                }
-                if (
-                    t.isCallExpression(line?.expression) &&
-                    line.expression.callee?.name === 'eval' &&
-                    line.expression.arguments.length === 1 &&
-                    t.isCallExpression(line.expression.arguments[0])
-                ) {
-                    data = t.expressionStatement(line.expression.arguments[0])
-                    continue
-                }
-                return null
+                return null;
+            } catch (e) {
+                console.log('unpack 错误:', e);
+                return null;
             }
-            if (!data) {
-                return null
-            }
-            code = generator(data, { minified: true }).code
-            return _originalEval(code)
         }
 
-        // 尝试解密
-        const evalDecoded = EvalDecode(code)
-        const unpackDecoded = unpack(code)
-        let result = evalDecoded || unpackDecoded
-
+        // 尝试不同的解密方法
+        let result = EvalDecode(code) || unpack(code);
+        
         if (result) {
-            return result
+            console.log('解密结果类型:', typeof result);
+            console.log('解密结果预览:', typeof result === 'string' ? result.slice(0, 100) : result);
+            return result;
         }
-        return code // 如果解密失败，返回原始代码
+
+        return code;
     } catch (error) {
-        console.error('part2ai 处理失败:', error)
-        return code // 出错时返回原始代码
+        console.error('part2ai 处理失败:', error);
+        return code;
     }
 }

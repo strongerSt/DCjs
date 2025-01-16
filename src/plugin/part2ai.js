@@ -7,66 +7,55 @@ const vm = require('vm')
 
 module.exports = function(code) {
     try {
-        // 创建安全的执行环境
+        // 创建模拟环境
         const context = vm.createContext({
-            console: console
+            console: console,
+            $response: { body: '{}' },
+            $persistentStore: {
+                read: () => '',
+                write: () => true
+            },
+            $notification: {
+                post: () => {}
+            },
+            $httpClient: {
+                get: () => {},
+                post: () => {},
+                put: () => {}
+            },
+            $prefs: {
+                valueForKey: () => null,
+                setValueForKey: () => null
+            },
+            $task: {
+                fetch: () => Promise.resolve({body: '{}'})
+            },
+            $done: () => {},
+            JSON: JSON
         });
 
-        // EvalDecode 函数
-        function EvalDecode(source) {
+        function decompress(code) {
             try {
-                return vm.runInContext(source, context);
-            } catch (e) {
-                console.log('EvalDecode 错误:', e);
-                return null;
+                // 尝试解析和美化代码
+                const ast = parse(code)
+                let result = generator(ast, {
+                    retainLines: true,
+                    compact: false,
+                    comments: true
+                }).code
+
+                return result
+            } catch(e) {
+                console.log('格式化错误:', e)
+                return code
             }
         }
 
-        // 解密函数
-        function unpack(code) {
-            try {
-                let ast = parse(code, { errorRecovery: true })
-                let lines = ast.program.body
-                let data = null
-                
-                for (let line of lines) {
-                    if (t.isEmptyStatement(line)) continue;
-                    
-                    // 检查是否是 eval 调用
-                    if (t.isCallExpression(line?.expression) && 
-                        line.expression.callee?.name === 'eval') {
-                        
-                        // 获取 eval 的参数
-                        let evalArg = generator(line.expression.arguments[0], { minified: true }).code;
-                        
-                        // 尝试在安全环境中执行
-                        try {
-                            let result = vm.runInContext(evalArg, context);
-                            if (result) return result;
-                        } catch (e) {
-                            console.log('执行 eval 参数错误:', e);
-                        }
-                    }
-                }
-                return null;
-            } catch (e) {
-                console.log('unpack 错误:', e);
-                return null;
-            }
-        }
+        // 返回格式化后的代码
+        return decompress(code)
 
-        // 尝试不同的解密方法
-        let result = EvalDecode(code) || unpack(code);
-        
-        if (result) {
-            console.log('解密结果类型:', typeof result);
-            console.log('解密结果预览:', typeof result === 'string' ? result.slice(0, 100) : result);
-            return result;
-        }
-
-        return code;
     } catch (error) {
-        console.error('part2ai 处理失败:', error);
-        return code;
+        console.error('part2ai 处理失败:', error)
+        return code
     }
 }

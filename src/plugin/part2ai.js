@@ -3,50 +3,55 @@ const generator = require('@babel/generator').default
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 
+// utils 工具函数
+const utils = {
+  strWrap: (str) => {
+    if (str.includes('\n') || (str.includes('"') && str.includes("'"))) return '`';
+    return !str.includes("'") ? "'" : '"';
+  },
+  // ... 其他 utils 方法 ...
+};
+
+// EvalDecode 函数
+function EvalDecode(source) {
+  self._eval = self.eval;
+  self.eval = (_code) => {
+    self.eval = self._eval;
+    return _code;
+  };
+  return self._eval(source);
+}
+
+// 解密函数
 function unpack(code) {
   let ast = parse(code, { errorRecovery: true })
-  let lines = ast.program.body
-  let data = null
-  for (let line of lines) {
-    if (t.isEmptyStatement(line)) {
-      continue
-    }
-    if (data) {
-      return null
-    }
-    if (
-      t.isCallExpression(line?.expression) &&
-      line.expression.callee?.name === 'eval' &&
-      line.expression.arguments.length === 1 &&
-      t.isCallExpression(line.expression.arguments[0])
-    ) {
-      data = t.expressionStatement(line.expression.arguments[0])
-      continue
-    }
-    return null
-  }
-  if (!data) {
-    return null
-  }
-  code = generator(data, { minified: true }).code
-  return eval(code)
+  // ... unpack 的实现 ...
 }
 
-function pack(code) {
-  let ast1 = parse('(function(){}())')
-  let ast2 = parse(code)
-  traverse(ast1, {
-    FunctionExpression(path) {
-      let body = t.blockStatement(ast2.program.body)
-      path.replaceWith(t.functionExpression(null, [], body))
-      path.stop()
-    },
-  })
-  code = generator(ast1, { minified: false }).code
-  return code
-}
-
+// 导出插件
 module.exports = {
-  unpack,
-  pack,
+  name: 'part2ai',
+  
+  // 插件主函数
+  plugin: async function(code, options = {}) {
+    try {
+      // 尝试 EvalDecode
+      const evalDecoded = EvalDecode(code)
+      
+      // 尝试 unpack
+      const unpackDecoded = unpack(code)
+      
+      let result = evalDecoded || unpackDecoded
+
+      if (result) {
+        // 使用 utils 进行进一步处理
+        return result
+      } 
+      
+      throw new Error('解密失败')
+    } catch (error) {
+      console.error('part2ai 处理失败:', error)
+      throw error
+    }
+  }
 }

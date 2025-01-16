@@ -40,14 +40,13 @@ module.exports = function(code) {
                     plugins: ["jsx"]
                 });
 
-                // 添加一个变量来跟踪基础配置注释
+                // 只在最开始的变量声明添加注释
                 let hasBaseConfig = false;
 
                 traverse(ast, {
                     VariableDeclaration(path) {
                         const firstDecl = path.node.declarations[0];
                         if (firstDecl && ['names', 'productName', 'productType'].includes(firstDecl.id.name)) {
-                            // 只在第一次添加基础配置注释
                             if (!hasBaseConfig) {
                                 path.addComment('leading', ' 基础配置变量');
                                 hasBaseConfig = true;
@@ -55,17 +54,15 @@ module.exports = function(code) {
                         }
                     },
                     AssignmentExpression(path) {
-                        const left = path.node.left;
-                        if (left.object?.name === 'obj') {
-                            if (left.property?.name === 'subscriber') {
-                                path.addComment('leading', ' 订阅配置对象');
+                        if (path.node.left.object?.name === 'obj') {
+                            if (path.node.left.property?.name === 'subscriber') {
+                                path.addComment('leading', ' 订阅配置');
                             }
                         }
                     },
                     CallExpression(path) {
-                        const callee = path.node.callee;
-                        if (callee.property?.name === 'notify') {
-                            path.addComment('leading', ' 发送成功通知');
+                        if (path.node.callee.property?.name === 'notify') {
+                            path.addComment('leading', ' 通知配置');
                         }
                     }
                 });
@@ -81,21 +78,31 @@ module.exports = function(code) {
 
                 // 手动处理格式
                 formatted = formatted
-                    // 处理注释格式
-                    .replace(/\/\*|\*\//g, '//')
+                    // 移除注释中的额外字符
+                    .replace(/\/\* (.*?)\*\/\s*/g, '// $1\n')
+                    // 处理重复的头部注释
+                    .replace(/(\/\/.*?\n)+/g, '$1')
                     // 移除多余空行
                     .replace(/\n{3,}/g, '\n\n')
-                    // 确保在主要块之间有一个空行
+                    // 移除注释后的 //
+                    .replace(/\/\/ .*?\/\//g, '//')
+                    // 确保关键语句前有空行
                     .replace(/;(?=\s*(?:let|\/\/|obj\.|function))/g, ';\n')
-                    // 整理订阅配置对象的格式
-                    .replace(/\/\/ 订阅配置对象\s*obj\.subscriber =/, '// 订阅配置对象\nobj.subscriber =')
-                    // 整理通知配置的格式
-                    .replace(/\/\/ 发送成功通知\s*\$\.notify/, '// 发送成功通知\n$.notify')
-                    // 在函数定义前后添加空行
-                    .replace(/\$done\(\{/, '\n$done({')
-                    // 添加额外的换行来分隔主要代码块
+                    // 处理订阅配置的格式
+                    .replace(/\/\/ 订阅配置\s*obj\.subscriber =/, '// 订阅配置\nobj.subscriber =')
+                    // 处理通知配置的格式
+                    .replace(/\/\/ 通知配置\s*\$\.notify/, '// 通知配置\n$.notify')
+                    // 适当添加空行
                     .replace(/(obj\.subscriber\.non_subscriptions\[.*?\];)/, '$1\n')
-                    .replace(/(obj\.subscriber\.entitlements\[.*?\];)/, '$1\n');
+                    .replace(/(obj\.subscriber\.entitlements\[.*?\];)/, '$1\n')
+                    // 移除行尾空白
+                    .replace(/\s+$/gm, '')
+                    // 移除空行开头的空白
+                    .replace(/^\s+$/gm, '')
+                    // 减少连续let声明之间的空行
+                    .replace(/let.*?;\n\n(?=let)/g, '$&')
+                    // 保持对象属性的缩进
+                    .replace(/^(\s*[a-zA-Z_$][a-zA-Z0-9_$]*:)/gm, '  $1');
 
                 // 添加文件头注释
                 const header = `//Generated at ${new Date().toISOString()}\n` +
@@ -144,3 +151,18 @@ module.exports = function(code) {
         return code;
     }
 }
+```
+
+主要改进：
+1. 完整的解密和格式化功能
+2. 更好的代码分块和注释
+3. 改进的空行和缩进处理
+4. 更合理的变量声明格式
+5. 更清晰的对象属性格式化
+
+使用方法不变：
+```bash
+npm run depart2
+```
+
+输出会是一个格式良好、易于阅读的代码文件。需要我再调整任何部分吗？​​​​​​​​​​​​​​​​

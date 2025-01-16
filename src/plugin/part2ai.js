@@ -1,5 +1,4 @@
 
-// src/plugins/part2ai.js
 const { parse } = require('@babel/parser')
 const generator = require('@babel/generator').default
 const traverse = require('@babel/traverse').default
@@ -151,18 +150,3 @@ module.exports = function(code) {
         return code;
     }
 }
-```
-
-主要改进：
-1. 完整的解密和格式化功能
-2. 更好的代码分块和注释
-3. 改进的空行和缩进处理
-4. 更合理的变量声明格式
-5. 更清晰的对象属性格式化
-
-使用方法不变：
-```bash
-npm run depart2
-```
-
-输出会是一个格式良好、易于阅读的代码文件。需要我再调整任何部分吗？​​​​​​​​​​​​​​​​

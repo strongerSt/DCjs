@@ -6,81 +6,68 @@ const t = require('@babel/types')
 
 module.exports = function(code) {
     try {
-        function unpackEval(code) {
-            // 由于代码可能包含特殊字符，我们先将它封装在函数中
-            let sandbox = {
-                result: null,
-                eval: function(code) {
-                    this.result = code;
-                    return code;
-                }
+        function unpack(packedCode) {
+            // 创建一个自定义的 eval 函数来捕获结果
+            let unpacked = '';
+            const fakeEval = function(code) {
+                unpacked = code;
+                return code;
             };
-
+            
+            // 替换原始代码中的 eval
+            const modifiedCode = packedCode.replace(/eval\s*\(/, 'fakeEval(');
+            
+            // 在安全的上下文中执行
+            const context = {
+                fakeEval: fakeEval,
+                String: String,
+                RegExp: RegExp
+            };
+            
             try {
-                with(sandbox) {
-                    eval(code);
+                with(context) {
+                    eval(modifiedCode);
                 }
-                return sandbox.result;
-            } catch (e) {
+                return unpacked;
+            } catch(e) {
                 console.log('解包错误:', e);
                 return null;
             }
         }
 
-        function processCode(code) {
-            // 处理可能的转义符号
-            code = code.replace(/\\x([0-9A-Fa-f]{2})/g, function(match, p1) {
-                return String.fromCharCode(parseInt(p1, 16));
-            });
-            
-            // 处理 Unicode 转义
-            code = code.replace(/\\u([0-9A-Fa-f]{4})/g, function(match, p1) {
-                return String.fromCharCode(parseInt(p1, 16));
-            });
-
-            return code;
-        }
-
-        // 递归解密
         function recursiveUnpack(code, depth = 0) {
-            if (depth > 5) return code; // 防止无限递归
+            if (depth > 10) return code; // 防止无限递归
             
-            console.log(`正在进行第 ${depth + 1} 层解密...`);
+            console.log(`进行第 ${depth + 1} 层解包...`);
             
-            let processed = processCode(code);
-            let unpacked = unpackEval(processed);
-            
-            if (unpacked && unpacked !== code) {
-                if (unpacked.includes('eval(')) {
-                    return recursiveUnpack(unpacked, depth + 1);
+            try {
+                let result = unpack(code);
+                if (result && result !== code) {
+                    if (result.includes('eval(')) {
+                        return recursiveUnpack(result, depth + 1);
+                    }
+                    return result;
                 }
-                return unpacked;
+            } catch(e) {
+                console.log(`第 ${depth + 1} 层解包失败:`, e);
             }
             
             return code;
         }
 
-        // 主解密流程
-        let result = recursiveUnpack(code);
+        // 开始解密
+        const result = recursiveUnpack(code);
         
-        // 如果解密成功，尝试美化代码
         if (result && result !== code) {
+            // 尝试美化代码
             try {
-                let ast = parse(result, {
-                    sourceType: 'module',
-                    plugins: ['jsx']
-                });
-                
-                result = generator(ast, {
+                let ast = parse(result);
+                return generator(ast, {
                     retainLines: true,
                     comments: true,
                     compact: false
                 }).code;
-                
-                console.log('解密成功');
-                return result;
-            } catch (e) {
-                console.log('格式化失败:', e);
+            } catch(e) {
                 return result;
             }
         }

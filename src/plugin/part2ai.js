@@ -1,21 +1,20 @@
-
-
 const { parse } = require('@babel/parser')
 const generator = require('@babel/generator').default
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 
-// 插件直接作为函数导出
 module.exports = function(code) {
     try {
         // EvalDecode 函数
         function EvalDecode(source) {
-            self._eval = self.eval;
-            self.eval = (_code) => {
-                self.eval = self._eval;
+            // 使用局部变量替代 self
+            let _originalEval = eval;
+            let _tempEval = (_code) => {
+                eval = _originalEval;
                 return _code;
             };
-            return self._eval(source);
+            eval = _tempEval;
+            return _originalEval(source);
         }
 
         // 解密函数
@@ -45,7 +44,7 @@ module.exports = function(code) {
                 return null
             }
             code = generator(data, { minified: true }).code
-            return eval(code)
+            return _originalEval(code)
         }
 
         // 尝试解密

@@ -1,21 +1,28 @@
-//Thu Jan 16 2025 04:38:30 GMT+0000 (Coordinated Universal Time)
+//Thu Jan 16 2025 04:41:35 GMT+0000 (Coordinated Universal Time)
+//Base:https://github.com/echo094/decode-js
+//Modify:https://github.com/smallfawn/decode_action
+//Generated at 2025-01-16T04:41:35.387Z
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
 
-// 基础配置
+// 基础配置变量//
 let names = "All Area Measurement";
 
-// 基础配置
 let productName = "pro";
 
-// 基础配置
 let productType = "am_lifetime";
+
 let appVersion = null;
+
 let notifyState = true;
+
 let ua = true;
+
 let obj = JSON.parse($response.body);
+
 let $ = new Env(names);
-/* 订阅配置*/obj.subscriber = {
+
+// 订阅配置对象//obj.subscriber = {
   non_subscriptions: {},
   first_seen: "2024-03-08T04:44:30Z",
   original_application_version: appVersion,
@@ -31,6 +38,7 @@ let $ = new Env(names);
   original_app_user_id: "$RCAnonymousID:0400000000000000000000000000000",
   last_seen: "2024-03-08T04:44:30Z"
 };
+
 obj.subscriber.non_subscriptions[productType] = [{
   id: "aaaaaaaaaa",
   is_sandbox: false,
@@ -39,16 +47,20 @@ obj.subscriber.non_subscriptions[productType] = [{
   store: "app_store",
   store_transaction_id: "280000000000000"
 }];
+
 obj.subscriber.entitlements[productName] = {
   grace_period_expires_date: null,
   purchase_date: "2024-03-08T04:44:44Z",
   product_identifier: productType,
   expires_date: null
 };
-/* 通知配置*/$.notify("XiaoMao_" + names + " 执行成功！", "", "Nice!已解锁成功，可关掉此脚本。", "https://i.pixiv.re/img-original/img/2022/12/19/00/06/12/103718184_p0.png");
+
+// 发送成功通知//$.notify("XiaoMao_" + names + " 执行成功！", "", "Nice!已解锁成功，可关掉此脚本。", "https://i.pixiv.re/img-original/img/2022/12/19/00/06/12/103718184_p0.png");
+
 $done({
   body: JSON.stringify(obj)
 });
+
 function Env(name) {
   const isLoon = typeof $loon !== "undefined";
   const isSurge = typeof $httpClient !== "undefined" && !isLoon;

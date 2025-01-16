@@ -6,74 +6,112 @@ const t = require('@babel/types')
 
 module.exports = function(code) {
     try {
-        // ... 之前的解密逻辑 ...
+        function unpack(packedCode) {
+            let unpacked = '';
+            const fakeEval = function(code) {
+                unpacked = code;
+                return code;
+            };
+            
+            const modifiedCode = packedCode.replace(/eval\s*\(/, 'fakeEval(');
+            
+            const context = {
+                fakeEval: fakeEval,
+                String: String,
+                RegExp: RegExp
+            };
+            
+            try {
+                with(context) {
+                    eval(modifiedCode);
+                }
+                return unpacked;
+            } catch(e) {
+                console.log('解包错误:', e);
+                return null;
+            }
+        }
 
         function formatCode(code) {
-            const sections = [
-                // 变量声明部分
-                {
-                    pattern: /let\s+[^;]+;/g,
-                    label: '// 变量声明'
-                },
-                // 主要逻辑部分
-                {
-                    pattern: /obj\.subscriber\s*=[\s\S]+?\};/,
-                    label: '// 主要订阅配置'
-                },
-                // 非订阅部分
-                {
-                    pattern: /obj\.subscriber\.non_subscriptions[\s\S]+?\];/,
-                    label: '// 非订阅配置'
-                },
-                // 权限部分
-                {
-                    pattern: /obj\.subscriber\.entitlements[\s\S]+?\};/,
-                    label: '// 权限配置'
-                },
-                // 通知部分
-                {
-                    pattern: /\$\.notify[\s\S]+?\);/,
-                    label: '// 发送通知'
-                },
-                // Env函数
-                {
-                    pattern: /function\s+Env[\s\S]+?}/,
-                    label: '// 环境配置函数'
-                }
-            ];
-
-            let formattedCode = code;
-
-            // 添加分节和注释
-            sections.forEach(({pattern, label}) => {
-                formattedCode = formattedCode.replace(pattern, match => `\n${label}\n${match}\n`);
-            });
-
-            // 美化代码结构
             try {
-                const ast = parse(formattedCode, {
-                    sourceType: 'module'
+                const ast = parse(code, {
+                    sourceType: "module",
+                    plugins: ["jsx"]
                 });
-                
-                formattedCode = generator(ast, {
+
+                // 添加代码块注释
+                traverse(ast, {
+                    VariableDeclaration(path) {
+                        const firstDecl = path.node.declarations[0];
+                        if (firstDecl && !path.node.leadingComments) {
+                            if (['names', 'productName', 'productType'].includes(firstDecl.id.name)) {
+                                path.addComment('leading', ' 基础配置');
+                            }
+                        }
+                    },
+                    AssignmentExpression(path) {
+                        const left = path.node.left;
+                        if (left.object?.name === 'obj') {
+                            if (left.property?.name === 'subscriber' && !path.node.leadingComments) {
+                                path.addComment('leading', ' 订阅配置');
+                            } else if (left.property?.name === 'entitlements' && !path.node.leadingComments) {
+                                path.addComment('leading', ' 权限配置');
+                            }
+                        }
+                    },
+                    CallExpression(path) {
+                        const callee = path.node.callee;
+                        if (callee.property?.name === 'notify' && !path.node.leadingComments) {
+                            path.addComment('leading', ' 通知配置');
+                        }
+                    },
+                    FunctionDeclaration(path) {
+                        if (path.node.id.name === 'Env' && !path.node.leadingComments) {
+                            path.addComment('leading', '\n 环境配置函数');
+                        }
+                    }
+                });
+
+                return generator(ast, {
                     retainLines: false,
-                    compact: false,
                     comments: true,
+                    compact: false,
                     indent: {
-                        style: '    ',
-                        adjustMultilineComment: true
+                        style: '    '
                     }
                 }).code;
             } catch(e) {
-                console.log('格式化出错:', e);
+                console.log('格式化错误:', e);
+                return code;
             }
-
-            return formattedCode;
         }
 
-        // 在解密后添加格式化
-        if (result && result !== code) {
-            return formatCode(result);
+        function recursiveUnpack(code, depth = 0) {
+            if (depth > 10) return code;
+            
+            console.log(`进行第 ${depth + 1} 层解包...`);
+            
+            try {
+                let result = unpack(code);
+                if (result && result !== code) {
+                    if (result.includes('eval(')) {
+                        return recursiveUnpack(result, depth + 1);
+                    }
+                    return result;
+                }
+            } catch(e) {
+                console.log(`第 ${depth + 1} 层解包失败:`, e);
+            }
+            
+            return code;
+        }
+
+        // 解密并格式化
+        const decrypted = recursiveUnpack(code);
+        
+        if (decrypted && decrypted !== code) {
+            // 解密成功后进行格式化
+            return formatCode(decrypted);
         }
 
         return code;

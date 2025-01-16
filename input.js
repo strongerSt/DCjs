@@ -1,1 +1,1 @@
-github-private-repo.plugin
+https://raw.githubusercontent.com/xiaomaoJT/QxScript/main/rewrite/boxJS/source/mca.js

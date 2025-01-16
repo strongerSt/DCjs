@@ -1,3 +1,4 @@
+
 // src/plugins/part2ai.js
 const { parse } = require('@babel/parser')
 const generator = require('@babel/generator').default
@@ -39,49 +40,70 @@ module.exports = function(code) {
                     plugins: ["jsx"]
                 });
 
-                // 添加代码块注释
+                // 添加一个变量来跟踪基础配置注释
+                let hasBaseConfig = false;
+
                 traverse(ast, {
                     VariableDeclaration(path) {
                         const firstDecl = path.node.declarations[0];
-                        if (firstDecl) {
-                            if (['names', 'productName', 'productType'].includes(firstDecl.id.name)) {
-                                // 只给主要配置项添加注释
-                                if (!path.node.leadingComments) {
-                                    path.addComment('leading', ' 基础配置');
-                                }
+                        if (firstDecl && ['names', 'productName', 'productType'].includes(firstDecl.id.name)) {
+                            // 只在第一次添加基础配置注释
+                            if (!hasBaseConfig) {
+                                path.addComment('leading', ' 基础配置变量');
+                                hasBaseConfig = true;
                             }
                         }
                     },
                     AssignmentExpression(path) {
-                        if (path.node.left.object?.name === 'obj') {
-                            if (path.node.left.property?.name === 'subscriber') {
-                                path.addComment('leading', ' 订阅配置');
+                        const left = path.node.left;
+                        if (left.object?.name === 'obj') {
+                            if (left.property?.name === 'subscriber') {
+                                path.addComment('leading', ' 订阅配置对象');
                             }
                         }
                     },
                     CallExpression(path) {
-                        if (path.node.callee.property?.name === 'notify') {
-                            // 确保通知配置单独一行
-                            path.addComment('leading', ' 通知配置');
+                        const callee = path.node.callee;
+                        if (callee.property?.name === 'notify') {
+                            path.addComment('leading', ' 发送成功通知');
                         }
                     }
                 });
 
-                // 自定义格式化配置
-                return generator(ast, {
+                let formatted = generator(ast, {
                     retainLines: false,
                     comments: true,
                     compact: false,
                     indent: {
-                        style: '  '  // 使用两个空格缩进
-                    },
-                    auxiliaryCommentBefore: '',
-                    jsonCompatibleStrings: true,
-                    decoratorsBeforeExport: true
-                }).code.replace(/;\n+/g, ';\n') // 移除多余的空行
-                   .replace(/\/\* (.*?)\*\/\n/g, '\n// $1\n') // 改变注释风格
-                   .replace(/\n{3,}/g, '\n\n') // 限制最大连续空行数为2
-                   .replace(/(\/\/ .*?)\n\n/g, '$1\n'); // 移除注释后的额外空行
+                        style: '  '
+                    }
+                }).code;
+
+                // 手动处理格式
+                formatted = formatted
+                    // 处理注释格式
+                    .replace(/\/\*|\*\//g, '//')
+                    // 移除多余空行
+                    .replace(/\n{3,}/g, '\n\n')
+                    // 确保在主要块之间有一个空行
+                    .replace(/;(?=\s*(?:let|\/\/|obj\.|function))/g, ';\n')
+                    // 整理订阅配置对象的格式
+                    .replace(/\/\/ 订阅配置对象\s*obj\.subscriber =/, '// 订阅配置对象\nobj.subscriber =')
+                    // 整理通知配置的格式
+                    .replace(/\/\/ 发送成功通知\s*\$\.notify/, '// 发送成功通知\n$.notify')
+                    // 在函数定义前后添加空行
+                    .replace(/\$done\(\{/, '\n$done({')
+                    // 添加额外的换行来分隔主要代码块
+                    .replace(/(obj\.subscriber\.non_subscriptions\[.*?\];)/, '$1\n')
+                    .replace(/(obj\.subscriber\.entitlements\[.*?\];)/, '$1\n');
+
+                // 添加文件头注释
+                const header = `//Generated at ${new Date().toISOString()}\n` +
+                             `//Base:https://github.com/echo094/decode-js\n` +
+                             `//Modify:https://github.com/smallfawn/decode_action\n\n`;
+
+                return header + formatted;
+
             } catch(e) {
                 console.log('格式化错误:', e);
                 return code;

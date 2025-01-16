@@ -1,11 +1,14 @@
-//Thu Jan 16 2025 04:32:55 GMT+0000 (Coordinated Universal Time)
+//Thu Jan 16 2025 04:38:04 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
-/* 基础配置*/
+
+// 基础配置
 let names = "All Area Measurement";
-/* 基础配置*/
+
+// 基础配置
 let productName = "pro";
-/* 基础配置*/
+
+// 基础配置
 let productType = "am_lifetime";
 let appVersion = null;
 let notifyState = true;
@@ -46,8 +49,6 @@ obj.subscriber.entitlements[productName] = {
 $done({
   body: JSON.stringify(obj)
 });
-/*
- 环境配置函数*/
 function Env(name) {
   const isLoon = typeof $loon !== "undefined";
   const isSurge = typeof $httpClient !== "undefined" && !isLoon;

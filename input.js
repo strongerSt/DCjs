@@ -1,1 +1,1 @@
-https://raw.githubusercontent.com/xiaomaoJT/QxScript/main/rewrite/boxJS/XiaoMaoMortgageCalc.js
+"&[^;]+;"

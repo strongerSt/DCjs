@@ -1,1 +1,1 @@
-https://raw.githubusercontent.com/xiaomaoJT/QxScript/main/rewrite/boxJS/source/mca.js
+https://raw.githubusercontent.com/Mikephie/ownuse/refs/heads/main/PRIVATE/iTunesLoon.plugin?token=GHSAT0AAAAAACXMYWVSOQU44R2SWZ56DR3MZ4JAYBA

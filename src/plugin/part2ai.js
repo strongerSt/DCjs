@@ -1,50 +1,52 @@
+
+
 const { parse } = require('@babel/parser')
 const generator = require('@babel/generator').default
 const traverse = require('@babel/traverse').default
 const t = require('@babel/types')
 
-// utils 工具函数
-const utils = {
-  strWrap: (str) => {
-    if (str.includes('\n') || (str.includes('"') && str.includes("'"))) return '`';
-    return !str.includes("'") ? "'" : '"';
-  },
-  // ... 其他 utils 方法 ...
-};
+class Part2aiPlugin {
+  constructor() {
+    this.name = 'part2ai'
+  }
 
-// EvalDecode 函数
-function EvalDecode(source) {
-  self._eval = self.eval;
-  self.eval = (_code) => {
-    self.eval = self._eval;
-    return _code;
-  };
-  return self._eval(source);
-}
+  // utils 工具函数
+  utils = {
+    strWrap: (str) => {
+      if (str.includes('\n') || (str.includes('"') && str.includes("'"))) return '`';
+      return !str.includes("'") ? "'" : '"';
+    },
+    // ... 其他 utils 方法
+  }
 
-// 解密函数
-function unpack(code) {
-  let ast = parse(code, { errorRecovery: true })
-  // ... unpack 的实现 ...
-}
+  // EvalDecode 函数
+  EvalDecode(source) {
+    self._eval = self.eval;
+    self.eval = (_code) => {
+      self.eval = self._eval;
+      return _code;
+    };
+    return self._eval(source);
+  }
 
-// 导出插件
-module.exports = {
-  name: 'part2ai',
-  
+  // 解密函数
+  unpack(code) {
+    let ast = parse(code, { errorRecovery: true })
+    // ... unpack 的实现
+  }
+
   // 插件主函数
-  plugin: async function(code, options = {}) {
+  async plugin(code, options = {}) {
     try {
       // 尝试 EvalDecode
-      const evalDecoded = EvalDecode(code)
+      const evalDecoded = this.EvalDecode(code)
       
       // 尝试 unpack
-      const unpackDecoded = unpack(code)
+      const unpackDecoded = this.unpack(code)
       
       let result = evalDecoded || unpackDecoded
 
       if (result) {
-        // 使用 utils 进行进一步处理
         return result
       } 
       
@@ -55,3 +57,5 @@ module.exports = {
     }
   }
 }
+
+module.exports = new Part2aiPlugin()

@@ -6,67 +6,72 @@ const t = require('@babel/types')
 
 module.exports = function(code) {
     try {
-        // 解析混淆的函数参数
-        function parseFunction(code) {
-            const matches = code.match(/eval\(function\(p,a,c,k,e,d\).*?{([\s\S]+?)}\((.*?)\)\)/);
-            if (!matches) return null;
-            
-            const [_, functionBody, args] = matches;
-            let [p, a, c, k, e, d] = eval(`[${args}]`);  // 解析参数
+        function unpackEval(code) {
+            try {
+                // 使用正则提取函数参数
+                let match = code.match(/eval\(function\(p,a,c,k,e,d\)(.*?})\((.*?)\)\)/);
+                if (!match) return null;
 
-            // 还原原始代码
-            e = function(c) {
-                return (c < a ? '' : e(parseInt(c/a))) + ((c = c%a) > 35 ? String.fromCharCode(c + 29) : c.toString(36));
-            };
-
-            if (!''.replace(/^/, String)) {
-                while (c--) {
-                    d[e(c)] = k[c] || e(c);
+                // 提取函数体和参数
+                let [fullMatch, funcBody, params] = match;
+                
+                // 构建新的函数调用
+                let newFuncBody = `(function(p,a,c,k,e,d)${funcBody})(${params})`;
+                
+                // 执行函数
+                try {
+                    let result = eval(newFuncBody);
+                    if (result && typeof result === 'string') {
+                        return result;
+                    }
+                } catch (evalError) {
+                    console.log('Eval执行错误:', evalError);
                 }
-                k = [function(e) {
-                    return d[e];
-                }];
-                e = function() {
-                    return '\\w+';
-                };
-                c = 1;
+                return null;
+            } catch (e) {
+                console.log('解包错误:', e);
+                return null;
             }
-
-            while (c--) {
-                if (k[c]) {
-                    p = p.replace(new RegExp('\\b' + e(c) + '\\b', 'g'), k[c]);
-                }
-            }
-
-            return p;
         }
 
-        function unpackAll(code) {
+        function recursiveUnpack(code) {
             let result = code;
-            let lastResult;
-            
-            // 持续解密直到没有更多的 eval
-            do {
-                lastResult = result;
-                try {
-                    result = parseFunction(result) || result;
-                } catch (e) {
-                    console.log('解密层级出错:', e);
+            let rounds = 0;
+            const MAX_ROUNDS = 10; // 防止无限循环
+
+            while (rounds < MAX_ROUNDS && result.includes('eval(function(p,a,c,k,e,d)')) {
+                let lastResult = result;
+                let unpacked = unpackEval(result);
+                
+                if (!unpacked) {
+                    console.log(`第 ${rounds + 1} 轮解密失败`);
                     break;
                 }
-            } while (result !== lastResult && result.includes('eval(function(p,a,c,k,e,d)'));
+                
+                result = unpacked;
+                if (result === lastResult) {
+                    break;
+                }
+                
+                rounds++;
+                console.log(`完成第 ${rounds} 轮解密`);
+            }
 
             return result;
         }
 
         // 开始解密
-        const decrypted = unpackAll(code);
+        console.log('开始解密...');
+        const decrypted = recursiveUnpack(code);
         
-        if (decrypted !== code) {
+        if (decrypted && decrypted !== code) {
+            console.log('解密成功');
             return decrypted;
+        } else {
+            console.log('未能成功解密');
+            return code;
         }
 
-        return code;
     } catch (error) {
         console.error('part2ai 处理失败:', error);
         return code;

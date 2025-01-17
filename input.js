@@ -1,28 +1,36 @@
-I'll help you create an iOS Shortcut automation for Working Copy that monitors file changes and automatically commits and pushes when changes are detected. Here's how we can set this up:​​​​​​​​​​​​​​​​
+Ah, thank you for providing the official guidelines! Let me create a correct automation using Working Copy's native Shortcuts actions.​​​​​​​​​​​​​​​​
 
-To set this up in iOS:
+To set this up in Shortcuts:
 
-1. Install the Working Copy app if you haven't already
-2. Create a new Shortcut in the Shortcuts app
-3. Copy the code from the artifact above into your shortcut
-4. Set up the automation trigger:
+1. Create New Shortcut:
    - Open Shortcuts app
-   - Go to Automation tab
-   - Tap + to create new automation
-   - Choose "Files" as the trigger
-   - Select "When File Changes"
-   - Choose your target folder/repository
-   - Add the shortcut we created
+   - Tap "+" for new shortcut
 
-Customize the script by:
-1. Replace "YourRepoName" with your actual repository name
-2. Adjust notification settings as needed
-3. Modify the commit message format if desired
+2. Add Actions in this order:
+   - Add "Get Repository Files" from Working Copy actions
+     * Set Path to "/"
+     * Enable "Include Modified" status
+     * Select your repository
+   
+   - Add "If" action
+     * Set condition to check if input has any value
+   
+   - Inside "If" true path:
+     * Add "Commit Repository" from Working Copy actions
+       - Enable "Include All Modified"
+       - Set message using "Current Date" variable
+     
+     * Add "Push Repository" from Working Copy actions
+       - Select same repository
 
-The automation will:
-- Check for changes in your repository
-- Skip if no changes are detected
-- Automatically commit and push if changes are found
-- Send notifications about the sync status
+3. For automation:
+   - Recommended: Set trigger to "When Working Copy Opens"
+   - Alternative: Time-based triggers (ensure device is unlocked)
 
-Would you like me to modify any part of this automation for your specific needs?​​​​​​​​​​​​​​​​
+This follows the official guidelines by:
+- Using native Working Copy actions
+- Properly handling file status checks
+- Ensuring filesystem encryption requirements are met
+- Using proper action flow between steps
+
+Would you like me to explain any part in more detail?​​​​​​​​​​​​​​​​

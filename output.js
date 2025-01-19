@@ -1,4 +1,4 @@
-//Sun Jan 19 2025 09:57:12 GMT+0000 (Coordinated Universal Time)
+//Sun Jan 19 2025 09:59:01 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
 const ddm = JSON.parse($response.body);

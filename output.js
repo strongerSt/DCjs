@@ -1,4 +1,4 @@
-//Mon Jan 20 2025 12:56:25 GMT+0000 (Coordinated Universal Time)
+//Mon Jan 20 2025 12:58:42 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
 const $ = new Env("解密崽操你妈", {

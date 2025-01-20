@@ -1,1817 +1,1615 @@
-//Sun Jan 19 2025 09:59:01 GMT+0000 (Coordinated Universal Time)
+//Mon Jan 20 2025 05:03:19 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
-const ddm = JSON.parse($response.body);
-const ua = $request.headers["User-Agent"] || $request.headers["user-agent"];
-const bundle_id = ddm.receipt.bundle_id || ddm.receipt.Bundle_Id;
-const yearid = `${bundle_id}.year`;
-const yearlyid = `${bundle_id}.yearly`;
-const yearlysubscription = `${bundle_id}.yearlysubscription`;
-const lifetimeid = `${bundle_id}.lifetime`;
-const list = {
-  "%E5%B0%8F%E5%B0%8F%E7%9B%B8%E6%9C%BA%E5%A4%A7%E5%B8%88": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.ai.merge.forever.vip",
-    latest: "ddm1023"
-  },
-  FoodIdentificationTool: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "20002",
-    latest: "ddm1023"
-  },
-  "com.qingcheng.seal.Seal": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.qingcheng.seal.Seal.premium.forever",
-    latest: "ddm1023"
-  },
-  "com.idealityapp.VideoEditing": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "MagicVideo_Vip_Permanent",
-    latest: "ddm1023"
-  },
-  YinzhangMaster: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.xiaoqi.seal.forever",
-    latest: "ddm1023"
-  },
-  "com.cuilingshi.flipclock": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "FlipClockProVersion",
-    latest: "ddm1023"
-  },
-  "com.maine.aifill": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.maine.aifill.unlimited",
-    latest: "ddm1023"
-  },
-  DeviceFinder: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.wonderfind.lifetime",
-    latest: "ddm1023"
-  },
-  Graphionica: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "premium_year",
-    latest: "ddm1023"
-  },
-  AIAssistant: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "AIchat_1w_7.99_trial",
-    latest: "ddm1023"
-  },
-  MonitorPlus: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.unhonin.MonitorPlus.proversion",
-    latest: "ddm1023"
-  },
-  MessageHold: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.messagehold.forever",
-    latest: "ddm1023"
-  },
-  "co.vulcanlabs": {
-    cm: "timea",
-    hx: "hxpda",
-    id: lifetimeid,
-    latest: "ddm1023"
-  },
-  "Guitar%20Gravitas": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "GuitarGravitasChordsScalesArpeggiosLessons",
-    latest: "ddm1023"
-  },
-  "com.eleven.chatgpt": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.chatgpt.yearly",
-    latest: "ddm1023"
-  },
-  "com.casttv.remotetv": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "liftetime2",
-    latest: "ddm1023"
-  },
-  WallpaperWidget: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.widget.theme.yearly.3dayfree",
-    latest: "ddm1023"
-  },
-  ProREC: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "ProAudioCamera_Annual",
-    latest: "ddm1023"
-  },
-  Period: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.hanchongzan.book.vip",
-    latest: "ddm1023"
-  },
-  "TypeOn%20Keyboard": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.hanchongzan.book.vip",
-    latest: "ddm1023"
-  },
-  PhotoCollagePro: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "PHOTABLE_PREMIUM",
-    latest: "ddm1023"
-  },
-  "com.alphamobiletech.bodyApp": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "Bodyapp_Forever",
-    latest: "ddm1023"
-  },
-  "com.alphamobiletech.facey": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "Facey_Forever",
-    latest: "ddm1023"
-  },
-  Packet: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.aaaalab.nepacket.iap.full",
-    latest: "ddm1023"
-  },
-  AllMyBatteries: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "AllMyBatteries_Ultimate",
-    latest: "ddm1023"
-  },
-  VDIT: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "me.imgbase.videoday.profeaturesYearly",
-    latest: "ddm1023"
-  },
-  CodeSnippet: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "it.beatcode.codesnippetpro.annualSubscription",
-    latest: "ddm1023"
-  },
-  darkWeb: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "dforce_unlock_all_functions",
-    latest: "ddm1023"
-  },
-  BookReader: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.reader.1year",
-    latest: "ddm1023"
-  },
-  BeatStation: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "BS_Pro_Yearly",
-    latest: "ddm1023"
-  },
-  FastPlayer: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "VideoPlayer_ProVersion",
-    latest: "ddm1023"
-  },
-  SimpleNotation: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.xinlin.notation.once",
-    latest: "ddm1023"
-  },
-  ChordMaster: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.chordMaster.once",
-    latest: "ddm1023"
-  },
-  Xfuse: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.xfuse.ProVision",
-    latest: "ddm1023"
-  },
-  "com.BertonYc.ScannerOCR": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "Scanner_Subscibe_Permanent",
-    latest: "ddm1023"
-  },
-  HRV: {
-    hx: "hxpdc",
-    id: "com.stress.test.record.yearly",
-    latest: "ddm1023"
-  },
-  iVCam: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "ivcam.full",
-    latest: "ddm1023"
-  },
-  RBrowser: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.mm.RBroswer.product11",
-    latest: "ddm1023"
-  },
-  Filterra: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.filterra.wtonetimepurchase",
-    latest: "ddm1023"
-  },
-  MOLDIV: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.jellybus.Moldiv.IAP.PRO7999",
-    latest: "ddm1023"
-  },
-  PICSPLAY: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.jellybus.PicsPlay2.IAP.PRO5999",
-    latest: "ddm1023"
-  },
-  Rookie: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.jellybus.Rookie.IAP.PRO5999",
-    latest: "ddm1023"
-  },
-  MoneyWiz: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.moneywiz.personalfinance.1year",
-    latest: "ddm1023"
-  },
-  qxzs: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "yongjiu",
-    latest: "ddm1023"
-  },
-  Overdrop: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.weather.overdrop.forever",
-    latest: "ddm1023"
-  },
-  Boom: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.globaldelight.iBoom.LifetimeDiscountPack",
-    latest: "ddm1023"
-  },
-  "PDFReaderPro%20Free": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.pdfreaderpro.free.member.all_access_pack_permanent_license.001",
-    latest: "ddm1023"
-  },
-  VideoHelper: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "vip_service",
-    latest: "ddm1023"
-  },
-  "Digital%20Planner": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.softwings.DigitalPlanner.1year",
-    latest: "ddm1023"
-  },
-  SuperMandarin: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "pth_vip_year",
-    latest: "ddm1023"
-  },
-  SuperQuestion: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "qtzs_vip_year",
-    latest: "ddm1023"
-  },
-  SuperElves: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.SuperElves.Answer.Forever",
-    latest: "ddm1023"
-  },
-  SuperDriving: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "jiakao_vip_forever",
-    latest: "ddm1023"
-  },
-  Pollykann: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "vip.forever.pollykann",
-    latest: "ddm1023"
-  },
-  JCCalendar: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.sjc.calendar.vip.lifelong",
-    latest: "ddm1023"
-  },
-  "com.yanxia.ChsMedical": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "VIPUser",
-    latest: "ddm1023"
-  },
-  SuperPointer: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.SuperPointer.Location.Forever",
-    latest: "ddm1023"
-  },
-  SnakeReader: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.lyran.snakescanner.premium18",
-    latest: "ddm1023"
-  },
-  FourthPPT: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.FourthPPT.Mobile.Forever",
-    latest: "ddm1023"
-  },
-  OneExtractor: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.OneExtractor.Video.Forever",
-    latest: "ddm1023"
-  },
-  "com.Colin.Colors": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.colin.colors.annualVIP",
-    latest: "ddm1023"
-  },
-  PhotosSorter: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "sorter.pro.ipa",
-    latest: "ddm1023"
-  },
-  intolive: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "me.imgbase.intolive.proSubYearly",
-    latest: "ddm1023"
-  },
-  MyAlbum: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.colin.myalbum.isUpgradeVip",
-    latest: "ddm1023"
-  },
-  VideoEditor: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.god.videohand.alwaysowner",
-    latest: "ddm1023"
-  },
-  PhotoMovie: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.mediaeditor.photomovie.year",
-    latest: "ddm1023"
-  },
-  ShotOn: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.colin.shoton.forevervip",
-    latest: "ddm1023"
-  },
-  PhimCiaj: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.jiancent.calligraphymaster.lifetime",
-    latest: "ddm1023"
-  },
-  TimeCut: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.floatcamellia.hfrslowmotion.forevervip",
-    latest: "ddm1023"
-  },
-  "com.floatcamellia.motiok": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.floatcamellia.motiok.vipforever",
-    latest: "ddm1023"
-  },
-  POPOLockScreenWidgetable: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.widget.fightenegery.yearly",
-    latest: "ddm1023"
-  },
-  GreetingScanner: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.alphaplus.greetingscaner.w.b",
-    latest: "ddm1023"
-  },
-  FancyCamPlus: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.alphaplus.fancycam.year.198",
-    latest: "ddm1023"
-  },
-  Again: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.owen.again.profession",
-    latest: "ddm1023"
-  },
-  remotelg: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.gqp.remotelg.lifetime",
-    latest: "ddm1023"
-  },
-  Notebook: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.zoho.notebook.ios.personal.yearly",
-    latest: "ddm1023"
-  },
-  "com.damon.dubbing": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.damon.dubbing.vip12",
-    latest: "ddm1023"
-  },
-  ZHUBEN: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.xiaoyu.yue",
-    latest: "ddm1023"
-  },
-  XIAOTangHomeParadise: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.yuee.mo2",
-    latest: "ddm1023"
-  },
-  film: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "pro_auto_subscribe_year_ovs",
-    latest: "ddm1023"
-  },
-  Muza: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.appmuza.premium_year",
-    latest: "ddm1023"
-  },
-  StandbyWidget: {
-    cm: "timed",
-    hx: "hxpda",
-    id: "com.standby.idream.year.68",
-    ids: "standbyus.nonconsume.missingyou",
-    latest: "ddm1023"
-  },
-  Mango6Minute: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "576170870",
-    latest: "ddm1023"
-  },
-  "Photo%20Cutout": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.icepine.allyear",
-    latest: "ddm1023"
-  },
-  cleanPhone: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.clean.year",
-    latest: "ddm1023"
-  },
-  ppt: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.palmmob.pptios.yearly",
-    latest: "ddm1023"
-  },
-  WasteCat: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "dev.sanjin.WasteCat.PermanentVip",
-    latest: "ddm1023"
-  },
-  MeowTalk: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "meowtalk.month.basic.autorenewable.subscription",
-    latest: "ddm1023"
-  },
-  habitdot: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "habitdots_pro_forever",
-    latest: "ddm1023"
-  },
-  stretchworkout: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.abishkking.premiumYearStretch",
-    latest: "ddm1023"
-  },
-  Planist: {
-    cm: "timed",
-    hx: "hxpda",
-    id: "org.zrey.planist.main",
-    ids: "org.zrey.planist.lifetime",
-    latest: "ddm1023"
-  },
-  "com.uzstudio.avenuecast.ios": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "1001",
-    latest: "ddm1023"
-  },
-  CongZhenBaZi: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "vip_forever_78",
-    latest: "ddm1023"
-  },
-  CongZhenQiMen: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "cn.congzhen.CongZhenQiMen.yearlyplan",
-    latest: "ddm1023"
-  },
-  ProFit: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.maxty.gofitness.yearlyplan",
-    latest: "ddm1023"
-  },
-  FitnessBodybuildingVGFIT: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.vgfit.fitnessvip.yearly",
-    latest: "ddm1023"
-  },
-  "Water%20Reminder": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.vgfit.premiumtracker.year",
-    latest: "ddm1023"
-  },
-  "%E7%91%9C%E4%BC%BD": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.vgfit.yoga.yearly",
-    latest: "ddm1023"
-  },
-  GPSMaker: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "theodolite_vip_year",
-    latest: "ddm1023"
-  },
-  wrongbook: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.palmmob.wrongbookios.yearly",
-    latest: "ddm1023"
-  },
-  excel: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.gamawh.excelerios.yearly",
-    latest: "ddm1023"
-  },
-  "Future%20Baby": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.nilu.faceseer.yearly",
-    latest: "ddm1023"
-  },
-  Smoke: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "smoke19870727",
-    latest: "ddm1023"
-  },
-  "com.wms.hrv": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.wms.hrv.pro",
-    latest: "ddm1023"
-  },
-  AppAlarmIOS: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "alarm.me.vip.year.tier1",
-    latest: "ddm1023"
-  },
-  Tinglee: {
-    cm: "timea",
-    hx: "hxpdb",
-    id: "vip.forever.tinglee",
-    latest: "ddm1023"
-  },
-  NoteKeys: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "notekeys_access_weekly",
-    latest: "ddm1023"
-  },
-  SheetMusicPro: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "sheetmusicpro.yearwithtrial",
-    latest: "ddm1023"
-  },
-  ProtractorEdge: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "ProtracatorEdge.PremiumAccess",
-    latest: "ddm1023"
-  },
-  "Piano%20Plus": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "kn_access_weekly",
-    latest: "ddm1023"
-  },
-  "Notation%20Pad": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "np_access_weekly",
-    latest: "ddm1023"
-  },
-  "Guitar%20Notation": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "gn_access_weekly",
-    latest: "ddm1023"
-  },
-  "Piano%20Fantasy": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.lotuz.PianoFantasy.weekwithtrail",
-    latest: "ddm1023"
-  },
-  "Piano%20Rush": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.lotuz.PianoPro.weekwithtrail",
-    latest: "ddm1023"
-  },
-  "com.richads.saucyart": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.richads.saucyart.sub.quarterly_29.99",
-    latest: "ddm1023"
-  },
-  SurveyorPro: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.celiangyuan.SurveyorPro.OneYear",
-    latest: "ddm1023"
-  },
-  "com.ydatong.dingdone": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.ydatong.dingdone.vip.forever",
-    latest: "ddm1023"
-  },
-  Dial: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "2104",
-    latest: "ddm1023"
-  },
-  "qxwp%20copy": {
-    cm: "timed",
-    hx: "hxpda",
-    id: "com.chowjoe.wp2free.year.pro",
-    ids: "com.chowjoe.wp2free.coin.70",
-    latest: "ddm1023"
-  },
-  LingLongShouZ: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "zhenwushouzhangQuarterlyPlus",
-    latest: "ddm1023"
-  },
-  MediaEditor: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "alwaysowner",
-    latest: "ddm1023"
-  },
-  UniversTranslate: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.univers.translator.tool.year",
-    latest: "ddm1023"
-  },
-  "com.gostraight.smallAccountBook": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "ForeverVIPPayment",
-    latest: "ddm1023"
-  },
-  ZJTBiaoGe: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "zhangjt.biaoge.monthvip",
-    latest: "ddm1023"
-  },
-  MiniMouse: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "minimouse_vip_1year",
-    latest: "ddm1023"
-  },
-  "Paste%20Keyboard": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.keyboard.1yetr",
-    latest: "ddm1023"
-  },
-  EWA: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.ewa.renewable.subscription.year8",
-    latest: "ddm1023"
-  },
-  BuBuSZ: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "quaVersion",
-    latest: "ddm1023"
-  },
-  CapyMood: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.paha.CapyMood.year",
-    latest: "ddm1023"
-  },
-  "xyz.iofree.lifenotes": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "xyz.iofree.lifelog.pro.yearly",
-    latest: "ddm1023"
-  },
-  "com.icandiapps.nightsky": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.icandiapps.ns4.annual",
-    latest: "ddm1023"
-  },
-  Wallpapers: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "wallpaperworld.subscription.yearly.12.notrial",
-    latest: "ddm1023"
-  },
-  "com.yumiteam.Kuki.ID": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.yumiteam.Kuki.ID.2",
-    latest: "ddm1023"
-  },
-  "com.quangtm193.picpro": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.quangtm193.picpro1year",
-    latest: "ddm1023"
-  },
-  Storybeat: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "yearly_1",
-    latest: "ddm1023"
-  },
-  "com.smartgymapp.smartgym": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.smartgymapp.smartgym.premiumpersonaltraineryearly",
-    latest: "ddm1023"
-  },
-  Ptime: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.subscribe.pro.year",
-    latest: "ddm1023"
-  },
-  Prookie: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "prookie.month.withtrial.0615",
-    latest: "ddm1023"
-  },
-  BodyTune: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "Bodypro1",
-    latest: "ddm1023"
-  },
-  Caculator: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "calc_Unlock_1",
-    latest: "ddm1023"
-  },
-  "killer.sudoku.free.brain.puzzle": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "ks.i.iap.premium",
-    latest: "ddm1023"
-  },
-  "sudoku.puzzle.free.game.brain": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "sudoku.i.sub.vvip.p1y",
-    latest: "ddm1023"
-  },
-  "One%20Markdown": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "10012",
-    latest: "ddm1023"
-  },
-  "MWeb%20iOS": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "10001",
-    latest: "ddm1023"
-  },
-  NYMF: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.nymf.app.premium_year",
-    latest: "ddm1023"
-  },
-  "com.lockwidt.cn": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.lockwidt.cn.member",
-    latest: "ddm1023"
-  },
-  Utsuki: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "KameePro",
-    latest: "ddm1023"
-  },
-  Processing: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "wtf.riedel.processing.lifetime",
-    latest: "ddm1023"
-  },
-  "one%20sec": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "wtf.riedel.one_sec.pro.annual.individual",
-    latest: "ddm1023"
-  },
-  "com.skysoft.pencilsketch": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.skysoft.pencilsketch.subscription.yearly",
-    latest: "ddm1023"
-  },
-  "com.instagridpost.rsigp": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.GridPost.oneyearplus",
-    latest: "ddm1023"
-  },
-  "com.skysoft.picsqueen": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.skysoft.picsqueen.subscription.yearly",
-    latest: "ddm1023"
-  },
-  "com.skysoft.removalfree": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.skysoft.removalfree.discount.unlimitedaccess",
-    latest: "ddm1023"
-  },
-  "com.skysoft.facecartoon": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.skysoft.facecartoon.subscription.yearly",
-    latest: "ddm1023"
-  },
-  "Jennie%20AI": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.skysoft.text2img.vip.yearly",
-    latest: "ddm1023"
-  },
-  MGhostLens: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.ghostlens.premium1month",
-    latest: "ddm1023"
-  },
-  Luminous: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.spacemushrooms.weekly",
-    latest: "ddm1023"
-  },
-  RitmoVideo: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.zhk.hidebox.yearly",
-    latest: "ddm1023"
-  },
-  PerfectImage: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "Perfect_Image_VIP_Yearly",
-    latest: "ddm1023"
-  },
-  moment: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "PYJMoment2",
-    latest: "ddm1023"
-  },
-  "Planner%20Plus": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.btgs.plannerfree.yearly",
-    latest: "ddm1023"
-  },
-  HiddenBox: {
-    cm: "timec",
-    hx: "hxpdb",
-    version: "1"
-  },
-  Synthesizer: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.qingxiu.synthesizer.mon",
-    latest: "ddm1023"
-  },
-  ContractMaster: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.qingxiu.contracts.monthly",
-    latest: "ddm1023"
-  },
-  MyDiary: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "diary.yearly.vip.1029",
-    latest: "ddm1023"
-  },
-  Translator: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "trans_sub_week",
-    latest: "ddm1023"
-  },
-  ToDoList: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "todolist.subscription.yearly",
-    latest: "ddm1023"
-  },
-  Idea: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "top.ideaapp.ideaiOS.membership.oneyear",
-    latest: "ddm1023"
-  },
-  ZeroTuImg: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "ZeroTuImgPlus",
-    latest: "ddm1023"
-  },
-  "com.traveltao.ExchangeAssistant": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "lxbyplus",
-    latest: "ddm1023"
-  },
-  ServerKit: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.serverkit.subscription.year.a",
-    latest: "ddm1023"
-  },
-  RawPlus: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.dynamicappdesign.rawplus.yearlysubscription",
-    latest: "ddm1023"
-  },
-  OrderGenerator: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "oder_pay_forever",
-    latest: "ddm1023"
-  },
-  GenerateAllOrdersTool: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "Order_Vip_010",
-    latest: "ddm1023"
-  },
-  MoMoShouZhang: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "shunchangshouzhangQuarterlyPlus",
-    latest: "ddm1023"
-  },
-  Mindkit: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "mindkit_permanently",
-    latest: "ddm1023"
-  },
-  DailySpending: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.xxtstudio.dailyspending.year",
-    latest: "ddm1023"
-  },
-  Miary: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "lifetime_sub",
-    latest: "ddm1023"
-  },
-  Noted: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.digitalworkroom.noted.plus.lifetime",
-    latest: "ddm1023"
-  },
-  BingQiTools: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "bingqi_e2",
-    latest: "ddm1023"
-  },
-  AnyDown: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.xiaoqi.down.forever",
-    latest: "ddm1023"
-  },
-  Reader: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.xiaoqi.reader.forever",
-    latest: "ddm1023"
-  },
-  "com.bestmusicvideo.formmaster": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.form.1yearvip",
-    latest: "ddm1023"
-  },
-  ExcelSpreadSheetsWPS: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.turbocms.SimpleSpreadSheet.viponeyear",
-    latest: "ddm1023"
-  },
-  XinQingRiJi: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "zhiwenshouzhangQuarterlyPlus",
-    latest: "ddm1023"
-  },
-  Nutrilio: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "net.nutrilio.one_year_plus",
-    latest: "ddm1023"
-  },
-  "Pixiu%E8%AE%B0%E8%B4%A6": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.RuoG.Pixiu.VIPYear",
-    latest: "ddm1023"
-  },
-  AIHeader: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.ai.avatar.maker.month.3dayfree",
-    latest: "ddm1023"
-  },
-  MoodTracker: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "co.vulcanlabs.moodtracker.lifetime2",
-    latest: "ddm1023"
-  },
-  "com.dandelion.Routine": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "membership",
-    latest: "ddm1023"
-  },
-  YSBrowser: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.ys.pro",
-    latest: "ddm1023"
-  },
-  "org.zrey.metion": {
-    cm: "timed",
-    hx: "hxpda",
-    id: "org.zrey.metion.pro",
-    ids: "org.zrey.metion.main",
-    latest: "ddm1023"
-  },
-  ZenJournal: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "zen_pro",
-    latest: "ddm1023"
-  },
-  "%E5%80%92%E6%94%BE%E6%8C%91%E6%88%98": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.abighead.ReverseChallenge.iap.pro.year",
-    latest: "ddm1023"
-  },
-  "com.visualmidi.app.perfectpiano.Perfect-Piano": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "auto_renew_monthly_subscription",
-    latest: "ddm1023"
-  },
-  Straw: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.1year.eyedropper",
-    latest: "ddm1023"
-  },
-  vibee: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.vibee.year.bigchampagne",
-    latest: "ddm1023"
-  },
-  Lister: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.productlab.lister.yearly",
-    latest: "ddm1023"
-  },
-  DrumPads: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.gismart.drumpads.pro_lifetime_30",
-    latest: "ddm1023"
-  },
-  "com.photoslab.ai.writerassistant": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.photoslab.ai.writerassistant.year",
-    latest: "ddm1023"
-  },
-  WaterMaskCamera: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.camera.watermark.yearly.3dayfree",
-    latest: "ddm1023"
-  },
-  ColorPaint: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "coloring.app.singingfish.year",
-    latest: "ddm1023"
-  },
-  SymbolKeyboard: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "fronts.keyboard.singingfish.one",
-    latest: "ddm1023"
-  },
-  "com.SingingFish.SudokuGame": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.singingfish.sudokugame.year",
-    latest: "ddm1023"
-  },
-  "com.kuaijiezhilingdashi.appname": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.othermaster.yearlyvip",
-    latest: "ddm1023"
-  },
-  LogInput: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.logcg.loginput",
-    latest: "ddm1023"
-  },
-  SoundLab: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "8800",
-    latest: "ddm1023"
-  },
-  HandNote: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "permanent_membership",
-    latest: "ddm1023"
-  },
-  Kilonotes: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "kipa_kilonotes_quarter_subscription",
-    latest: "ddm1023"
-  },
-  YiJianKouTu: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "XiChaoYiJianKouTuPlus",
-    latest: "ddm1023"
-  },
-  FileArtifact: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.shengzhou.fileartifact.permanent",
-    latest: "ddm1023"
-  },
-  Wext: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.lmf.wext.life",
-    latest: "ddm1023"
-  },
-  ColorCapture: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "10001",
-    latest: "ddm1023"
-  },
-  xTerminal: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "xterminal.pro2",
-    latest: "ddm1023"
-  },
-  Fotoz: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.kiddy.fotoz.ipa.pro",
-    latest: "ddm1023"
-  },
-  TheLastFilm: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "Filmroll_Pro_1Year",
-    latest: "ddm1023"
-  },
-  Motivation: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.monkeytaps.motivation.premium.year3",
-    latest: "ddm1023"
-  },
-  "io.sumi.GridDiary2": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "io.sumi.GridDiary.pro.annually",
-    latest: "ddm1023"
-  },
-  Subscriptions: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.touchbits.subscriptions.iap.pro.yearly",
-    latest: "ddm1023"
-  },
-  "com.leapfitness.fasting": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.leapfitness.fasting.oneyear1",
-    latest: "ddm1023"
-  },
-  WidgetBox: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "widgetlab001",
-    latest: "ddm1023"
-  },
-  LifeTracker: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.dk.lifetracker.yearplan",
-    latest: "ddm1023"
-  },
-  imgplay: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "me.imgbase.imgplay.subscriptionYearly",
-    latest: "ddm1023"
-  },
-  WaterMinder: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "waterminder.premiumYearly",
-    latest: "ddm1023"
-  },
-  HashPhotos: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.kobaltlab.HashPhotos.iap.allinone.free",
-    latest: "ddm1023"
-  },
-  FileBrowser: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.qingcheng.filex.pro.yearly",
-    latest: "ddm1023"
-  },
-  SilProject: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.sm.Alina.Pro",
-    latest: "ddm1023"
-  },
-  "com.chenxi.shanniankapian": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.chenxi.shannian.superNian",
-    latest: "ddm1023"
-  },
-  "com.risingcabbage.pro.camera": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.risingcabbage.pro.camera.yearlysubscription",
-    latest: "ddm1023"
-  },
-  "co.bazaart.patternator": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "Patternator_Lock_Screen_Monthly",
-    latest: "ddm1023"
-  },
-  "%E5%BD%95%E9%9F%B3%E4%B8%93%E4%B8%9A%E7%89%88": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.winat.recording.pro.yearly",
-    latest: "ddm1023"
-  },
-  "cn.linfei.SimpleRecorder": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "cn.linfei.SimpleRecorder.Plus",
-    latest: "ddm1023"
-  },
-  "com.maliquankai.appdesign": {
-    cm: "timec",
-    hx: "hxpdb",
-    version: "1.5.8"
-  },
-  PictureScanner: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "om.picturescanner.tool.year",
-    latest: "ddm1023"
-  },
-  BestColor: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.bestColor.tool.month",
-    latest: "ddm1023"
-  },
-  "com.decibel.tool": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "decibel98free3",
-    latest: "ddm1023"
-  },
-  MeasurementTools: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "mesurementyearvip",
-    latest: "ddm1023"
-  },
-  TinyPNGTool: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.tinypngtool.tool.weekvip",
-    latest: "ddm1023"
-  },
-  IconChange: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "iconeryearvip",
-    latest: "ddm1023"
-  },
-  "life.journal.diary": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "life.journal.diary.lifetime",
-    latest: "ddm1023"
-  },
-  "com.floatcamellia.motionninja": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.floatcamellia.motionninja.yearlyvip",
-    latest: "ddm1023"
-  },
-  "com.iuuapp.audiomaker": {
-    cm: "timed",
-    hx: "hxpda",
-    id: "com.iuuapp.audiomaker.cloud.year",
-    ids: "com.iuuapp.audiomaker.removeads",
-    latest: "ddm1023"
-  },
-  "com.biggerlens.photoretouch": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.photoretouch.SVIP",
-    latest: "ddm1023"
-  },
-  "com.macpaw.iosgemini": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.macpaw.iosgemini.month.trial",
-    latest: "ddm1023"
-  },
-  "com.mematom.ios": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "MMYear",
-    latest: "ddm1023"
-  },
-  "com.LuoWei.aDiary": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.LuoWei.aDiary.yearly0",
-    latest: "ddm1023"
-  },
-  "com.zerone.hidesktop": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.zerone.hidesktop.forever",
-    latest: "ddm1023"
-  },
-  MagicWidget: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "cf__forever_0_4.7.1",
-    latest: "ddm1023"
-  },
-  "com.tasmanic.capture": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "CTPCAPTUREYEARLY",
-    latest: "ddm1023"
-  },
-  "com.readdle.CalendarsLite": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.readdle.CalendarsLite.subscription.year20trial7",
-    latest: "ddm1023"
-  },
-  "com.readdle.ReaddleDocsIPad": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.readdle.ReaddleDocsIPad.subscription.month10_allusers",
-    latest: "ddm1023"
-  },
-  "com.1ps.lovetalk": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.1ps.lovetalk.normal.weekly",
-    latest: "ddm1023"
+let obj = {};
+let ddm = JSON.parse(typeof $response != "undefined" && $response.body || "{}");
+const headers = $request.headers;
+const ua = headers["User-Agent"] || headers["user-agent"];
+const bundle_id = headers["X-Client-Bundle-ID"] || headers["x-client-bundle-id"];
+const forbiddenApps = ["Rond", "Fileball", "APTV"];
+if (forbiddenApps.some(app => ua && ua.includes(app) || $request.body && $request.body.includes(app))) {
+  console.log("⛔️检测到禁止 MITM 的 APP，脚本停止运行！");
+  $done({});
+}
+const bundle = {
+  "com.ausoco.umai": {
+    name: "umai_pro",
+    id: "umai_pro_yearly",
+    cm: "sja"
+  },
+  "camp.user.penbook": {
+    name: "pro",
+    id: "penbook.lifetime01",
+    cm: "sjb"
+  },
+  "design.yugen.Flow": {
+    name: "pro",
+    id: "design.yugen.Flow.Lifetime",
+    cm: "sja"
+  },
+  "com.runbuddy.prod": {
+    name: "premium",
+    id: "rb_9999_1y_1y7999",
+    cm: "sja"
+  },
+  TeleprompterX: {
+    name: "Pro Upgrade",
+    id: "TPXOTP",
+    cm: "sjb"
+  },
+  "com.exoplanet.chatme": {
+    name: "premium",
+    id: "chatme_premium_year_trial",
+    cm: "sja"
+  },
+  "com.reku.Counter": {
+    name: "plus",
+    id: "com.reku.counter.plus.lifetime",
+    cm: "sjb"
+  },
+  "moonbox.co.il.grow": {
+    name: "pro",
+    id: "moonbox.co.il.grow.lifetime.offer",
+    cm: "sjb"
   },
   "tech.miidii.MDClock": {
-    cm: "timeb",
-    hx: "hxpda",
+    name: "Entitlement.Pro",
     id: "tech.miidii.MDClock.pro",
-    latest: "ddm1023"
+    cm: "sjb"
   },
-  "com.floatcamellia.prettyup": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.floatcamellia.prettyup.onetimepurchase",
-    latest: "ddm1023"
+  "com.voicedream.Voic": {
+    name: "standard",
+    id: "vd_annual_79_3daytrial",
+    cm: "sja"
   },
-  "com.zijayrate.analogcam": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.zijayrate.analogcam.vipforever10",
-    latest: "ddm1023"
+  "com.laser-focused.focus-ios": {
+    name: "subscribed",
+    id: "iap.io.masterbuilders.focus.pro_one_year",
+    cm: "sja"
   },
-  WeeklyNote: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "org.zrey.weeklynote.lifetime",
-    latest: "ddm1023"
+  "com.roehl": {
+    name: "Pro",
+    id: "habitkit_3499_lt",
+    cm: "sjb"
   },
-  DoMemo: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "org.zrey.fastnote.lifetime",
-    latest: "ddm1023"
+  "net.tengl.powertimer": {
+    name: "plus",
+    id: "powertimer.plus",
+    cm: "sjb"
   },
-  CostMemo: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "org.zrey.money.lifetime",
-    latest: "ddm1023"
+  "com.reader.book": {
+    name: "pro",
+    id: "reader.lifetimeFamily.pro",
+    cm: "sja"
   },
-  iTimely: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "org.zrey.iTimely.lifetime",
-    latest: "ddm1023"
+  "app.imone.OneWidget": {
+    name: "pro",
+    id: "app.imone.OneWidget.Lifetime",
+    cm: "sjb"
   },
-  "net.daylio.Daylio": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "net.daylio.one_year_pro.offer_initial",
-    latest: "ddm1023"
+  "io.innerpeace.yiye": {
+    name: "Premium",
+    id: "io.innerpeace.yiye.lifetime.forYearly",
+    cm: "sja"
   },
-  "com.yengshine.webrecorder": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.yengshine.webrecorder.yearly",
-    latest: "ddm1023"
+  "com.skysoft.removalfree": {
+    name: "Pro",
+    id: "com.skysoft.removalfree.subscription.newyearly",
+    cm: "sja"
+  }
+};
+const listua = {
+  Accountit: {
+    name: "spenditPlus",
+    id: "DesignTech.SIA.Spendit.Plus.Lifetime",
+    cm: "sjb"
   },
-  "org.skydomain.foodcamera": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "org.skydomain.foodcamera.yearly",
-    latest: "ddm1023"
+  "Phtoto%20Swiper": {
+    name: "pro",
+    id: "rc_499_life",
+    cm: "sjb"
   },
-  "com.yengshine.proccd": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.yengshine.proccd.yearly",
-    latest: "ddm1023"
+  ShellBean: {
+    name: "pro",
+    id: "com.ningle.shellbean.iap.forever",
+    cm: "sjb"
   },
-  "com.palmmob.pdfios": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.palmmob.pdfios.168",
-    latest: "ddm1023"
+  Wishy: {
+    name: "Wishy Subscription",
+    id: "wishy_lifetime_subscription",
+    cm: "sjc"
   },
-  "com.palmmob.scanner2ios": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.palmmob.scanner2ios.396",
-    latest: "ddm1023"
+  Fontsify: {
+    name: "pro",
+    id: "media.upstate.fontify.lifetime",
+    cm: "sjb"
   },
-  "com.palmmob.officeios": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.palmmob.officeios.188",
-    latest: "ddm1023"
+  "com.dison.diary": {
+    name: "vip",
+    id: "lifetime",
+    cm: "sjb"
   },
-  "com.palmmob.recorder": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.palmmob.recorder.198",
-    latest: "ddm1023"
+  "Food-Diary": {
+    name: "Premium",
+    id: "fd_lifetime",
+    cm: "sjb"
   },
-  "com.7color.newclean": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.cleaner.salesyear",
-    latest: "ddm1023"
+  "Meal%20Planner": {
+    name: "premium",
+    id: "mp_1999_lifetime",
+    cm: "sjc"
   },
-  Habbit: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "HabitUpYearly",
-    latest: "ddm1023"
+  "Medication%20List": {
+    name: "Premium",
+    id: "ml_lifetime",
+    cm: "sjc"
   },
-  "com.dbmeterpro.dB-Meter-Free": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.dbmeterpro.premiumModeSubscriptionWithTrial",
-    latest: "ddm1023"
+  "Shared%20Family%20Shopping%20List": {
+    name: "premium",
+    id: "ls_1299_lifetime",
+    cm: "sjc"
   },
-  "com.vstudio.newpuzzle": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.vstudio.newpuzzle.yearlyVipFreetrail.15_99",
-    latest: "ddm1023"
+  "Pantry%20Check": {
+    name: "Premium",
+    id: "pc_lifetime",
+    cm: "sjc"
   },
-  "com.jianili.Booka": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.jianili.Booka.pro.yearly",
-    latest: "ddm1023"
+  becoming: {
+    name: "Strength Pro",
+    id: "strength_membership_lifetime",
+    cm: "sjb"
   },
-  "com.ziheng.OneBox": {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.ziheng.OneBox",
-    latest: "ddm1023"
+  SCRL: {
+    name: "com.dopedevelopment.Panels.subscription.Pro_Dynamic_Pricing",
+    id: "strength_membership_lifetime",
+    cm: "sja"
   },
-  ChickAlarmClock: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.ChickFocus.ChickFocus.yearly_2023_promo",
-    latest: "ddm1023"
+  Morphose: {
+    name: "ProStandard",
+    id: "com.pixery.morphose.yearly",
+    cm: "sja"
   },
-  MyWorks: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.MyWorks.Handwritten.Year",
-    latest: "ddm1023"
+  ClevCalc: {
+    name: "Premium",
+    id: "com.dencreak.dlcalculator.iap.dlc_no_ads_permanent",
+    cm: "sjb"
   },
-  "Instant%20Saver": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.pocket.compress.yearly",
-    latest: "ddm1023"
+  Unfold: {
+    name: "REDUCED_PRO_YEARLY",
+    id: "UNFOLD_PRO_YEARLY",
+    cm: "sja"
   },
-  SaveTik: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.pocket.compress.yearly",
-    latest: "ddm1023"
+  "Tracepad-iOS": {
+    name: "unlock",
+    id: "tracepad_unlock_all_gesture_5",
+    cm: "sjb"
   },
-  "%E6%96%87%E4%BB%B6%E7%AE%A1%E7%90%86%E5%99%A8": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.mobislet.files.yearly",
-    latest: "ddm1023"
+  photography: {
+    name: "premium",
+    id: "photography_sub_yearly_1",
+    cm: "sja"
   },
-  "ZIP%E5%8E%8B%E7%BC%A9%E8%A7%A3%E5%8E%8B%E7%BC%A9%E5%B7%A5%E5%85%B7": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.mobislet.zipfile.yearly",
-    latest: "ddm1023"
+  Binsoo: {
+    name: "vibe",
+    id: "annual",
+    cm: "sja"
   },
-  TPTeleprompter: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.pocket.compress.yearly",
-    latest: "ddm1023"
+  "%E8%90%8C%E5%AE%A2AI%E7%BB%98%E7%94%BB": {
+    name: "AISticker_VIP",
+    id: "LifetimeSubscription_Sticker",
+    cm: "sjb"
   },
-  "com.pocket.photo": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.pocket.photo.yearly",
-    latest: "ddm1023"
+  "Storage%20Cleaner": {
+    name: "Premium",
+    id: "storagecleaner_standalone_lifetime_free",
+    cm: "sjb"
   },
-  "com.pocket.watermark": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.pocket.watermark.yearly",
-    latest: "ddm1023"
+  "Language%20Learning": {
+    name: "premium",
+    id: "language_sub_lifetime",
+    cm: "sjb"
   },
-  "com.pocket.compress": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.pocket.compress.yearly",
-    latest: "ddm1023"
+  OneTap: {
+    name: "pro",
+    id: "DiscountedProLifetime",
+    cm: "sjb"
   },
-  "com.pocket.format": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.pocket.format.yearly",
-    latest: "ddm1023"
+  ChatPub: {
+    name: "Unlimited Access",
+    id: "conversationai.annual",
+    cm: "sja"
   },
-  "com.CalculatorForiPad.InternetRocks": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "co.airapps.calculator.year",
-    latest: "ddm1023"
+  Jellycuts: {
+    name: "pro",
+    id: "premium",
+    cm: "sja"
   },
-  "solutions.wzp": {
-    cm: "timea",
-    hx: "hxpda",
-    id: yearlysubscription,
-    latest: "ddm1023"
+  quitnow: {
+    name: "pro_features",
+    id: "com.eaginsoftware.QuitNow.unlock_all_pro_features",
+    cm: "sjb"
   },
-  "co.airapps": {
-    cm: "timea",
-    hx: "hxpda",
-    id: yearid,
-    latest: "ddm1023"
+  "Ricoh%20Recipes": {
+    name: "Patron",
+    id: "Ricoh_Patron",
+    cm: "sja"
   },
-  "com.internet-rocks": {
-    cm: "timea",
-    hx: "hxpda",
-    id: yearid,
-    latest: "ddm1023"
+  PixImagine: {
+    id: "com.efsoft.piximagine_nc_lifetime",
+    cm: "sjc"
   },
-  SuperWidget: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.focoslive",
-    latest: "ddm1023"
+  PicLoom: {
+    id: "com.efsoft.picloom_nc_lifetime",
+    cm: "sjc"
   },
-  Picsew: {
-    cm: "timeb",
-    hx: "hxpdb",
-    id: "com.sugarmo.ScrollClip.pro"
+  "Translate%20-%20Talk%20Translator": {
+    name: "Premium",
+    id: "premiumAnnually",
+    cm: "sja"
   },
-  vpn: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "yearautorenew",
-    latest: "ddm1023"
+  Authenticator: {
+    name: "premium",
+    id: "2fa_standalone_lifetime",
+    cm: "sja"
   },
-  TT: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.55panda.hicalculator.year_sub",
-    latest: "ddm1023"
+  ChatBot: {
+    name: "chatbot_annual",
+    id: "chatbot_annual",
+    cm: "sja"
   },
-  Focos: {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.focos.1w_t4_1w",
-    latest: "ddm1023"
+  Mockview: {
+    name: "Pro",
+    id: "kavsoft.dev.yearly",
+    cm: "sja"
   },
-  ProKnockOut: {
-    cm: "timeb",
-    hx: "hxpda",
-    id: "com.knockout.SVIP.50off",
-    latest: "ddm1023"
+  ChatLLM: {
+    name: "Pro",
+    id: "com.curiouscreatorsco.ChatLLM.pro.lifetime.notrial.150_00",
+    cm: "sjb"
   },
-  "com.teadoku.flashnote": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "pro_ios_ipad_mac",
-    latest: "ddm1023"
+  Binsoo: {
+    name: "vibe",
+    id: "annual",
+    cm: "sja"
   },
-  "com.tapuniverse.texteditor": {
-    cm: "timea",
-    hx: "hxpda",
-    id: "com.tapuniverse.texteditor.w",
-    latest: "ddm1023"
+  Photoooo: {
+    name: "lifetime",
+    id: "canoe_28_rnb_forever",
+    cm: "sjb"
+  },
+  VibeCamera: {
+    name: "forever",
+    id: "vibe_pro_forever",
+    cm: "sjb"
+  },
+  "No%20Fusion": {
+    name: "LivePhoto",
+    id: "com.grey.nofusion.livephoto",
+    cm: "sjb"
+  },
+  Themy: {
+    name: "fonts_premium",
+    id: "lifetime",
+    cm: "sjb"
+  },
+  BabyCare: {
+    name: "pro",
+    id: "KiddoKeeper_38_LifeTime",
+    cm: "sjb"
+  },
+  ElonAI: {
+    name: "premium",
+    id: "elongpt.yearly_1",
+    cm: "sja"
+  },
+  "Dumb%20Phone": {
+    name: "Pro",
+    id: "dp.lifetime_19.99",
+    cm: "sjb"
+  },
+  maple_mobile: {
+    name: "premium",
+    id: "mc_3000_12m",
+    cm: "sja"
+  },
+  FujiLifeStyle: {
+    name: "FUJIStyle Pro(Year)",
+    id: "FujiStyle2024003",
+    cm: "sja"
+  },
+  Gentler: {
+    name: "premium",
+    id: "app.gentler.activity.nonconsumable.onetime1",
+    cm: "sjb"
+  },
+  TuneTally: {
+    name: "Pro",
+    id: "tunetally_pro",
+    cm: "sjb"
+  },
+  Readle: {
+    name: "Premium",
+    id: "com.hello.german.yearly",
+    cm: "sja"
+  },
+  Utiful: {
+    name: "All Access",
+    id: "All_Access_YR_12M_Free",
+    cm: "sja"
+  },
+  CharingCrossRoad: {
+    name: "ready_pro",
+    id: "ready_pro_50_1y",
+    cm: "sja"
+  },
+  "ig-bookmarker": {
+    name: "entitlement",
+    id: "lifetimeID",
+    cm: "sjb"
+  },
+  PhotoMapper: {
+    name: "premium",
+    id: "photomapper_lifetime_1.99",
+    cm: "sjb"
+  },
+  CallAnnie: {
+    name: "ai.animato.callannie.entitlement.pro0",
+    id: "ai.animato.callannie.proyearly1",
+    cm: "sja"
+  },
+  Liftbear: {
+    name: "Pro",
+    id: "liftbear_2399_1y",
+    cm: "sja"
+  },
+  OneMockup: {
+    name: "pro",
+    id: "online.ohwe.onescreen.Lifetime",
+    cm: "sja"
+  },
+  DataCalc: {
+    name: "datacalc.pro",
+    id: "datacalc.yearly.12",
+    cm: "sja"
+  },
+  "moss-ios": {
+    name: "prouser",
+    id: "dpbox_yearly_68",
+    cm: "sja"
+  },
+  Law: {
+    name: "vip",
+    id: "LawVIPOneYear",
+    cm: "sja"
+  },
+  SleepSounds: {
+    name: "vip",
+    id: "VIPOneMonth",
+    cm: "sja"
+  },
+  multitimer_app: {
+    name: "premium",
+    id: "timus_lt_base",
+    cm: "sjb"
+  },
+  pdfai_app: {
+    name: "premium",
+    id: "special_lifetime",
+    cm: "sjb"
+  },
+  "Linearity%20Curve": {
+    name: "pro",
+    id: "linearity_curve_pro_yearly_free_trial",
+    cm: "sja"
+  },
+  TQBrowser: {
+    name: "pro_lt",
+    id: "com.tk.client.lifetime",
+    cm: "sjb"
+  },
+  "AI%C2%A0Chat": {
+    name: "AI Plus",
+    id: "ai_plus_gpt_yearly",
+    cm: "sja"
+  },
+  Yosum: {
+    name: "Premium",
+    id: "yosum_999_1year",
+    cm: "sja"
+  },
+  "%E8%B5%84%E6%BA%90%E6%90%AC%E8%BF%90%E5%A4%A7%E5%B8%88": {
+    name: "SaveTikYoutu_common",
+    id: "LifetimeSubscription",
+    cm: "sjb"
+  },
+  DHWaterMarkManager: {
+    name: "WaterManager_common",
+    id: "lifetimeVIP_001",
+    cm: "sjb"
+  },
+  iplayTV: {
+    name: "com.ll.btplayer.12",
+    id: "com.ll.btplayer.12",
+    cm: "sjb"
+  },
+  MaxWallpaper: {
+    name: "maxwallpaper_common",
+    id: "super_forever_vip",
+    cm: "sjb"
+  },
+  intervalFlow: {
+    name: "All Access",
+    id: "wodtimer_lf",
+    cm: "sjb"
+  },
+  BORD: {
+    name: "pro_membership",
+    id: "bord_plus_2499_lifetime",
+    cm: "sjb"
+  },
+  FRMD: {
+    name: "all_access",
+    id: "frmd_plus_999_lifetime",
+    cm: "sjb"
+  },
+  HRZN: {
+    name: "pro",
+    id: "plus_999_lifetime",
+    cm: "sjb"
+  },
+  Assembly: {
+    name: "premium_access",
+    id: "com.pixite.assembly.1yearlyq",
+    cm: "sja"
+  },
+  Flourish: {
+    name: "Pro",
+    id: "flourish_9800_1yr_1m0",
+    cm: "sja"
+  },
+  metaslip: {
+    name: "Pro",
+    id: "ms_lifetime",
+    cm: "sjb"
+  },
+  Pins: {
+    name: "customer",
+    id: "do.anh.Pins.Unlock.Standard",
+    cm: "sja"
+  },
+  Loora: {
+    name: "Yearly",
+    id: "yearly_free_ref_10usd_off",
+    cm: "sja"
+  },
+  PwDrawingPad: {
+    name: "pro",
+    id: "com.s132.app.supaintexchange.year",
+    cm: "sja"
+  },
+  OneGrow: {
+    name: "pro",
+    id: "com.onenicetech.OneGrow.Lifetime",
+    cm: "sjb"
+  },
+  "%E6%97%B6%E9%97%B4%E8%AE%B0%E5%BD%95": {
+    name: "pro",
+    id: "com.bapaws.Hours.lifetime",
+    cm: "sjb"
+  },
+  PianoTrainer: {
+    name: "pro_subscription",
+    id: "pianotrainer.sub.yearly.pro",
+    cm: "sja"
+  },
+  FretTrainer: {
+    name: "pro_subscription",
+    id: "frettrainer.sub.yearly.pro",
+    cm: "sja"
+  },
+  Currency: {
+    name: "plus",
+    id: "com.jeffreygrossman.currencyapp.iap.plus",
+    cm: "sja"
+  },
+  TripMemo: {
+    name: "pro",
+    id: "com.ningle.dailytracker.lifetime",
+    cm: "sjb"
+  },
+  ShellBean: {
+    name: "pro",
+    id: "com.ningle.shellbean.iap.forever",
+    cm: "sjb"
+  },
+  nPtt: {
+    name: "vip.yearly",
+    id: "app.nextptt.vip1.yearly",
+    cm: "sja"
+  },
+  MagicTiles3: {
+    name: "VIP",
+    id: "com.pianoidols.vipsub.year.06",
+    cm: "sja"
+  },
+  Airmail: {
+    name: "Airmail Premium",
+    id: "Airmail_iOS_Yearly_P",
+    cm: "sja"
+  },
+  ScreenRecordCase: {
+    name: "Premium",
+    id: "me.fandong.ScreenRecordCase.Ultra",
+    cm: "sjb"
+  },
+  opusvpn: {
+    name: "pro",
+    id: "yearly_discount",
+    cm: "sja"
+  },
+  ip_tv_react_native: {
+    name: "Single",
+    id: "opus.lifetime",
+    cm: "sjb"
+  },
+  Atomic: {
+    name: "pro",
+    id: "ht_lifetime1",
+    cm: "sjb"
+  },
+  QingLong: {
+    name: "Premium",
+    id: "qinglong_premium",
+    cm: "sjb"
+  },
+  "timetrack.io": {
+    name: "atimelogger-premium-plus",
+    id: "ttio_premium_plus",
+    cm: "sjb"
+  },
+  "Video%20Teleprompter": {
+    name: "videoPremium",
+    id: "com.joeallenpro.videoteleprompter.upgrade.yearly_a",
+    cm: "sja"
+  },
+  FoJiCam: {
+    name: "ProVersionLifeTime",
+    id: "com.uzero.cn.fojicam.life2",
+    cm: "sjb"
+  },
+  FruitMinder: {
+    name: "Premium",
+    id: "com.bartozo.FruitMinder.lifetime",
+    cm: "sjb"
+  },
+  PDF_convertor: {
+    name: "VIP",
+    id: "com.pdf.convertor.forever",
+    cm: "sjb"
+  },
+  rewritingText: {
+    name: "AIGrammercheckerProAccess",
+    id: "sv.aigrammerchecker.com.lifetime",
+    cm: "sjb"
+  },
+  ShellBoxKit: {
+    name: "ssh_pro",
+    id: "ShellBoxKit.Year",
+    cm: "sja"
+  },
+  IDM: {
+    name: "premium",
+    id: "sub_yearly_idm",
+    cm: "sja"
+  },
+  Whisper: {
+    name: "all_features",
+    id: "whisperai_80_y",
+    cm: "sja"
+  },
+  Shapy: {
+    name: "premium",
+    id: "com.blake.femalefitness.subscription.yearly",
+    cm: "sja"
+  },
+  "Carbon-iOS": {
+    name: "pro",
+    id: "carbon.unlockall",
+    cm: "sjb"
+  },
+  "%E6%89%8B%E6%8C%81%E5%BC%B9%E5%B9%95": {
+    name: "Pro access",
+    id: "com.tech.LedScreen.VIPALL",
+    cm: "sjb"
+  },
+  "%E8%AF%AD%E9%9F%B3%E8%AE%A1%E7%AE%97%E5%99%A8": {
+    name: "Pro access",
+    id: "com.tech.counter.All",
+    cm: "sjb"
+  },
+  "%E7%BE%8E%E5%A6%86%E6%97%A5%E5%8E%86": {
+    name: "Pro access",
+    id: "com.tech.Aula.VIPALL",
+    cm: "sjb"
+  },
+  LiveWallpaper: {
+    name: "Pro access",
+    id: "com.tech.LiveWallpaper.ALL",
+    cm: "sjb"
+  },
+  "Chat%E7%BB%83%E5%8F%A3%E8%AF%AD": {
+    name: "Pro access",
+    id: "com.tech.AiSpeak.All",
+    cm: "sjb"
+  },
+  Calflow: {
+    name: "pro",
+    id: "kike.calflow.pro.lifetime",
+    cm: "sjb"
+  },
+  dtdvibe: {
+    name: "pro",
+    id: "com.dtd.aroundu.life",
+    cm: "sjb"
+  },
+  Clipboard: {
+    name: "Premium",
+    id: "Premium_0_99_1M_1MFree",
+    cm: "sja"
+  },
+  "Hi%E8%AE%BA%E5%9D%9B/69": {
+    name: "plus",
+    id: "plus_yearly",
+    cm: "sja"
+  },
+  AnimeArt: {
+    name: "AnimeArt.Gold",
+    id: "WaifuArt.Lifetime",
+    cm: "sjb"
+  },
+  LiveCaption: {
+    name: "Plus",
+    id: "rc_0400_1m",
+    cm: "sja"
+  },
+  EraseIt: {
+    name: "ProVersionLifeTime",
+    id: "com.uzero.cn.eraseit.premium1.fromyear",
+    cm: "sjb"
+  },
+  MusicPutty: {
+    name: "pro_version",
+    id: "mp_3599_1y",
+    cm: "sja"
+  },
+  SleepDown: {
+    name: "Pro",
+    id: "pro_student_0926",
+    cm: "sjb"
+  },
+  PhotoRoom: {
+    name: "pro",
+    id: "com.background.pro.yearly",
+    cm: "sja"
+  },
+  "Bg%20Remover": {
+    name: "Premium",
+    id: "net.kaleidoscope.cutout.premium1",
+    cm: "sja"
+  },
+  "Sex%20Actions": {
+    name: "Premium Plus",
+    id: "ru.sexactions.subscriptionPromo1",
+    cm: "sja"
+  },
+  StarFocus: {
+    name: "pro",
+    id: "com.gsdyx.StarFocus.nonConsumable.forever",
+    cm: "sjb"
+  },
+  StarDiary: {
+    name: "pro",
+    id: "com.gsdyx.StarDiary.nonConsumable.forever",
+    cm: "sjb"
+  },
+  CountDuck: {
+    name: "premium",
+    id: "Lifetime",
+    cm: "sjb"
+  },
+  wordswag: {
+    name: "pro",
+    id: "Pro_Launch_Monthly",
+    cm: "sja"
+  },
+  LockFlow: {
+    name: "unlimited_access",
+    id: "lf_00.00_lifetime",
+    cm: "sjb"
+  },
+  TextMask: {
+    name: "pro",
+    id: "tm_lifetime",
+    cm: "sjb"
+  },
+  "%E5%96%B5%E7%BB%84%E4%BB%B6": {
+    name: "MiaoWidgetPro",
+    id: "MiaoLifeTime",
+    cm: "sjb"
+  },
+  Chatty: {
+    name: "pro",
+    id: "chatty.yearly.1",
+    cm: "sja"
+  },
+  ImagineAI: {
+    name: "plus",
+    id: "artistai.lifetime.1",
+    cm: "sjb"
+  },
+  Langster: {
+    name: "Premium",
+    id: "com.langster.universal.lifetime",
+    cm: "sjb"
+  },
+  VoiceAI: {
+    name: "Special Offer",
+    id: "voiceannualspecial",
+    cm: "sjb"
+  },
+  Rootd: {
+    name: "pro",
+    id: "subscription_lifetime",
+    cm: "sjb"
+  },
+  MusicMate: {
+    name: "premium",
+    id: "mm_lifetime_68_premium",
+    cm: "sjb"
+  },
+  AIKeyboard: {
+    name: "plus_keyboard",
+    id: "aiplus_keyboard_yearly",
+    cm: "sja"
+  },
+  SmartAIChat: {
+    name: "Premium",
+    id: "sc_3999_1y",
+    cm: "sja"
+  },
+  AIChat: {
+    name: "AI Plus",
+    id: "ai_plus_yearly",
+    cm: "sja"
+  },
+  LazyReply: {
+    name: "lazyReplyYearlySubscription",
+    id: "com.bokhary.lazyreply.yearlyprosubscription",
+    cm: "sja"
+  },
+  LazyBoard: {
+    name: "lazyboardPro",
+    id: "com.bokhary.magicboard.magicboardpro",
+    cm: "sjb"
+  },
+  "PDF%20Viewer": {
+    name: "sub.pro",
+    id: "com.pspdfkit.viewer.sub.pro.yearly",
+    cm: "sja"
+  },
+  Joy: {
+    name: "pro",
+    id: "com.indiegoodies.Agile.lifetime2",
+    cm: "sjb"
+  },
+  AnkiPro: {
+    name: "Premium",
+    id: "com.ankipro.app.lifetime",
+    cm: "sjb"
+  },
+  SharkSMS: {
+    name: "VIP",
+    id: "com.gaapp.sms.permanently",
+    cm: "sjb"
+  },
+  EncryptNote: {
+    name: "Pro",
+    id: "com.gaapp.2019note.noAds",
+    cm: "sjb"
+  },
+  One4WallSwiftUI: {
+    name: "lifetime",
+    id: "lifetime_key",
+    cm: "sjb"
+  },
+  Pigment: {
+    name: "pro",
+    id: "com.pixite.pigment.1yearS",
+    cm: "sja"
+  },
+  GradientMusic: {
+    name: "Pro",
+    id: "com.gradient.vision.new.music.one.time.79",
+    cm: "sjb"
+  },
+  iBody: {
+    name: "Pro",
+    id: "com.tickettothemoon.bodyfilter.one.time.purchase",
+    cm: "sjb"
+  },
+  Persona: {
+    name: "unlimited",
+    id: "com.tickettothemoon.video.persona.one.time.purchase",
+    cm: "sjb"
+  },
+  easy_chart: {
+    name: "unlock all",
+    id: "qgnjs_2",
+    cm: "sja"
+  },
+  Snipd: {
+    name: "premium",
+    id: "snipd_premium_1y_7199_trial_2w_v2",
+    cm: "sja"
+  },
+  "Tide%20Guide": {
+    name: "Tides+",
+    id: "TideGuidePro_Lifetime_Family_149.99",
+    cm: "sjb"
+  },
+  Gear: {
+    name: "subscription",
+    id: "com.gear.app.yearly",
+    cm: "sja"
+  },
+  Aisten: {
+    name: "pro",
+    id: "aisten_pro",
+    cm: "sjb"
+  },
+  ASKAI: {
+    name: "pro",
+    id: "askai_pro",
+    nameb: "pro_plan",
+    idb: "token_pro_plan",
+    cm: "sjb"
+  },
+  Subtrack: {
+    name: "pro",
+    id: "com.mohitnandwani.subtrack.subtrackpro.family",
+    cm: "sjb"
+  },
+  "shipian-ios": {
+    name: "vipOffering",
+    id: "shipian_25_forever",
+    cm: "sjb"
+  },
+  "My%20Time": {
+    name: "Pro",
+    id: "ninja.fxc.mytime.pro.lifetime",
+    cm: "sjb"
+  },
+  LUTCamera: {
+    name: "ProVersionLifeTime",
+    id: "com.uzero.funforcam.lifetimepurchase",
+    cm: "sjb"
+  },
+  "Heal%20Clock": {
+    name: "pro",
+    id: "com.mad.HealClock.pro",
+    cm: "sjb"
+  },
+  tiimo: {
+    name: "full_access",
+    id: "lifetime.iap",
+    cm: "sjb"
+  },
+  IPTVUltra: {
+    name: "premium",
+    id: "com.ddm1023.lifetime",
+    cm: "sjb"
+  },
+  Wozi: {
+    name: "wozi_pro_2023",
+    id: "wozi_pro_2023",
+    cm: "sjb"
+  },
+  "Color%20Widgets": {
+    name: "pro",
+    id: "cw_1999_1y_3d0",
+    cm: "sja"
+  },
+  server_bee: {
+    name: "Pro",
+    id: "pro_45_lifetime",
+    cm: "sjb"
+  },
+  MyPianist: {
+    name: "pro",
+    id: "com.collaparte.mypianist.pro.yearly",
+    cm: "sja"
+  },
+  ProCam: {
+    name: "pro",
+    id: "pro_lifetime",
+    cm: "sjb"
+  },
+  Drops: {
+    name: "premium",
+    id: "forever_unlimited_time_discounted_80_int",
+    cm: "sjb"
+  },
+  transmission_ui: {
+    name: "Premium",
+    id: "200002",
+    cm: "sja"
+  },
+  fastdiet: {
+    name: "premium",
+    id: "com.happy.fastdiet.forever",
+    cm: "sjb"
+  },
+  money_manager: {
+    name: "premium",
+    id: "com.happy.money.forever",
+    cm: "sjb"
+  },
+  Overdue: {
+    name: "Pro",
+    id: "1",
+    cm: "sjb"
+  },
+  Ledger: {
+    name: "Pro",
+    id: "com.lifetimeFamily.pro",
+    cm: "sjb"
+  },
+  WeNote: {
+    name: "pro",
+    id: "Yearly",
+    cm: "sja"
+  },
+  Scelta: {
+    name: "pro",
+    id: "SceltaProLifetime",
+    cm: "sjb"
+  },
+  "%E5%87%B9%E5%87%B8%E5%95%A6%E6%9F%A5%E5%A6%86": {
+    name: "Pro access",
+    id: "com.smartitfarmer.MakeUpAssistant.UNLIMITED",
+    cm: "sjb"
+  },
+  PM4: {
+    name: "pro",
+    id: "pm4_pro_1y_2w0",
+    cm: "sja"
+  },
+  "Project%20Delta": {
+    name: "rc_entitlement_obscura_ultra",
+    id: "com.benricemccarthy.obscura4.obscura_ultra_sub_annual",
+    cm: "sja"
+  },
+  Zettelbox: {
+    name: "Power Pack",
+    id: "powerpack_permanent_1",
+    cm: "sjb"
+  },
+  Packr: {
+    name: "Pro",
+    id: "com.jeremieleroy.packr.premiumyearly",
+    cm: "sja"
+  },
+  muoyu: {
+    name: "pro",
+    id: "com.metaorder.muoyu.prolifetime.12",
+    cm: "sjb"
+  },
+  "%E7%BF%BB%E9%A1%B5%E6%97%B6%E9%92%9F": {
+    name: "Pro access",
+    id: "com.douwan.aiclock.ALL",
+    cm: "sjb"
+  },
+  "%E7%A7%A9%E5%BA%8F%E6%97%B6%E9%92%9F": {
+    name: "lifetime",
+    id: "com.metaorder.orderclocko.lifetime",
+    cm: "sjb"
+  },
+  "%E7%A7%A9%E5%BA%8F%E7%9B%AE%E6%A0%87": {
+    name: "pro",
+    id: "com.metaorder.OKRTomato.vip.supremacy",
+    cm: "sjb"
+  },
+  "%E4%BA%BA%E7%94%9F%E6%B8%85%E5%8D%95": {
+    name: "premium",
+    id: "com.metaorder.lifelist.premium",
+    cm: "sjb"
+  },
+  Vision: {
+    name: "promo_3.0",
+    id: "vis_lifetime_3.0_promo",
+    cm: "sja"
+  },
+  TruthOrDare: {
+    name: "premium",
+    id: "truth_or_dare_premium_monthly",
+    cm: "sja"
+  },
+  HurtYou: {
+    name: "premium",
+    id: "hurtyou_199_1y",
+    cm: "sja"
+  },
+  "%E4%BF%A1%E6%81%AF%E8%AE%A1%E7%AE%97": {
+    name: "pro",
+    id: "informaticcalculations.pro.lifetime",
+    cm: "sjb"
+  },
+  Context_iOS: {
+    name: "Context Pro",
+    id: "ctx_sub_1y_sspai_preorder_angel",
+    cm: "sja"
+  },
+  Structured: {
+    name: "pro",
+    id: "today.structured.pro",
+    cm: "sjb"
+  },
+  HTTPBot: {
+    name: "pro",
+    id: "com.behindtechlines.HTTPBot.prounlock",
+    cm: "sjb"
+  },
+  MinimalDiary: {
+    name: "pro",
+    id: "com.mad.MinimalDiary.lifetime",
+    cm: "sjb"
+  },
+  "Zen%20Flip%20Clock": {
+    name: "pro",
+    id: "com.mad.zenflipclock.iap.buymeacoffee",
+    cm: "sjb"
+  },
+  Transfer: {
+    name: "pro",
+    id: "transfer_ios_premium_year_2022_1",
+    cm: "sja"
+  },
+  Collect: {
+    name: "pro",
+    id: "com.revenuecat.product.yearly.ios",
+    cm: "sja"
+  },
+  Paper: {
+    name: "pro",
+    id: "com.fiftythree.paper.credit",
+    cm: "sjb"
+  },
+  Ape: {
+    name: "pro-iOS",
+    id: "ape.lifetime",
+    cm: "sjb"
+  },
+  Boar: {
+    name: "pro-iOS",
+    id: "boar.yearly",
+    cm: "sja"
+  },
+  Loopsie: {
+    name: "pro-iOS",
+    id: "com.reader.autoRenewableSeason",
+    cm: "sja"
+  },
+  MySticker: {
+    name: "mysticker premium",
+    id: "com.miiiao.MySticker.lifetime",
+    cm: "sjb"
+  },
+  Rec: {
+    name: "rec.paid",
+    id: "rec.paid.onetime",
+    cm: "sjb"
+  },
+  Photon: {
+    name: "photon.paid",
+    id: "photon.paid.onetime",
+    cm: "sjb"
+  },
+  OneTodo: {
+    name: "pro",
+    id: "onetodo_lifetime",
+    cm: "sjb"
+  },
+  OneFlag: {
+    name: "pro",
+    id: "oneflag_lifetime",
+    cm: "sjb"
+  },
+  OneClear: {
+    name: "pro",
+    id: "app.imone.OneClear.Lifetime",
+    cm: "sjb"
+  },
+  OneScreen: {
+    name: "pro",
+    id: "onescreen_lifetime",
+    cm: "sjb"
+  },
+  Photomator: {
+    name: "pixelmator_photo_pro_access",
+    id: "pixelmator_photo_lifetime_v1",
+    cm: "sjb"
+  },
+  Endel: {
+    name: "pro",
+    id: "Lifetime",
+    cm: "sjb"
+  },
+  Drowsy: {
+    name: "Pro",
+    id: "Drowsy_Life",
+    cm: "sjb"
+  },
+  Thiro: {
+    name: "pro",
+    id: "atelerix_pro_lifetime",
+    cm: "sjb"
+  },
+  Stress: {
+    name: "StressWatch Pro",
+    id: "stress_membership_lifetime",
+    cm: "sjb"
+  },
+  Worrydolls: {
+    name: "magicmode",
+    id: "magicmode",
+    cm: "sjb"
+  },
+  Echo: {
+    name: "PLUS",
+    id: "com.LEMO.LemoFm.plus.lifetime.l3",
+    cm: "sjb"
+  },
+  Falendar: {
+    name: "Falendar+",
+    id: "falendar_68_life",
+    cm: "sjb"
+  },
+  "%E8%BD%A6%E7%A5%A8%E7%A5%A8": {
+    name: "vip+watch_vip",
+    id: "eticket_with_watch_life_a",
+    cm: "sjb"
+  },
+  iRead: {
+    name: "vip",
+    id: "com.vip.forever_1",
+    cm: "sjb"
+  },
+  MOZE: {
+    name: "MOZE_PREMIUM_SUBSCRIPTION",
+    id: "MOZE_PRO_SUBSCRIPTION_YEARLY_BASIC",
+    cm: "sja"
+  },
+  "app/112": {
+    name: "Pro",
+    id: "com.wengqianshan.friends.pro",
+    cm: "sjb"
+  },
+  "app/38": {
+    name: "Pro",
+    id: "com.wengqianshan.diet.pro",
+    cm: "sjb"
+  },
+  MatrixClock: {
+    name: "Premium",
+    id: "com.lishaohui.matrixclock.lifetimesharing",
+    cm: "sjb"
+  },
+  SalesCat: {
+    name: "Premium",
+    id: "com.lishaohui.salescat.lifetime",
+    cm: "sjb"
+  },
+  MoneyThings: {
+    name: "Premium",
+    id: "com.lishaohui.cashflow.lifetime",
+    cm: "sjb"
+  },
+  ChatGPTApp: {
+    name: "Advanced",
+    id: "com.palligroup.gpt3.yearlyyy",
+    cm: "sja"
+  },
+  Journal_iOS: {
+    name: "PRO",
+    id: "com.pureformstudio.diary.yearly_2022_promo",
+    cm: "sja"
+  },
+  LemonKeepAccounts: {
+    name: "VIP",
+    id: "lm_1_1month",
+    cm: "sja"
+  },
+  mizframa: {
+    name: "premium",
+    id: "mf_20_lifetime2",
+    cm: "sjb"
+  },
+  EasyClicker: {
+    name: "pro",
+    id: "easyclicker.premium.discount2",
+    cm: "sjb"
+  },
+  ImageX: {
+    name: "imagex.pro.ios",
+    id: "imagex.pro.ios.lifetime",
+    cm: "sjb"
+  },
+  image_upscaler: {
+    name: "pro",
+    id: "yearly_sub_pro",
+    cm: "sja"
+  },
+  DayPoem: {
+    name: "Pro Access",
+    id: "com.uzero.poem.month1",
+    cm: "sja"
+  },
+  "Personal%20Best": {
+    name: "pro",
+    id: "PersonalBestPro_Yearly",
+    cm: "sja"
+  },
+  Darkroom: {
+    name: "co.bergen.Darkroom.entitlement.allToolsAndFilters",
+    id: "co.bergen.Darkroom.product.forever.everything",
+    cm: "sja"
+  },
+  CardPhoto: {
+    name: "allaccess",
+    id: "CardPhoto_Pro",
+    cm: "sjb"
+  },
+  OneWidget: {
+    name: "allaccess",
+    id: "com.onewidget.vip",
+    cm: "sjb"
+  },
+  PinPaper: {
+    name: "allaccess",
+    id: "Paper_Lifetime",
+    cm: "sjb"
+  },
+  Cookie: {
+    name: "allaccess",
+    id: "app.ft.Bookkeeping.lifetime",
+    cm: "sjb"
+  },
+  MyThings: {
+    name: "pro",
+    id: "xyz.jiaolong.MyThings.pro.infinity",
+    cm: "sjb"
+  },
+  "%E4%BA%8B%E7%BA%BF": {
+    name: "pro",
+    id: "xyz.jiaolong.eventline.pro.lifetime",
+    cm: "sjb"
+  },
+  PipDoc: {
+    name: "pro",
+    id: "pipdoc_pro_lifetime",
+    cm: "sjb"
+  },
+  Facebook: {
+    name: "pro",
+    id: "fb_pro_lifetime",
+    cm: "sjb"
+  },
+  Free: {
+    name: "pro",
+    id: "appspree_pro_lifetime",
+    cm: "sjb"
+  },
+  Startodo: {
+    name: "pro",
+    id: "pro_lifetime",
+    cm: "sjb"
+  },
+  Browser: {
+    name: "pro",
+    id: "pro_zoomable",
+    cm: "sjb"
+  },
+  YubePiP: {
+    name: "pro",
+    id: "piptube_pro_lifetime",
+    cm: "sjb"
+  },
+  PrivateBrowser: {
+    name: "pro",
+    id: "private_pro_lifetime",
+    cm: "sjb"
+  },
+  "Photo%20Cleaner": {
+    name: "premium",
+    id: "com.monocraft.photocleaner.lifetime.3",
+    cm: "sjb"
+  },
+  bluredit: {
+    name: "Premium",
+    id: "net.kaleidoscope.bluredit.premium1",
+    cm: "sja"
+  },
+  TouchRetouchBasic: {
+    name: "premium",
+    id: "tr5_yearlysubsc_15dlrs_2",
+    cm: "sja"
+  },
+  TimeFinder: {
+    name: "pro",
+    id: "com.lukememet.TimeFinder.Premium",
+    cm: "sjb"
+  },
+  Alpenglow: {
+    name: "newPro",
+    id: "ProLifetime",
+    cm: "sja"
+  },
+  Decision: {
+    name: "com.nixwang.decision.entitlements.pro",
+    id: "com.nixwang.decision.pro.annual",
+    cm: "sja"
+  },
+  ElementNote: {
+    name: "pro",
+    id: "com.soysaucelab.element.note.lifetime",
+    cm: "sjb"
+  },
+  "Noto%20%E7%AC%94%E8%AE%B0": {
+    name: "pro",
+    id: "com.lkzhao.editor.full",
+    cm: "sja"
+  },
+  Tangerine: {
+    name: "Premium",
+    id: "PremiumMonthly",
+    cm: "sja"
+  },
+  "Email%20Me": {
+    name: "premium",
+    id: "ventura.media.EmailMe.premium.lifetime",
+    cm: "sjb"
+  },
+  Brass: {
+    name: "pro",
+    id: "brass.pro.annual",
+    cm: "sja"
+  },
+  "Happy%3ADays": {
+    name: "pro",
+    id: "happy_999_lifetime",
+    cm: "sjb"
+  },
+  Aphrodite: {
+    name: "all",
+    id: "com.ziheng.aphrodite.onetime",
+    cm: "sjb"
+  },
+  apollo: {
+    name: "all",
+    id: "com.ziheng.apollo.onetime",
+    cm: "sjb"
+  },
+  widget_art: {
+    name: "all",
+    id: "com.ziheng.widgetart.onetime",
+    cm: "sjb"
+  },
+  "audiomack-iphone": {
+    name: "Premium1",
+    id: "com.audiomack.premium.2022",
+    cm: "sja"
+  },
+  MallocVPN: {
+    name: "IOS_PRO",
+    id: "malloc_yearly_vpn",
+    cm: "sja"
+  },
+  WhiteCloud: {
+    name: "allaccess",
+    id: "wc_pro_1y",
+    cm: "sja"
+  },
+  Spark: {
+    name: "premium",
+    id: "spark_6999_1y_1w0",
+    nameb: "premium",
+    idb: "spark_openai_tokens_4xt",
+    cm: "sja"
+  },
+  NotePlan: {
+    name: "premium",
+    id: "co.noteplan.subscription.personal.annual",
+    cm: "sja"
+  },
+  vibes: {
+    name: "patron",
+    id: "com.andyworks.vibes.yearlyPatron",
+    cm: "sja"
+  },
+  "simple-weather": {
+    name: "patron",
+    id: "com.andyworks.weather.yearlyPatron",
+    cm: "sja"
+  },
+  streaks: {
+    name: "patron",
+    id: "com.andyworks.weather.yearlyPatron",
+    cm: "sja"
+  },
+  "andyworks-calculator": {
+    name: "patron",
+    id: "com.andyworks.weather.yearlyPatron",
+    cm: "sja"
+  },
+  "simple-timer": {
+    name: "patron",
+    id: "com.andyworks.weather.yearlyPatron",
+    cm: "sja"
+  },
+  Harukong: {
+    name: "premium",
+    id: "com.bluesignum.harukong.lifetime.premium",
+    cm: "sjb"
+  },
+  UTC: {
+    name: "Entitlement.Pro",
+    id: "tech.miidii.MDClock.subscription.month",
+    cm: "sja"
+  },
+  OffScreen: {
+    name: "Entitlement.Pro",
+    id: "tech.miidii.offscreen.pro",
+    cm: "sjb"
+  },
+  "%E8%B0%9C%E5%BA%95%E9%BB%91%E8%83%B6": {
+    name: "Entitlement.Pro",
+    id: "tech.miidii.MDVinyl.lifetime",
+    cm: "sja"
+  },
+  "%E8%B0%9C%E5%BA%95%E6%97%B6%E9%92%9F": {
+    name: "Entitlement.Pro",
+    id: "tech.miidii.MDClock.pro",
+    cm: "sjb"
+  },
+  "%E7%9B%AE%E6%A0%87%E5%9C%B0%E5%9B%BE": {
+    name: "pro",
+    id: "com.happydogteam.relax.lifetimePro",
+    cm: "sjb"
+  },
+  APTV: {
+    name: "Pro",
+    id: "com.kimen.aptvpro.lifetime",
+    cm: "sjb"
+  },
+  Seamless: {
+    name: "Seamless.Pro",
+    id: "net.shinystone.Seamless.Pro",
+    cm: "sjb"
+  },
+  Anybox: {
+    name: "pro",
+    id: "cc.anybox.Anybox.annual",
+    cm: "sja"
+  },
+  ScannerPro: {
+    name: "plus",
+    id: "com.ddm1024.premium.yearly",
+    cm: "sja"
+  },
+  Pillow: {
+    name: "premium",
+    id: "com.neybox.pillow.premium.year.v2",
+    cm: "sja"
+  },
+  Taio: {
+    name: "full-version",
+    id: "taio_1651_1y_2w0_std_v2",
+    cm: "sja"
+  },
+  CPUMonitor: {
+    name: "Pro",
+    id: "com.mars.cpumonitor_removeAd",
+    cm: "sjb"
+  },
+  totowallet: {
+    name: "all",
+    id: "com.ziheng.totowallet.onetimepurchase",
+    cm: "sjb"
+  },
+  "1Blocker": {
+    name: "premium",
+    id: "blocker.ios.iap.lifetime",
+    cm: "sjb"
+  },
+  VSCO: {
+    name: "pro",
+    id: "vscopro_global_5999_annual_7D_free",
+    cm: "sja"
   }
 };
 var encode_version = "jsjiami.com.v5";
 if (typeof $rocket !== "undefined") {
-  function getBoxJSValue(_0x2e827e) {
-    try {
-      {
-        if (typeof $persistentStore !== "undefined" && typeof $persistentStore.read === "function") {
-          const _0x5cf54c = $persistentStore.read(_0x2e827e);
-          console.log("🔍 成功读取 BoxJS 值（$persistentStore）：" + _0x2e827e + " = " + _0x5cf54c);
-          return _0x5cf54c;
-        } else {
-          if (typeof $prefs !== "undefined" && typeof $prefs.valueForKey === "function") {
-            {
-              const _0xca4144 = $prefs.valueForKey(_0x2e827e);
-              console.log("🔍 成功读取 BoxJS 值（$prefs）：" + _0x2e827e + " = " + _0xca4144);
-              return _0xca4144;
-            }
-          } else {
-            console.log("⚠️ 无法检测到可用的 BoxJS 环境！");
+  function getBoxJSValue(_0x11365d) {
+    var _0x4bffe4 = function () {
+      var _0x2acc3a = true;
+      return function (_0x32aa97, _0x56b297) {
+        var _0x1d1ce3 = _0x2acc3a ? function () {
+          if (_0x56b297) {
+            var _0x22b706 = _0x56b297.apply(_0x32aa97, arguments);
+            _0x56b297 = null;
+            return _0x22b706;
           }
+        } : function () {};
+        _0x2acc3a = false;
+        return _0x1d1ce3;
+      };
+    }();
+    var _0x2bd6c7 = _0x4bffe4(this, function () {
+      var _0x2ee06 = function () {
+        return "dev";
+      };
+      var _0x527390 = function () {
+        return "window";
+      };
+      var _0x4c3e91 = function () {
+        var _0x6b0400 = new RegExp("\\w+ *\\(\\) *{\\w+ *['|\"].+['|\"];? *}");
+        return !_0x6b0400.test(_0x2ee06.toString());
+      };
+      var _0x3c4ed9 = function () {
+        var _0x655506 = new RegExp("(\\\\[x|u](\\w){2,4})+");
+        return _0x655506.test(_0x527390.toString());
+      };
+      var _0x390411 = function (_0x2e253c) {
+        var _0x2066ec = 0 >> 1 + NaN;
+        if (_0x2e253c.indexOf("i" === _0x2066ec)) {
+          _0x533479(_0x2e253c);
+        }
+      };
+      var _0x533479 = function (_0x511379) {
+        var _0x50a125 = 3 >> 1 + NaN;
+        if (_0x511379.indexOf("true"[3]) !== _0x50a125) {
+          _0x390411(_0x511379);
+        }
+      };
+      if (!_0x4c3e91()) {
+        if (!_0x3c4ed9()) {
+          _0x390411("indеxOf");
+        } else {
+          _0x390411("indexOf");
+        }
+      } else {
+        _0x390411("indеxOf");
+      }
+    });
+    _0x2bd6c7();
+    try {
+      if (typeof $persistentStore !== "undefined" && typeof $persistentStore.read === "function") {
+        {
+          const _0x3d003f = $persistentStore.read(_0x11365d);
+          console.log("🔍 成功读取 BoxJS 值（$persistentStore）：" + _0x11365d + " = " + _0x3d003f);
+          return _0x3d003f;
+        }
+      } else {
+        if (typeof $prefs !== "undefined" && typeof $prefs.valueForKey === "function") {
+          const _0x13c881 = $prefs.valueForKey(_0x11365d);
+          console.log("🔍 成功读取 BoxJS 值（$prefs）：" + _0x11365d + " = " + _0x13c881);
+          return _0x13c881;
+        } else {
+          console.log("⚠️ 无法检测到可用的 BoxJS 环境！");
         }
       }
-    } catch (_0x4f3ab7) {
-      {
-        console.log("⚠️ 读取 BoxJS 配置失败：" + _0x4f3ab7.message);
-      }
+    } catch (_0x436931) {
+      console.log("⚠️ 读取 BoxJS 配置失败：" + _0x436931.message);
     }
     return null;
   }
@@ -1824,178 +1622,271 @@ if (typeof $rocket !== "undefined") {
     $done();
   }
 }
-const receipt = {
-  quantity: "1",
-  purchase_date_ms: "1694250549000",
-  is_in_intro_offer_period: "false",
-  transaction_id: "490001314520000",
-  is_trial_period: "false",
-  original_transaction_id: "490001314520000",
-  purchase_date: "2023-09-09 09:09:09 Etc/GMT",
-  product_id: yearlyid,
-  original_purchase_date_pst: "2023-09-09 02:09:10 America/Los_Angeles",
-  in_app_ownership_type: "PURCHASED",
-  original_purchase_date_ms: "1694250550000",
-  web_order_line_item_id: "490000123456789",
-  purchase_date_pst: "2023-09-09 02:09:09 America/Los_Angeles",
-  original_purchase_date: "2023-09-09 09:09:10 Etc/GMT"
+const finalize = function (_0x72eedd = null) {
+  if (_0x72eedd) {
+    obj.body = JSON.stringify(_0x72eedd);
+    console.log("🥳 已操作成功🎉🎉🎉\n叮当猫の分享频道: https://t.me/ddm1023");
+  }
+  $done(obj);
 };
-const expirestime = {
-  expires_date: "2099-09-09 09:09:09 Etc/GMT",
-  expires_date_pst: "2099-09-09 06:06:06 America/Los_Angeles",
-  expires_date_ms: "4092599349000"
-};
-let anchor = false;
-let data;
-for (const i in list) {
-  const regex = new RegExp("^" + i, "i");
-  if (regex.test(ua) || regex.test(bundle_id)) {
-    const {
-      cm,
-      hx,
-      id,
-      ids,
-      latest,
-      version
-    } = list[i];
-    const receiptdata = Object.assign({}, receipt, {
-      product_id: id
-    });
-    switch (cm) {
-      case "timea":
-        data = [Object.assign({}, receiptdata, expirestime)];
-        break;
-      case "timeb":
-        data = [receiptdata];
-        break;
-      case "timec":
-        data = [];
-        break;
-      case "timed":
-        data = [Object.assign({}, receiptdata, expirestime, {
-          product_id: ids
-        }), Object.assign({}, receiptdata, expirestime, {
-          product_id: id
-        })];
-        break;
-    }
-    if (hx.includes("hxpda")) {
-      ddm.receipt.in_app = data;
-      ddm.latest_receipt_info = data;
-      ddm.pending_renewal_info = [{
-        product_id: id,
-        original_transaction_id: "490001314520000",
-        auto_renew_product_id: id,
-        auto_renew_status: "1"
-      }];
-      ddm.latest_receipt = latest;
-    } else {
-      if (hx.includes("hxpdb")) {
-        ddm.receipt.in_app = data;
-      } else {
-        if (hx.includes("hxpdc")) {
-          const xreceipt = {
-            expires_date_formatted: "2099-09-09 09:09:09 Etc/GMT",
-            expires_date: "4092599349000",
-            expires_date_formatted_pst: "2099-09-09 06:06:06 America/Los_Angeles",
-            product_id: id
-          };
-          ddm.receipt = Object.assign({}, ddm.receipt, xreceipt);
-          ddm.latest_receipt_info = Object.assign({}, ddm.receipt, xreceipt);
-          ddm.status = 0;
-          ddm.auto_renew_status = 1;
-          ddm.auto_renew_product_id = id;
-          delete ddm.latest_expired_receipt_info;
-          delete ddm.expiration_intent;
+if (typeof $response === "undefined") {
+  delete headers["x-revenuecat-etag"];
+  delete headers["X-RevenueCat-ETag"];
+  obj.headers = headers;
+  finalize();
+} else {
+  if (/(offerings|attributes|adservices_attribution)/.test($request.url)) {
+    console.log("🚨 检测到已屏蔽的URL，已跳过脚本执行。");
+    $done({});
+  }
+  const timea = {
+    purchase_date: "2024-09-09T09:09:09Z",
+    expires_date: "2099-09-09T09:09:09Z"
+  };
+  const timeb = {
+    original_purchase_date: "2024-09-09T09:09:09Z",
+    is_sandbox: false,
+    store_transaction_id: "490001314520000",
+    store: "app_store",
+    ownership_type: "PURCHASED"
+  };
+  let name;
+  let nameb;
+  let ids;
+  let idb;
+  let data;
+  let anchor = false;
+  let localMatched = false;
+  for (const src of [listua, bundle]) {
+    for (const i in src) {
+      const test = src === listua ? ua : bundle_id;
+      if (new RegExp("^" + i, "i").test(test)) {
+        if (src[i].cm.includes("sja")) {
+          data = timea;
+          anchor = true;
+        } else {
+          if (src[i].cm.includes("sjb")) {
+            data = {
+              purchase_date: "2024-09-09T09:09:09Z"
+            };
+            anchor = true;
+          } else {
+            if (src[i].cm.includes("sjc")) {
+              data = timea;
+              anchor = false;
+            }
+          }
         }
+        ids = src[i].id;
+        name = src[i].name || "";
+        idb = src[i].idb;
+        nameb = src[i].nameb;
+        localMatched = true;
+        break;
       }
     }
-    if (version && version.trim() !== "") {
-      ddm.receipt.original_application_version = version;
+    if (localMatched) {
+      break;
     }
-    anchor = true;
-    console.log("恭喜您，已操作成功🎉🎉🎉\n叮当猫の分享频道: https://t.me/ddm1023");
-    break;
+  }
+  const updateEntitlements = function (_0x42cce6 = "", _0x277cbd = "", _0x46c666 = false) {
+    const _0x86351b = name || _0x42cce6;
+    const _0x4d60c8 = ids || _0x277cbd;
+    const _0x5e311a = data || timea;
+    const _0x25bde3 = Object.assign({}, _0x5e311a, timeb);
+    if (!anchor) {
+      ddm.subscriber.non_subscriptions = Object.assign(ddm.subscriber.non_subscriptions || {}, {
+        [_0x4d60c8]: [Object.assign({}, {
+          id: "888888888"
+        }, _0x25bde3)]
+      });
+      ddm.subscriber.other_purchases = Object.assign(ddm.subscriber.other_purchases || {}, {
+        [_0x4d60c8]: _0x5e311a
+      });
+    }
+    if (!_0x46c666 && _0x86351b) {
+      ddm.subscriber.entitlements = Object.assign(ddm.subscriber.entitlements || {}, {
+        [_0x86351b]: Object.assign({}, _0x5e311a, {
+          product_identifier: _0x4d60c8
+        })
+      });
+    }
+    ddm.subscriber.subscriptions = Object.assign(ddm.subscriber.subscriptions || {}, {
+      [_0x4d60c8]: _0x25bde3
+    });
+    if (idb && nameb && !_0x46c666) {
+      ddm.subscriber.entitlements = Object.assign(ddm.subscriber.entitlements, {
+        [nameb]: Object.assign({}, _0x5e311a, {
+          product_identifier: idb
+        })
+      });
+      ddm.subscriber.subscriptions = Object.assign(ddm.subscriber.subscriptions, {
+        [idb]: _0x25bde3
+      });
+    }
+  };
+  const fetchProductEntitlements = function () {
+    const _0x174046 = {
+      url: "https://api.revenuecat.com/v1/product_entitlement_mapping",
+      headers: headers
+    };
+    const _0x2750f3 = "https://api.rc-backup.com/v1/product_entitlement_mapping";
+    const _0x245171 = function (_0x479884) {
+      return new Promise((_0x3a5e80, _0xd68443) => {
+        const _0x279a1b = {
+          url: _0x479884,
+          headers: headers
+        };
+        if (typeof $task !== "undefined") {
+          {
+            $task.fetch(_0x279a1b).then(_0x2c5372 => {
+              {
+                if (_0x2c5372.statusCode === 200) {
+                  {
+                    _0x3a5e80(_0x2c5372);
+                  }
+                } else {
+                  {
+                    _0xd68443("HTTP Error: " + _0x2c5372.statusCode);
+                  }
+                }
+              }
+            }).catch(_0x116383 => {
+              {
+                _0xd68443("请求错误: " + _0x116383);
+              }
+            });
+          }
+        } else {
+          if (typeof $httpClient !== "undefined") {
+            $httpClient.get(_0x279a1b, (_0x5ce08a, _0x583183, _0x338e1d) => {
+              if (_0x5ce08a) {
+                _0xd68443("请求错误: " + _0x5ce08a);
+              } else {
+                if (_0x583183.status === 200) {
+                  {
+                    _0x3a5e80(Object.assign(_0x583183, {
+                      body: _0x338e1d
+                    }));
+                  }
+                } else {
+                  {
+                    _0xd68443("HTTP Error: " + _0x583183.status);
+                  }
+                }
+              }
+            });
+          } else {
+            if (typeof $https !== "undefined") {
+              $https.get(_0x279a1b, (_0x50efdd, _0x4d5aeb, _0x334d3c) => {
+                if (_0x50efdd) {
+                  _0xd68443("请求错误: " + _0x50efdd);
+                } else {
+                  if (_0x4d5aeb.status === 200) {
+                    _0x3a5e80(Object.assign(_0x4d5aeb, {
+                      body: _0x334d3c
+                    }));
+                  } else {
+                    {
+                      _0xd68443("HTTP Error: " + _0x4d5aeb.status);
+                    }
+                  }
+                }
+              });
+            } else {
+              if (typeof $http !== "undefined") {
+                $http.get(_0x279a1b, (_0x543b4d, _0x3e09f7, _0x439c68) => {
+                  {
+                    if (_0x543b4d) {
+                      _0xd68443("请求错误: " + _0x543b4d);
+                    } else {
+                      if (_0x3e09f7.status === 200) {
+                        {
+                          _0x3a5e80(Object.assign(_0x3e09f7, {
+                            body: _0x439c68
+                          }));
+                        }
+                      } else {
+                        {
+                          _0xd68443("HTTP Error: " + _0x3e09f7.status);
+                        }
+                      }
+                    }
+                  }
+                });
+              } else {
+                {
+                  _0xd68443("❌ 不支持的代理工具");
+                }
+              }
+            }
+          }
+        }
+      });
+    };
+    return _0x245171(_0x174046.url).then(_0x2c6c7c => {
+      const _0x358f5d = JSON.parse(_0x2c6c7c.body);
+      if (_0x358f5d && _0x358f5d.product_entitlement_mapping && Object.keys(_0x358f5d.product_entitlement_mapping).length > 0) {
+        return _0x2c6c7c;
+      } else {
+        {
+          return _0x245171(_0x2750f3);
+        }
+      }
+    }).catch(_0x3c877b => {
+      console.log("错误信息：", _0x3c877b);
+      return _0x245171(_0x2750f3);
+    });
+  };
+  const fallbackSolution = function () {
+    console.log("‼️ 主逻辑执行失败，启动备用方案...");
+    updateEntitlements("pro", "com.ddm1023.pro", false);
+    finalize(ddm);
+  };
+  if (localMatched) {
+    console.log("🥳 已匹配到数据！🎉🎉🎉");
+    updateEntitlements();
+    finalize(ddm);
+  } else {
+    console.log("😮‍💨 未匹配到数据！🚫🚫🚫");
+    fetchProductEntitlements().then(_0x507607 => {
+      const _0x5be374 = JSON.parse(_0x507607.body);
+      const _0x542e83 = _0x5be374.product_entitlement_mapping || {};
+      if (!_0x542e83 || Object.keys(_0x542e83).length === 0) {
+        console.log("🚨 检测无数据，启动备用方案...");
+        fallbackSolution();
+        return;
+      }
+      for (const [_0x4a60ec, _0x5b014e] of Object.entries(_0x542e83)) {
+        const _0x143eea = _0x5b014e.product_identifier;
+        const _0x53e7f8 = _0x5b014e.entitlements || [];
+        if (_0x53e7f8.length === 0) {
+          updateEntitlements("", _0x143eea, true);
+        } else {
+          {
+            for (const _0x377688 of _0x53e7f8) {
+              updateEntitlements(_0x377688, _0x143eea, false);
+            }
+          }
+        }
+      }
+      finalize(ddm);
+    }).catch(_0x4d4d71 => {
+      console.log("Error:", _0x4d4d71);
+      fallbackSolution();
+    });
   }
 }
-if (!anchor) {
-  data = [Object.assign({}, receipt, expirestime)];
-  ddm.receipt.in_app = data;
-  ddm.latest_receipt_info = data;
-  ddm.pending_renewal_info = [{
-    product_id: yearlyid,
-    original_transaction_id: "490001314520000",
-    auto_renew_product_id: yearlyid,
-    auto_renew_status: "1"
-  }];
-  ddm.latest_receipt = "ddm1023";
-  console.log("很遗憾未能识别出UA或bundle_id\n但已使用备用方案🎉🎉🎉\n叮当猫の分享频道: https://t.me/ddm1023");
-}
-$done({
-  body: JSON.stringify(ddm)
-});
-(function (_0x42d9e9, _0x383b4f, _0x2bdc5a) {
-  var _0x138f6b = function () {
-    var _0x5ce2f6 = true;
-    return function (_0x5c4a2a, _0x5f5325) {
-      var _0x5187d8 = _0x5ce2f6 ? function () {
-        if (_0x5f5325) {
-          var _0x55821e = _0x5f5325.apply(_0x5c4a2a, arguments);
-          _0x5f5325 = null;
-          return _0x55821e;
-        }
-      } : function () {};
-      _0x5ce2f6 = false;
-      return _0x5187d8;
-    };
-  }();
-  var _0x595456 = _0x138f6b(this, function () {
-    var _0x4d66c1 = function () {
-      return "dev";
-    };
-    var _0x4335e3 = function () {
-      return "window";
-    };
-    var _0x279e08 = function () {
-      var _0x2cc97b = new RegExp("\\w+ *\\(\\) *{\\w+ *['|\"].+['|\"];? *}");
-      return !_0x2cc97b.test(_0x4d66c1.toString());
-    };
-    var _0x44e0d3 = function () {
-      var _0x3411a2 = new RegExp("(\\\\[x|u](\\w){2,4})+");
-      return _0x3411a2.test(_0x4335e3.toString());
-    };
-    var _0x4a72b8 = function (_0x27d0af) {
-      var _0x129ce = 0 >> 1 + NaN;
-      if (_0x27d0af.indexOf("i" === _0x129ce)) {
-        _0xbab618(_0x27d0af);
-      }
-    };
-    var _0xbab618 = function (_0x2ac782) {
-      var _0x4d26e3 = 3 >> 1 + NaN;
-      if (_0x2ac782.indexOf("true"[3]) !== _0x4d26e3) {
-        _0x4a72b8(_0x2ac782);
-      }
-    };
-    if (!_0x279e08()) {
-      if (!_0x44e0d3()) {
-        _0x4a72b8("indеxOf");
-      } else {
-        _0x4a72b8("indexOf");
-      }
-    } else {
-      _0x4a72b8("indеxOf");
-    }
-  });
-  _0x595456();
-  _0x2bdc5a = "al";
+(function (_0xa0f45b, _0x45f6e1, _0x4205df) {
+  _0x4205df = "al";
   try {
-    _0x2bdc5a += "ert";
-    _0x383b4f = encode_version;
-    if (!(typeof _0x383b4f !== "undefined" && _0x383b4f === "jsjiami.com.v5")) {
-      _0x42d9e9[_0x2bdc5a]("删除版本号，js会定期弹窗，还请支持我们的工作");
+    _0x4205df += "ert";
+    _0x45f6e1 = encode_version;
+    if (!(typeof _0x45f6e1 !== "undefined" && _0x45f6e1 === "jsjiami.com.v5")) {
+      _0xa0f45b[_0x4205df]("删除版本号，js会定期弹窗，还请支持我们的工作");
     }
-  } catch (_0x29cc78) {
-    _0x42d9e9[_0x2bdc5a]("删除版本号，js会定期弹窗");
+  } catch (_0xcfc3ea) {
+    _0xa0f45b[_0x4205df]("删除版本号，js会定期弹窗");
   }
 })(window);
 encode_version = "jsjiami.com.v5";

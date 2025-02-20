@@ -1,4 +1,4 @@
-//Wed Feb 19 2025 08:52:59 GMT+0000 (Coordinated Universal Time)
+//Thu Feb 20 2025 13:09:29 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
 const KuWoLe = new Env("酷我音乐");
@@ -8,7 +8,7 @@ const {
   getVer,
   getInfo
 } = KuWoLF("影子");
-const KuWoLf = "5.2.13-2";
+const KuWoLf = "5.2.20";
 const KuWoLg = KuWoLe.toObj(KuWoLe.getval("KuWo")) || {};
 let KuWoLh = "undefined" !== typeof $request ? $request.url : "";
 let KuWoLi = "undefined" !== typeof $response ? $response.body : null;
@@ -19,7 +19,7 @@ const KuWoLl = {
   vipTabInfo: /vip\/v\d\/user\/vip/,
   bookVip: /(a\.p|v\d\/api\/(pay\/)?user\/info)/,
   musicInfo: /music\.pay\?newver\=\d$/,
-  vipTheme: /(commercia\/)?vip\/(v\d\/theme\?op\=gd|player\/getStyleListByModel)/,
+  vipTheme: /(commercia\/)?vip\/(v\d\/theme\?op\=gd|(player\/getStyleListByModel|hanger\/wear))/,
   kwBookHome: /v\d\/api\/advert\/myPage/,
   bottomTab: /kuwo\/ui\/info$/,
   indexTopAd: /openapi\/v\d\/operate\/homePage/,
@@ -72,64 +72,85 @@ async function KuWoLo() {
     ver
   } = KuWoLg;
   !(async () => {
-    await getInfo(user, "kuwo");
-    await getVer();
-    if (isVip && new Date().getTime() < endTime && KuWoLf == ver && KuWoLj.data != 200) {
-      const p = keys[Math.floor(Math.random() * keys.length)];
-      const q = decrypt(p);
-      const r = {
-        br: 4000,
-        url: "4000kflac"
-      };
-      const s = {
-        br: 2000,
-        url: "2000kflac"
-      };
-      const t = {
-        br: 320,
-        url: "320kmp3"
-      };
-      const u = {
-        br: 128,
-        url: "128kmp3"
-      };
-      const v = {
-        br: 100,
-        url: "100kogg"
-      };
-      const w = {
-        br: 96,
-        url: "96kwma"
-      };
-      const x = {
-        br: 48,
-        url: "48kaac"
-      };
-      const y = [r, s, t, u, v, w, x];
-      let z = 0;
-      if ("book" == Song) {
-        z = 2;
-      }
-      while (y[z]) {
-        {
-          const A = {
-            url: "http://mobi.kuwo.cn/mobi.s?f=web&source=" + q + "&type=convert_url_with_sign&br=" + y[z].url + "&rid=" + PlayID
-          };
-          await KuWoLe.http.get(A).then(B => {
-            KuWoLi = B.body;
-            KuWoLj = KuWoLe.toObj(KuWoLi);
-          });
-          if (KuWoLj.data.bitrate == y[z].br) {
-            break;
+    {
+      await getInfo(user, "kuwo");
+      await getVer();
+      if (isVip && new Date().getTime() < endTime && KuWoLf == ver && KuWoLj.data != 200) {
+        const p = keys[Math.floor(Math.random() * keys.length)];
+        const q = decrypt(p);
+        const r = {
+          br: 4000,
+          url: "4000kflac"
+        };
+        const s = {
+          br: 2000,
+          url: "2000kflac"
+        };
+        const t = {
+          br: 320,
+          url: "320kmp3"
+        };
+        const u = {
+          br: 128,
+          url: "128kmp3"
+        };
+        const v = {
+          br: 100,
+          url: "100kogg"
+        };
+        const w = {
+          br: 96,
+          url: "96kwma"
+        };
+        const x = {
+          br: 48,
+          url: "48kaac"
+        };
+        let y = [r, s, t, u, v, w, x];
+        let z = 0;
+        if ("undefined" !== typeof $argument) {
+          {
+            switch ($argument.QS) {
+              case "无损音质":
+                z = 1;
+                break;
+              case "超品音质":
+                z = 2;
+                break;
+              case "高品音质":
+                z = 3;
+                break;
+              default:
+                z = 0;
+            }
           }
-          z++;
+        }
+        if ("book" == Song) {
+          z = 2;
+        }
+        y = y.slice(z).concat(y.slice(0, z));
+        z = 0;
+        while (y[z]) {
+          {
+            const C = {
+              url: "http://mobi.kuwo.cn/mobi.s?f=web&source=" + q + "&type=convert_url_with_sign&br=" + y[z].url + "&rid=" + PlayID
+            };
+            await KuWoLe.http.get(C).then(D => {
+              KuWoLi = D.body;
+              KuWoLj = KuWoLe.toObj(KuWoLi);
+            });
+            if (KuWoLj.data.bitrate == y[z].br) {
+              break;
+            }
+            z++;
+          }
         }
       }
+      const o = {
+        body: KuWoLi
+      };
+      KuWoLe.done(o);
     }
-    const o = {
-      body: KuWoLi
-    };
-    KuWoLe.done(o);
   })();
 }
 async function KuWoLp() {
@@ -139,12 +160,14 @@ async function KuWoLp() {
     e = KuWoLh.replace(/.*?uid=(\d+).*/, "$1");
   }
   !(async () => {
-    await getInfo(e, "kuwo");
-    KuWoLi = await KuWoLe.http.get(KuWoLh.replace(/uid=\d+/g, "uid=238581279")).then(g => g.body);
-    const f = {
-      body: KuWoLi
-    };
-    KuWoLe.done(f);
+    {
+      await getInfo(e, "kuwo");
+      KuWoLi = await KuWoLe.http.get(KuWoLh.replace(/uid=\d+/g, "uid=238581279")).then(h => h.body);
+      const g = {
+        body: KuWoLi
+      };
+      KuWoLe.done(g);
+    }
   })();
 }
 async function KuWoLq() {
@@ -180,12 +203,12 @@ async function KuWoLr() {
   if ("songs" in KuWoLj) {
     {
       for (let g in KuWoLj.songs) {
-        {
-          const i = KuWoLj.songs[g];
-          const {
-            id = KuWoLi.replace(/.*?\"id\":(\d+).*/, "$1")
-          } = i;
-          if ("number" == typeof id) {
+        const h = KuWoLj.songs[g];
+        const {
+          id = KuWoLi.replace(/.*?\"id\":(\d+).*/, "$1")
+        } = h;
+        if ("number" == typeof id) {
+          {
             KuWoLg.PlayID = id;
             KuWoLg.Song = "book";
             KuWoLe.setval(KuWoLe.toStr(KuWoLg), "KuWo");
@@ -203,21 +226,13 @@ async function KuWoLr() {
 }
 async function KuWoLs() {
   const e = g => {
-    const i = {
-      lnUBF: "title",
-      rvywp: "homeTop"
-    };
-    for (let j in g) {
-      {
-        if (typeof g[j] === "string" && g[j].includes("1")) {
+    for (let h in g) {
+      if (typeof g[h] === "string" && g[h].includes("1")) {
+        g[h] = g[h].replace(/1/g, "0");
+      } else {
+        if (typeof g[h] === "object" && g[h] !== null) {
           {
-            g[j] = g[j].replace(/1/g, "0");
-          }
-        } else {
-          if (typeof g[j] === "object" && g[j] !== null) {
-            {
-              e(g[j]);
-            }
+            e(g[h]);
           }
         }
       }
@@ -233,13 +248,13 @@ async function KuWoLs() {
     e(KuWoLj.songs[0].payInfo);
     if ("audio" in KuWoLj.songs[0] && Array.isArray(KuWoLj.songs[0].audio)) {
       {
-        KuWoLj.songs[0].audio.forEach(h => h.st = 0);
-        let g = KuWoLj.songs[0].audio[0].policy;
+        KuWoLj.songs[0].audio.forEach(i => i.st = 0);
+        let h = KuWoLj.songs[0].audio[0].policy;
         KuWoLj.user[0] = {
           pid: KuWoLj.songs[0].audio[0].pid,
-          type: g,
-          name: g + "_1",
-          categray: g + "_1",
+          type: h,
+          name: h + "_1",
+          categray: h + "_1",
           id: KuWoLj.songs[0].id,
           order: 375787919,
           final: [],
@@ -277,12 +292,23 @@ async function KuWoLt() {
       KuWoLi = KuWoLe.toStr(KuWoLj);
     }
   } else {
-    KuWoLi = KuWoLi.replace(/\"(paymentType)\":\d/g, "\"$1\":0").replace(/(umpUrl)\":\".*?\"/g, "$1\":\"\"");
+    if ("needBied" in KuWoLj.data) {
+      const i = {
+        requestUrl: "",
+        btnText: null,
+        rightStatus: 1,
+        requestUrlType: 1
+      };
+      Object.assign(KuWoLj.data.needBied, i);
+      KuWoLi = KuWoLe.toStr(KuWoLj);
+    } else {
+      KuWoLi = KuWoLi.replace(/\"(paymentType)\":\d/g, "\"$1\":0").replace(/(umpUrl)\":\".*?\"/g, "$1\":\"\"");
+    }
   }
-  const e = {
+  const f = {
     body: KuWoLi
   };
-  KuWoLe.done(e);
+  KuWoLe.done(f);
 }
 async function KuWoLu() {
   const g = {
@@ -318,9 +344,9 @@ async function KuWoLw() {
   KuWoLj.data.list[1].description = "点击获取授权";
   KuWoLj.data.list[1].route.params.url = "https://pay.kuwo.cn/authPay";
   if (KuWoLg.endTime) {
-    delete KuWoLj.data.list[1].route;
     KuWoLj.data.list[1].title = "授权至：";
     KuWoLj.data.list[1].description = KuWoLe.time("yyyy-MM-dd", KuWoLg.endTime);
+    KuWoLj.data.list[1].route.params.url = "https://t.me/Napi_Group";
   }
   KuWoLi = KuWoLe.toStr(KuWoLj);
   const g = {
@@ -333,7 +359,9 @@ async function KuWoLx() {
   let f = 0;
   while (KuWoLj.data.homeTop[f]) {
     if (!e.includes(KuWoLj.data.homeTop[f].title)) {
-      delete KuWoLj.data.homeTop[f];
+      {
+        delete KuWoLj.data.homeTop[f];
+      }
     }
     f++;
   }
@@ -345,58 +373,53 @@ async function KuWoLx() {
 }
 async function KuWoLy() {
   const e = h => {
-    const i = {};
-    i.ZWOOi = "\"$1\":0";
-    i.uMzFn = "$1\":\"\"";
-    i.VLmgn = "child";
-    const j = i;
     {
-      for (let k in h) {
-        {
-          if (typeof h[k] === "string") {
-            if (k.includes("btnText")) {
-              h[k] = KuWoLg.endTime && "超级会员" || "未授权";
+      for (let l in h) {
+        if (typeof h[l] === "string") {
+          {
+            if (l.includes("btnText")) {
+              h[l] = KuWoLg.endTime && "超级会员" || "未授权";
             }
-            if (k.includes("icon")) {
+            if (l.includes("icon")) {
               {
-                h[k] = "https://h5s.kuwo.cn/upload/pictures/20250107/b81d9c5c7af42dc5ed6281fcbe19fcc7.png";
+                h[l] = "https://h5s.kuwo.cn/upload/pictures/20250107/b81d9c5c7af42dc5ed6281fcbe19fcc7.png";
               }
             }
-            if (k.includes("Url")) {
+            if (l.includes("Url")) {
               {
-                h[k] = null;
+                h[l] = null;
               }
             }
-          } else {
-            if (typeof h[k] === "object" && h[k] !== null) {
-              {
-                e(h[k]);
-              }
-            }
+          }
+        } else {
+          if (typeof h[l] === "object" && h[l] !== null) {
+            e(h[l]);
           }
         }
       }
     }
   };
   const f = (h, i = []) => {
-    if (typeof i === "string") {
-      {
+    {
+      if (typeof i === "string") {
         i = [i];
       }
-    }
-    for (let m in h) {
-      {
-        if (!i.includes(m)) {
-          delete h[m];
+      for (let l in h) {
+        if (!i.includes(l)) {
+          {
+            delete h[l];
+          }
         }
       }
     }
   };
   if ("data" in KuWoLj) {
-    const h = ["subConfigType", "tsAdBarInfoV2"];
-    f(KuWoLj.data, h);
-    f(KuWoLj.data.tsAdBarInfoV2, "tsHomeWeex");
-    e(KuWoLj.data);
+    {
+      const h = ["subConfigType", "tsAdBarInfoV2"];
+      f(KuWoLj.data, h);
+      f(KuWoLj.data.tsAdBarInfoV2, "tsHomeWeex");
+      e(KuWoLj.data);
+    }
   }
   KuWoLi = KuWoLe.toStr(KuWoLj);
   const g = {
@@ -421,21 +444,27 @@ async function KuWoLz() {
 }
 async function KuWoLA() {
   if ("tab" in KuWoLj.data) {
-    let f = 1;
-    while (KuWoLj.data.tab.vipTypes[0].topics[f]) {
-      delete KuWoLj.data.tab.vipTypes[0].topics[f];
-      f++;
+    {
+      KuWoLj.data.tab.vipTypes[0].topics[0].url = "https://h5app.kuwo.cn/pay/viptab/index.html";
+      let g = 1;
+      while (KuWoLj.data.tab.vipTypes[0].topics[g]) {
+        {
+          delete KuWoLj.data.tab.vipTypes[0].topics[g];
+          g++;
+        }
+      }
     }
   } else {
     if (Array.isArray(KuWoLj.data)) {
-      {
-        let h = ["会员福利"];
-        let j = 0;
-        while (KuWoLj.data[j]) {
-          if (h.some(k => KuWoLj.data[j].title.includes(k))) {
-            delete KuWoLj.data[j].data;
+      KuWoLj.data[1].data;
+      let j = ["会员福利"];
+      let k = 0;
+      while (KuWoLj.data[k]) {
+        {
+          if (j.some(l => KuWoLj.data[k].title.includes(l))) {
+            delete KuWoLj.data[k].data;
           }
-          j++;
+          k++;
         }
       }
     }
@@ -460,8 +489,10 @@ async function KuWoLB() {
 async function KuWoLC() {
   const e = ["data", "dataV2", "child_level_info"];
   e.forEach(g => {
-    if (g in KuWoLj) {
-      delete KuWoLj[g];
+    {
+      if (g in KuWoLj) {
+        delete KuWoLj[g];
+      }
     }
   });
   KuWoLi = KuWoLe.toStr(KuWoLj);
@@ -494,80 +525,88 @@ function KuWoLF(e) {
       let r = new TextEncoder().encode(e);
       let s = new Uint8Array(q.length);
       for (let t = 0; t < q.length; t++) {
-        let u = q[t] ^ r[t % r.length];
-        while (u >= 256) {
-          u %= 256;
+        {
+          let u = q[t] ^ r[t % r.length];
+          while (u >= 256) {
+            u %= 256;
+          }
+          s[t] = u;
         }
-        s[t] = u;
       }
       return btoa(String.fromCharCode(...s));
     }
   };
   const l = p => {
-    let q = new TextEncoder().encode(e);
-    let r = new Uint8Array(atob(p).split("").map(t => t.charCodeAt(0)));
-    let s = new Uint8Array(r.length);
-    for (let t = 0; t < r.length; t++) {
-      let u = r[t] ^ q[t % q.length];
-      while (u >= 256) {
+    {
+      let s = new TextEncoder().encode(e);
+      let t = new Uint8Array(atob(p).split("").map(v => v.charCodeAt(0)));
+      let u = new Uint8Array(t.length);
+      for (let v = 0; v < t.length; v++) {
         {
-          u %= 256;
+          let w = t[v] ^ s[v % s.length];
+          while (w >= 256) {
+            {
+              w %= 256;
+            }
+          }
+          u[v] = w;
         }
       }
-      s[t] = u;
+      return new TextDecoder().decode(u);
     }
-    return new TextDecoder().decode(s);
   };
   const m = async () => {
     {
-      let r = "https://napi.ltd/getVer";
-      let s = await KuWoLe.http.get(r).then(u => u.body);
-      let t = KuWoLe.toObj(s);
-      if (KuWoLf != t.kuwo) {
+      let p = "https://napi.ltd/getVer";
+      let q = await KuWoLe.http.get(p).then(s => s.body);
+      let r = KuWoLe.toObj(q);
+      if (KuWoLf != r.kuwo) {
         KuWoLe.msg("需要更新 -> 请更新你的脚本！");
       }
-      KuWoLg.ver = t.kuwo;
+      KuWoLg.ver = r.kuwo;
       KuWoLe.setval(KuWoLe.toStr(KuWoLg), "KuWo");
     }
   };
   const n = async (p, q) => {
-    let r = "type=" + q + "&user=" + p;
-    if (!KuWoLg.user || p != KuWoLg.user || !KuWoLg.endTime || new Date().getTime() > KuWoLg.endTime || !KuWoLg.keys || KuWoLg.ver !== KuWoLf) {
-      KuWoLe.log("正在获取 " + p + " 的授权信息…");
-      const s = {
-        url: "https://yingzi-0gwxqpln4f7a7fda-1251393964.ap-shanghai.app.tcloudbase.com/getInfo",
-        body: r
-      };
-      let t = KuWoLe.toObj(await KuWoLe.http.post(s).then(u => u.body));
-      for (let u in t) {
+    {
+      let r = "type=" + q + "&user=" + p;
+      if (!KuWoLg.user || p != KuWoLg.user || !KuWoLg.endTime || new Date().getTime() > KuWoLg.endTime || !KuWoLg.keys || KuWoLg.ver !== KuWoLf) {
         {
-          if (t.hasOwnProperty(u)) {
+          KuWoLe.log("正在获取 " + p + " 的授权信息…");
+          const s = {
+            url: "https://yingzi-0gwxqpln4f7a7fda-1251393964.ap-shanghai.app.tcloudbase.com/getInfo",
+            body: r
+          };
+          let t = KuWoLe.toObj(await KuWoLe.http.post(s).then(u => u.body));
+          for (let u in t) {
             {
-              KuWoLg[u] = t[u];
+              if (t.hasOwnProperty(u)) {
+                {
+                  KuWoLg[u] = t[u];
+                }
+              }
             }
           }
-        }
-      }
-      KuWoLe.setval(KuWoLe.toStr(KuWoLg), "KuWo");
-      KuWoLe.log("数据获取完成...");
-      if (t.isVip) {
-        {
-          let x = KuWoLe.time("yyyy-MM-dd HH:mm", KuWoLg.endTime);
-          if (KuWoLf != KuWoLg.ver) {
-            x += "\n需要更新 -> 请更新你的脚本！";
+          KuWoLe.setval(KuWoLe.toStr(KuWoLg), "KuWo");
+          KuWoLe.log("数据获取完成...");
+          if (t.isVip) {
+            let x = KuWoLe.time("yyyy-MM-dd HH:mm", KuWoLg.endTime);
+            if (KuWoLf != KuWoLg.ver) {
+              {
+                x += "\n需要更新 -> 请更新你的脚本！";
+              }
+            }
+            KuWoLe.log("当前账户 " + p + " 已授权\n授权有效期至：" + x);
+            KuWoLe.msg("当前账户 " + p + " 已授权", "", "授权有效期至：" + x);
+          } else {
+            KuWoLe.log("未能获取到当前账户 " + p + " 的授权信息\n即将再次获取你的授权信息");
+            KuWoLe.msg("未获取到授权信息", "", "请重启应用或点击本条通知获取授权码", {
+              "open-url": "kwapp://open?t=27&u=https%3A%2F%2Fpay.kuwo.cn%2FauthPay",
+              "media-url": "https://file.napi.ltd/Static/Image/KuWo.png"
+            });
           }
-          KuWoLe.log("当前账户 " + p + " 已授权\n授权有效期至：" + x);
-          KuWoLe.msg("当前账户 " + p + " 已授权", "", "授权有效期至：" + x);
         }
       } else {
-        KuWoLe.log("未能获取到当前账户 " + p + " 的授权信息\n即将再次获取你的授权信息");
-        KuWoLe.msg("未获取到授权信息", "", "请重启应用或点击本条通知获取授权码", {
-          "open-url": "https://pay.kuwo.cn/authPay",
-          "media-url": "https://file.napi.ltd/Static/Image/KuWo.png"
-        });
-      }
-    } else {
-      {
         KuWoLe.log("当前账户 " + p + " 已授权\n祝使用愉快！");
       }
     }

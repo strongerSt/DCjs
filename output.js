@@ -1,83 +1,153 @@
-//Sat Mar 01 2025 04:33:43 GMT+0000 (Coordinated Universal Time)
+//Tue Mar 04 2025 09:33:20 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
-var encode_version = "jsjiami.com.v5";
-var _0x2184f9 = $response.body;
-var _0x294d99 = $request.url;
-var _0x1089e8 = JSON.parse(_0x2184f9);
-const _0x3a485e = "/ios/regOrLogin";
-const _0x5f0cd6 = "/api/user-coin/getTotalCoin";
-if (_0x294d99.indexOf(_0x3a485e) != -1) {
-  _0x1089e8.data.isVip = 1;
-  _0x1089e8.data.user.nick_name = "https://t.me/GieGie777";
-  _0x2184f9 = JSON.stringify(_0x1089e8);
-}
-if (_0x294d99.indexOf(_0x5f0cd6) != -1) {
-  _0x1089e8.data.aboutRmb = 999880;
-  _0x1089e8.data.totalCoin = 999880;
-  _0x2184f9 = JSON.stringify(_0x1089e8);
+//Generated at 2025-03-04T09:33:20.893Z
+//Base:https://github.com/echo094/decode-js
+//Modify:https://github.com/smallfawn/decode_action
+
+// 基础配置变量
+let names = "Video2Photo";
+let productName = "com.mike.Video2Photo";
+let productType = "6740474392";
+let appVersion = "4";
+let notifyState = true;
+let ua = false;
+let obj = JSON.parse($response.body);
+let requestUrl = $request.url;
+let $ = new Env(names);
+if (/^https:\/\/buy\.itunes\.apple\.com\/verifyReceipt?/.test(requestUrl) && (ua ? $request.headers["User-Agent"].includes(names) : true)) {
+  let receipt = {
+      receipt_type: "Production",
+      bundle_id: productName,
+      in_app: [{
+        quantity: "1",
+        transaction_id: "666666666666667",
+        original_transaction_id: "666666666666667",
+        product_id: productType,
+        in_app_ownership_type: "PURCHASED",
+        purchase_date: "2024-04-14 15:27:40 Etc/GMT",
+        purchase_date_ms: "1691972860000",
+        purchase_date_pst: "2024-04-14 08:27:40 America/Los_Angeles",
+        original_purchase_date: "2024-04-14 08:24:40 Etc/GMT",
+        original_purchase_date_ms: "1692026680000",
+        original_purchase_date_pst: "2024-04-14 08:24:40 America/Los_Angeles",
+        expires_date: "2222-02-02 02:02:02 Etc/GMT",
+        expires_date_pst: "2222-02-02 02:02:02 America/Los_Angeles",
+        expires_date_ms: "7955085722000"
+    }],
+      adam_id: 1111111111,
+      receipt_creation_date_pst: "2024-04-14 08:25:04 America/Los_Angeles",
+      request_date: "2024-04-14 15:27:40 Etc/GMT",
+      request_date_pst: "2024-04-14 08:27:40 America/Los_Angeles",
+      version_external_identifier: 666666666,
+      request_date_ms: "1692026860531",
+      original_purchase_date_pst: "2024-04-14 08:24:40 America/Los_Angeles",
+      application_version: appVersion,
+      original_purchase_date_ms: "1692026680000",
+      receipt_creation_date_ms: "1691972704000",
+      original_application_version: appVersion,
+      download_id: 666666666666666666,
+      latest_receipt_info: [{
+        quantity: "1",
+        transaction_id: "666666666666667",
+        original_transaction_id: "666666666666667",
+        product_id: productType,
+        in_app_ownership_type: "PURCHASED",
+        is_in_intro_offer_period: "false",
+        is_trial_period: "false",
+        purchase_date: "2024-04-14 15:27:40 Etc/GMT",
+        purchase_date_ms: "1691972860000",
+        purchase_date_pst: "2024-04-14 08:27:40 America/Los_Angeles",
+        original_purchase_date: "2024-04-14 08:24:40 Etc/GMT",
+        original_purchase_date_ms: "1692026680000",
+        original_purchase_date_pst: "2024-04-14 08:24:40 America/Los_Angeles",
+        expires_date: "2222-02-02 02:02:02 Etc/GMT",
+        expires_date_pst: "2222-02-02 02:02:02 America/Los_Angeles",
+        expires_date_ms: "7955085722000"
+    }],
+      pending_renewal_info: [{
+        product_id: productName,
+        original_transaction_id: "666666666666667",
+        auto_renew_product_id: productType,
+        auto_renew_status: "1"
+    }],
+      status: 0,
+      environment: "Production"
+  };
+  obj.latest_receipt_info = receipt.latest_receipt_info;
+  obj.latest_receipt = "";
+  obj.pending_renewal_info = receipt.pending_renewal_info;
+  obj.receipt = receipt;
+  if (notifyState) {
+    // 通知配置
+$.notify("XiaoMao_" + names + " 执行成功！", "", "Nice!已解锁成功，可关掉此脚本。", "https://i.pixiv.re/img-original/img/2021/08/01/01/43/03/91637959_p0.jpg");
+  }
 }
 $done({
-  body: _0x2184f9
+    body: JSON.stringify(obj)
 });
-(function (_0x1cbe88, _0x38a604, _0x172a96) {
-  var _0x34e92a = function () {
-    {
-      var _0x402311 = true;
-      return function (_0x30e798, _0x195076) {
-        {
-          var _0x19ab2a = _0x402311 ? function () {
-            if (_0x195076) {
-              var _0x5737c1 = _0x195076.apply(_0x30e798, arguments);
-              _0x195076 = null;
-              return _0x5737c1;
-            }
-          } : function () {};
-          _0x402311 = false;
-          return _0x19ab2a;
-        }
-      };
+function Env(name) {
+  const isLoon = typeof $loon !== "undefined";
+  const isSurge = typeof $httpClient !== "undefined" && !isLoon;
+  const isQX = typeof $task !== "undefined";
+  const read = key => {
+    if (isLoon || isSurge) return $persistentStore.read(key);
+    if (isQX) return $prefs.valueForKey(key);
+  };
+  const write = (key, value) => {
+    if (isLoon || isSurge) return $persistentStore.write(key, value);
+    if (isQX) return $prefs.setValueForKey(key, value);
+  };
+  const notify = (title = "XiaoMao", subtitle = "", message = "", url = "", url2 = url) => {
+    if (isLoon) $notification.post(title, subtitle, message, url);
+    if (isSurge) $notification.post(title, subtitle, message, {
+      url
+    });
+    if (isQX) $notify(title, subtitle, message, {
+      "open-url": url,
+      "media-url": url2
+    });
+  };
+  const get = (url, callback) => {
+    if (isLoon || isSurge) $httpClient.get(url, callback);
+    if (isQX) {
+      url.method = `GET`;
+      $task.fetch(url).then(resp => callback(null, {}, resp.body));
     }
-  }();
-  var _0x29ee69 = _0x34e92a(this, function () {
-    {
-      var _0x55eada = function () {};
-      var _0x12613f = typeof window !== "undefined" ? window : typeof process === "object" && typeof require === "function" && typeof global === "object" ? global : this;
-      if (!_0x12613f.console) {
-        _0x12613f.console = function (_0x1f252f) {
-          {
-            var _0x172a96 = {};
-            _0x172a96.log = _0x1f252f;
-            _0x172a96.warn = _0x1f252f;
-            _0x172a96.debug = _0x1f252f;
-            _0x172a96.info = _0x1f252f;
-            _0x172a96.error = _0x1f252f;
-            _0x172a96.exception = _0x1f252f;
-            _0x172a96.trace = _0x1f252f;
-            return _0x172a96;
-          }
-        }(_0x55eada);
-      } else {
-        _0x12613f.console.log = _0x55eada;
-        _0x12613f.console.warn = _0x55eada;
-        _0x12613f.console.debug = _0x55eada;
-        _0x12613f.console.info = _0x55eada;
-        _0x12613f.console.error = _0x55eada;
-        _0x12613f.console.exception = _0x55eada;
-        _0x12613f.console.trace = _0x55eada;
-      }
+  };
+  const post = (url, callback) => {
+    if (isLoon || isSurge) $httpClient.post(url, callback);
+    if (isQX) {
+      url.method = `POST`;
+      $task.fetch(url).then(resp => callback(null, {}, resp.body));
     }
-  });
-  _0x29ee69();
-  _0x172a96 = "al";
-  try {
-    _0x172a96 += "ert";
-    _0x38a604 = encode_version;
-    if (!(typeof _0x38a604 !== "undefined" && _0x38a604 === "jsjiami.com.v5")) {
-      _0x1cbe88[_0x172a96]("删除版本号，js会定期弹窗，还请支持我们的工作");
+  };
+  const put = (url, callback) => {
+    if (isLoon || isSurge) $httpClient.put(url, callback);
+    if (isQX) {
+      url.method = "PUT";
+      $task.fetch(url).then(resp => callback(null, {}, resp.body));
     }
-  } catch (_0x230e22) {
-    _0x1cbe88[_0x172a96]("删除版本号，js会定期弹窗");
-  }
-})(window);
-encode_version = "jsjiami.com.v5";
+  };
+  const toObj = str => JSON.parse(str);
+  const toStr = obj => JSON.stringify(obj);
+  const queryStr = obj => {
+    return Object.keys(obj).map(key => `${key}=${obj[key]}`).join("&");
+  };
+  const log = message => console.log(message);
+  const done = (value = {}) => $done(value);
+  return {
+    name,
+    read,
+    write,
+    notify,
+    get,
+    post,
+    put,
+    toObj,
+    toStr,
+    queryStr,
+    log,
+    done
+  };
+}

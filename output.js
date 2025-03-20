@@ -1,266 +1,206 @@
-//Thu Mar 13 2025 13:32:02 GMT+0000 (Coordinated Universal Time)
+//Thu Mar 20 2025 09:33:24 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
-let ddm = JSON.parse($response.body);
-const headers = $request?.headers || {};
-const ua = headers["User-Agent"] || headers["user-agent"] || "";
-const profileid = headers["adapty-sdk-profile-id"] || headers["ADAPTY-SDK-PROFILE-ID"] || "";
-const time = Date.now();
-const list = {
-  "Flight%20Tracker": {
-    dy: "dypda",
-    id: "com.iaftt.flightplusfree.49.99year",
-    bundle_id: "com.iaftt.flightplusfree"
-  },
-  "$%7BPRODUCT_NAME%7D": {
-    dy: "dypda",
-    id: "com.iaftt.flightplusfree.49.99year",
-    bundle_id: "com.iaftt.flightplusfree"
-  },
-  AvA: {
-    dy: "dypda",
-    id: "momo_yearly_subs_pro",
-    bundle_id: "com.scaleup.dreame"
-  },
-  PlantApp: {
-    dy: "dypda",
-    id: "plantapp.lifetime.promoted.sub",
-    bundle_id: "com.scaleup.plantid"
-  },
-  KeyboardGPT: {
-    dy: "dypda",
-    id: "smart.keyboard.yearly.01",
-    bundle_id: "com.smart.keyboard"
-  },
-  SketchAR: {
-    dy: "dypda",
-    id: "tech.sketchar.subscription.yearly",
-    bundle_id: "tech.sketchar.ios"
-  },
-  universal: {
-    dy: "dypda",
-    id: "remotetv.yearly.01",
-    bundle_id: "com.universal.remotetv"
-  },
-  Lingvist: {
-    dy: "dypda",
-    id: "com.lingvist.unlimited_12_months.v11.full_1md_ft",
-    bundle_id: "ee.keel24.Lingvist"
-  },
-  ChatAI: {
-    dy: "dypda",
-    id: "chatai_yearly_ios",
-    bundle_id: "com.scaleup.chatai"
-  },
-  FacePlus: {
-    dy: "dypda",
-    id: "faceplus_yearly_subs_3dft_ios",
-    bundle_id: "com.scaleup.faceplus"
-  },
-  Batched: {
-    dy: "dypdba",
-    id: "com.advasoft.batched.premium_year",
-    bundle_id: "com.advasoft.batched"
-  }
-};
-var encode_version = "jsjiami.com.v5";
-if (typeof $rocket !== "undefined") {
-  function getBoxJSValue(_0x5ea269) {
-    try {
-      if (typeof $persistentStore !== "undefined" && typeof $persistentStore.read === "function") {
-        const _0x3a43b4 = $persistentStore.read(_0x5ea269);
-        console.log("🔍 成功读取 BoxJS 值（$persistentStore）：" + _0x5ea269 + " = " + _0x3a43b4);
-        return _0x3a43b4;
-      } else {
-        if (typeof $prefs !== "undefined" && typeof $prefs.valueForKey === "function") {
-          const _0x5e0bbf = $prefs.valueForKey(_0x5ea269);
-          console.log("🔍 成功读取 BoxJS 值（$prefs）：" + _0x5ea269 + " = " + _0x5e0bbf);
-          return _0x5e0bbf;
-        } else {
-          {
-            console.log("⚠️ 无法检测到可用的 BoxJS 环境！");
-          }
+const $ = new Env("carrot");
+(() => {
+  var g = "one_first_run";
+  var h = $.getdata(g);
+  h || ($.msg($.name, "", "欢迎使用脚本！点此通知加入作者频道", "https://t.me/Jsforbaby"), $.setdata("true", g));
+  var j = $response.body;
+  try {
+    {
+      var k = JSON.parse(j);
+      if (k.result && k.result.subscriptions && k.result.subscriptions.length > 0) {
+        {
+          var l = k.result.subscriptions[0];
+          l.productId = "com.grailr.carrotWeather.premiumFamily1year";
+          var m = Date.now();
+          l.purchaseTime = m;
+          l.originalPurchaseTime = m;
+          l.expirationTime = m + 31536000000;
+          l.isTrialPeriod = null;
+          k.result.serverDate && k.result.serverDate.iso && (k.result.serverDate.iso = new Date().toISOString());
+          l.lastNotificationDate && l.lastNotificationDate.iso && (l.lastNotificationDate.iso = new Date().toISOString());
         }
       }
-    } catch (_0x17880a) {
-      console.log("⚠️ 读取 BoxJS 配置失败：" + _0x17880a.message);
+      $.done({
+        body: JSON.stringify(k)
+      });
     }
-    return null;
-  }
-  const scriptSwitch = getBoxJSValue("ddm.app_switch");
-  const isScriptEnabled = scriptSwitch === "true" || scriptSwitch === true;
-  console.log("BoxJS 配置读取：ddm.app_switch = " + scriptSwitch);
-  if (!isScriptEnabled) {
-    console.log("⛔️ BoxJS 配置禁用脚本，脚本停止运行");
-    $notification.post("⚠️ 脚本异常已终止运行", "检测到脚本开关未开启", "📌 【Boxjs 配置指南】\n1️⃣ 配置地址： https://github.com/chavyleung/scripts\n2️⃣ 订阅链接： https://raw.githubusercontent.com/chxm1023/Script_X/main/ddm1023.boxjs.json\n\n📋 【使用说明】\n1️⃣ 添加订阅链接到 Boxjs\n2️⃣ 启用 [脚本开关] 并保存设置\n\n⚠️ 【注意事项】\n- 开关用于防止非法售卖脚本\n- 仅供学习体验，请勿传播或滥用\n- 建议 24 小时内删除，避免不必要问题\n\n🙏 感谢理解与支持！");
-    $done();
-  }
-}
-const premiumTemplate = {
-  id: "premium",
-  is_lifetime: false,
-  store: "app_store",
-  starts_at: "2024-01-23T09:09:09.000000+0000",
-  expires_at: "2099-09-09T09:09:09.000000+0000",
-  will_renew: true,
-  is_active: true,
-  is_in_grace_period: false,
-  activated_at: "2024-01-23T09:09:09.000000+0000",
-  renewed_at: "2024-01-23T09:09:09.000000+0000",
-  is_refund: false,
-  vendor_transaction_id: "490001271881589",
-  vendor_original_transaction_id: "490001271881589",
-  is_sandbox: false,
-  active_introductory_offer_type: "trial"
-};
-const receiptTemplate = {
-  quantity: "1",
-  purchase_date_ms: "1706000949000",
-  expires_date: "2099-09-09 09:09:09 Etc/GMT",
-  is_in_intro_offer_period: "false",
-  transaction_id: "490001271881589",
-  is_trial_period: "true",
-  original_transaction_id: "490001271881589",
-  purchase_date: "2024-01-23 09:09:09 Etc/GMT",
-  in_app_ownership_type: "PURCHASED",
-  original_purchase_date_ms: "1706000949000",
-  expires_date_ms: "4092628149000"
-};
-for (const key in list) {
-  const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  if (new RegExp("^" + safeKey, "i").test(ua)) {
-    const {
-      dy,
-      id,
-      ids,
-      bundle_id
-    } = list[key];
-    let subscriptions = {};
-    let receiptdata = [];
-    switch (dy) {
-      case "dypda":
-        subscriptions[id] = Object.assign({}, premiumTemplate, {
-          vendor_product_id: id
-        });
-        receiptdata.push(Object.assign({}, receiptTemplate, {
-          product_id: id
-        }));
-        break;
-      case "dypdb":
-        subscriptions[id] = Object.assign({}, premiumTemplate, {
-          vendor_product_id: id
-        });
-        if (ids) {
-          subscriptions[ids] = Object.assign({}, premiumTemplate, {
-            vendor_product_id: ids
-          });
-          receiptdata.push(Object.assign({}, receiptTemplate, {
-            product_id: ids
-          }));
-        }
-        receiptdata.push(Object.assign({}, receiptTemplate, {
-          product_id: id
-        }));
-        break;
+  } catch (q) {
+    {
+      var n = {
+        body: j
+      };
+      $.done(n);
     }
-    if (/(analytics\/profiles|purchase\/app-store)/.test($request.url)) {
-      ddm = {
-        data: {
-          type: "adapty_purchase_app_store_original_transaction_id_validation_result",
-          id: profileid,
-          attributes: {
-            profile_id: profileid,
-            is_test_user: false,
-            segment_hash: "8245f974014fdf4c",
-            timestamp: time,
-            apple_validation_result: {
-              environment: "Production",
-              revision: "1726387136000_490001234567890_4",
-              appAppleId: 1560806510,
-              transactions: [{
-                productId: id,
-                storefront: "CHN",
-                originalTransactionId: "490001234567890",
-                expiresDate: "2099-09-09T09:09:09Z",
-                subscriptionGroupIdentifier: "20459405",
-                purchaseDate: "2024-01-23 09:09:09Z",
-                price: 0,
-                transactionId: "490001234567890",
-                currency: "CNY",
-                inAppOwnershipType: "PURCHASED"
-              }],
-              hasMore: false,
-              bundleId: bundle_id
-            },
-            subscriptions: subscriptions,
-            paid_access_levels: {
-              premium: Object.assign({}, premiumTemplate, {
-                vendor_product_id: id
-              })
+  }
+})();
+function Env(name) {
+  return new class {
+    constructor(name) {
+      this.name = name;
+      this.startTime = new Date().getTime();
+      this.log("", `🔔${this.name},开始!`);
+      this.envs = {
+        Surge: "Surge",
+        Loon: "Loon",
+        Stash: "Stash",
+        QuantumultX: "Quantumult X",
+        Shadowrocket: "Shadowrocket",
+        Nodejs: "Node.js"
+      };
+    }
+    getEnv() {
+      if ("undefined" !== typeof $environment && $environment["surge-version"]) {
+        return "Surge";
+      }
+      if ("undefined" !== typeof $environment && $environment["stash-version"]) {
+        return "Stash";
+      }
+      if ("undefined" !== typeof module && !!module.exports) {
+        return "Node.js";
+      }
+      if ("undefined" !== typeof $task) {
+        return "Quantumult X";
+      }
+      if ("undefined" !== typeof $loon) {
+        return "Loon";
+      }
+      if ("undefined" !== typeof $rocket) {
+        return "Shadowrocket";
+      }
+    }
+    isNode() {
+      return "Node.js" === this.getEnv();
+    }
+    isQuanX() {
+      return "Quantumult X" === this.getEnv();
+    }
+    isSurge() {
+      return "Surge" === this.getEnv();
+    }
+    isLoon() {
+      return "Loon" === this.getEnv();
+    }
+    isShadowrocket() {
+      return "Shadowrocket" === this.getEnv();
+    }
+    isStash() {
+      return "Stash" === this.getEnv();
+    }
+    getdata(key) {
+      switch (this.getEnv()) {
+        case "Surge":
+        case "Loon":
+        case "Stash":
+        case "Shadowrocket":
+          return $persistentStore.read(key);
+        case "Quantumult X":
+          return $prefs.valueForKey(key);
+        case "Node.js":
+          this.data = this.data || {};
+          return this.data[key];
+        default:
+          return null;
+      }
+    }
+    setdata(val, key) {
+      switch (this.getEnv()) {
+        case "Surge":
+        case "Loon":
+        case "Stash":
+        case "Shadowrocket":
+          return $persistentStore.write(val, key);
+        case "Quantumult X":
+          return $prefs.setValueForKey(val, key);
+        case "Node.js":
+          this.data = this.data || {};
+          this.data[key] = val;
+          return true;
+        default:
+          return false;
+      }
+    }
+    msg(title = this.name, subt = "", desc = "", opts = {}) {
+      const toEnvOpts = rawopts => {
+        if (typeof rawopts === "string") {
+          switch (this.getEnv()) {
+            case "Surge":
+            case "Stash":
+            default:
+              return {
+                url: rawopts
+              };
+            case "Loon":
+            case "Shadowrocket":
+              return rawopts;
+            case "Quantumult X":
+              return {
+                "open-url": rawopts
+              };
+            case "Node.js":
+              return undefined;
+          }
+        } else {
+          if (typeof rawopts === "object") {
+            const openUrl = rawopts.openUrl || rawopts.url || rawopts["open-url"];
+            switch (this.getEnv()) {
+              case "Surge":
+              case "Stash":
+              case "Shadowrocket":
+                return openUrl ? {
+                  url: openUrl
+                } : {};
+              case "Loon":
+                return openUrl ? {
+                  openUrl
+                } : {};
+              case "Quantumult X":
+                return openUrl ? {
+                  "open-url": openUrl
+                } : {};
+              case "Node.js":
+                return undefined;
             }
           }
         }
+        return undefined;
       };
+      switch (this.getEnv()) {
+        case "Surge":
+        case "Loon":
+        case "Stash":
+        case "Shadowrocket":
+          $notification.post(title, subt, desc, toEnvOpts(opts));
+          break;
+        case "Quantumult X":
+          $notify(title, subt, desc, toEnvOpts(opts));
+          break;
+        case "Node.js":
+          console.log(`${title}\n${subt}\n${desc}`);
+          break;
+      }
     }
-    if (/(receipt\/validate|purchase-containers)/.test($request.url)) {
-      ddm = {
-        data: {
-          type: "adapty_inapps_apple_receipt_validation_result",
-          id: profileid,
-          attributes: {
-            profile_id: profileid,
-            apple_validation_result: {
-              environment: "Production",
-              receipt: {
-                receipt_type: "Production",
-                bundle_id: bundle_id,
-                in_app: receiptdata,
-                original_purchase_date: "2024-01-23 09:09:09 Etc/GMT",
-                adam_id: 1560806510,
-                request_date: "2024-01-23 09:09:09 Etc/GMT",
-                request_date_ms: "1706000949000",
-                application_version: "1",
-                original_application_version: "1"
-              },
-              status: 0,
-              pending_renewal_info: [{
-                expiration_intent: "1",
-                product_id: id,
-                is_in_billing_retry_period: "0",
-                auto_renew_product_id: id,
-                original_transaction_id: "490001234567890",
-                auto_renew_status: "0"
-              }],
-              latest_receipt_info: receiptdata,
-              latest_receipt: "ddm"
-            },
-            subscriptions: subscriptions,
-            paid_access_levels: {
-              premium: Object.assign({}, premiumTemplate, {
-                vendor_product_id: id
-              })
-            }
-          }
-        }
-      };
+    log(...logs) {
+      console.log(logs.join("\n"));
     }
-    console.log("已操作成功🎉🎉🎉\n叮当猫の分享频道: https://t.me/ddm1023");
-    break;
-  }
+    done(val = {}) {
+      const endTime = new Date().getTime();
+      const costTime = (endTime - this.startTime) / 1000;
+      this.log("", `🔔${this.name},结束!🕛${costTime}秒`);
+      switch (this.getEnv()) {
+        case "Surge":
+        case "Loon":
+        case "Stash":
+        case "Shadowrocket":
+        case "Quantumult X":
+          $done(val);
+          break;
+        case "Node.js":
+          process.exit(1);
+          break;
+      }
+    }
+  }(name);
 }
-$done({
-  body: JSON.stringify(ddm)
-});
-(function (_0x13a141, _0x2c2753, _0x35c450) {
-  _0x35c450 = "al";
-  try {
-    _0x35c450 += "ert";
-    _0x2c2753 = encode_version;
-    if (!(typeof _0x2c2753 !== "undefined" && _0x2c2753 === "jsjiami.com.v5")) {
-      _0x13a141[_0x35c450]("删除版本号，js会定期弹窗，还请支持我们的工作");
-    }
-  } catch (_0x88cffb) {
-    _0x13a141[_0x35c450]("删除版本号，js会定期弹窗");
-  }
-})(window);
-encode_version = "jsjiami.com.v5";

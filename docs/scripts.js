@@ -40,13 +40,13 @@ function initTabs() {
 // 初始化按钮事件
 function initButtons() {
     // 清空按钮点击事件
-    document.getElementById('clear-btn').addEventListener('click', () => {
+    document.getElementById('clear-btn')?.addEventListener('click', () => {
         document.getElementById('code-input').value = '';
         document.getElementById('result-content').innerHTML = '';
     });
     
     // 解码按钮点击事件
-    document.getElementById('decrypt-btn').addEventListener('click', () => {
+    document.getElementById('decrypt-btn')?.addEventListener('click', () => {
         const code = document.getElementById('code-input').value;
         if (!code.trim()) {
             alert('请输入需要解密的代码');
@@ -74,9 +74,188 @@ function initButtons() {
     });
 }
 
+// 创建GitHub issue
+function createGitHubIssue(code, fileType, encryptionType) {
+    const resultElement = document.getElementById('result-content');
+    
+    try {
+        // 提供手动创建Issue的指南
+        resultElement.innerHTML = `
+            <p>请按照以下步骤创建解密请求：</p>
+            <ol>
+                <li>手动创建一个新Issue: <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/new" target="_blank" class="github-link">创建Issue</a></li>
+                <li>使用标题: <strong>[Web解密请求] ${encryptionType}</strong></li>
+                <li>在内容中添加以下模板:</li>
+            </ol>
+            <div style="background: #1a1a1a; padding: 15px; border-radius: 4px; margin: 15px 0; border: 1px solid #333;">
+                <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">
+# 解密请求
+
+**文件类型:** \`${fileType}\`
+**加密类型:** \`${encryptionType}\`
+**时间戳:** ${new Date().toISOString()}
+
+**代码:**
+\`\`\`${fileType}
+${code.length > 500 ? '(请在这里粘贴您的完整代码)' : code}
+\`\`\`</pre>
+                <button id="copy-template-btn" style="margin-top: 10px; background-color: #333; color: #e0e0e0; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">复制模板</button>
+            </div>
+            <ol start="4">
+                <li>提交Issue后回到此页面，点击下方按钮输入Issue编号</li>
+            </ol>
+            <button id="check-result-btn" class="github-link" style="display: block; margin: 15px auto; padding: 10px 20px; font-size: 16px;">输入Issue编号</button>
+        `;
+        
+        // 添加复制模板按钮事件
+        document.getElementById('copy-template-btn').addEventListener('click', () => {
+            const templateText = `# 解密请求
+
+**文件类型:** \`${fileType}\`
+**加密类型:** \`${encryptionType}\`
+**时间戳:** ${new Date().toISOString()}
+
+**代码:**
+\`\`\`${fileType}
+${code}
+\`\`\``;
+            
+            navigator.clipboard.writeText(templateText)
+                .then(() => {
+                    alert('模板已复制到剪贴板！现在您可以粘贴到Issue中。');
+                })
+                .catch(err => {
+                    console.error('复制失败:', err);
+                    alert('复制失败，请手动复制模板。');
+                });
+        });
+        
+        // 添加检查结果按钮事件
+        document.getElementById('check-result-btn').addEventListener('click', () => {
+            promptForIssueNumber(fileType);
+        });
+    } catch (error) {
+        resultElement.innerHTML = `
+            <p>错误: ${error.message}</p>
+            <p>请稍后重试。</p>
+        `;
+    }
+}
+
+// 提示输入Issue编号
+function promptForIssueNumber(fileType) {
+    const issueNumber = prompt('请输入Issue编号 (仅数字部分):', '');
+    if (issueNumber && !isNaN(issueNumber)) {
+        const resultElement = document.getElementById('result-content');
+        resultElement.innerHTML = `
+            <p>正在检查issue #${issueNumber}的解密结果...</p>
+            <p>请等待约60秒，GitHub Actions正在处理您的请求</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        `;
+        
+        // 启动进度条
+        startProgressBar();
+        
+        // 开始轮询结果
+        pollForIssueResults(issueNumber, fileType);
+    } else {
+        alert('请输入有效的Issue编号！');
+    }
+}
+
+// 轮询issue结果
+function pollForIssueResults(issueNumber, fileType) {
+    const resultElement = document.getElementById('result-content');
+    let attempts = 0;
+    const maxAttempts = 20; // 最多尝试20次，每次3秒
+    
+    const checkIssue = () => {
+        attempts++;
+        
+        if (attempts > maxAttempts) {
+            // 超过最大尝试次数
+            clearInterval(window.progressInterval);
+            resultElement.innerHTML = `
+                <p>检查超时。GitHub Actions可能仍在处理您的请求。</p>
+                <p>请稍后直接查看issue获取结果。</p>
+                <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/${issueNumber}" target="_blank" class="github-link">查看Issue #${issueNumber}</a>
+                <button id="retry-btn" class="github-link" style="margin-top: 10px;">再次检查</button>
+            `;
+            
+            // 添加重试按钮事件
+            document.getElementById('retry-btn').addEventListener('click', () => {
+                pollForIssueResults(issueNumber, fileType);
+            });
+            return;
+        }
+        
+        // 由于浏览器端无法直接访问GitHub API（需要认证令牌），
+        // 我们会指导用户直接查看issue
+        if (attempts === 10) { // 等待约30秒后提示
+            resultElement.innerHTML = `
+                <p>GitHub Actions可能正在处理您的请求。</p>
+                <p>您可以直接查看issue获取最新结果：</p>
+                <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/${issueNumber}" target="_blank" class="github-link">查看Issue #${issueNumber}</a>
+                <p>或继续等待自动检查（还剩${maxAttempts - attempts}次尝试）</p>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar" style="width: ${(attempts / maxAttempts) * 100}%"></div>
+                </div>
+            `;
+        }
+        
+        // 这里我们假设解密大约需要60秒
+        // 实际应用中，如果有API访问权限，可以真正检查issue评论
+        if (attempts >= maxAttempts - 1) { // 最后一次尝试
+            clearInterval(checkInterval);
+            clearInterval(window.progressInterval);
+            
+            resultElement.innerHTML = `
+                <p>检查完成，请点击下方链接查看解密结果：</p>
+                <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/${issueNumber}" target="_blank" class="github-link">查看Issue #${issueNumber} 的解密结果</a>
+                <p class="info-box" style="margin-top: 15px;">
+                    <strong>提示:</strong> 如果Issue中尚未显示解密结果，GitHub Actions可能仍在处理。
+                    请稍后再查看，或检查是否有错误信息。
+                </p>
+            `;
+        }
+    };
+    
+    // 立即执行一次
+    checkIssue();
+    
+    // 然后每3秒执行一次
+    const checkInterval = setInterval(checkIssue, 3000);
+}
+
+// 启动进度条
+function startProgressBar() {
+    const progressBar = document.getElementById('progress-bar');
+    let width = 0;
+    
+    // 如果存在旧的interval，清除它
+    if (window.progressInterval) {
+        clearInterval(window.progressInterval);
+    }
+    
+    // 创建新的progress interval
+    const interval = setInterval(() => {
+        if (width >= 100) {
+            clearInterval(interval);
+        } else {
+            width += 0.5; // 更平滑的进度增长
+            progressBar.style.width = width + '%';
+        }
+    }, 300); // 60秒满进度
+    
+    // 保存interval ID
+    window.progressInterval = interval;
+}
+
 // 初始化文件上传
 function initFileUpload() {
-    document.getElementById('local-file').addEventListener('change', (event) => {
+    document.getElementById('local-file')?.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
@@ -101,8 +280,8 @@ function initFileUpload() {
 
 // 初始化远程文件获取
 function initRemoteFile() {
-    document.getElementById('fetch-remote').addEventListener('click', () => {
-        const url = document.getElementById('remote-url').value;
+    document.getElementById('fetch-remote')?.addEventListener('click', () => {
+        const url = document.getElementById('remote-url')?.value;
         if (!url) {
             alert('请输入远程文件URL');
             return;
@@ -112,7 +291,10 @@ function initRemoteFile() {
         document.getElementById('result-content').innerHTML = '<p>正在获取远程文件...</p>';
         
         // 尝试通过CORS代理获取远程文件
-        fetch('https://cors-anywhere.herokuapp.com/' + url)
+        // 注意：cors-anywhere可能对新域名有限制
+        // 考虑使用其他公共CORS代理或自建代理
+        const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+        fetch(corsProxy + url)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('无法获取远程文件');
@@ -141,185 +323,13 @@ function initRemoteFile() {
                 document.getElementById('result-content').innerHTML = `
                     <p>获取远程文件失败: ${error.message}</p>
                     <p>由于浏览器的安全限制，某些远程文件可能无法直接获取。请尝试手动复制代码。</p>
+                    <p>或者尝试使用其他公共CORS代理：</p>
+                    <ul>
+                        <li><a href="https://allorigins.win/" target="_blank" class="github-link">AllOrigins</a></li>
+                        <li><a href="https://api.codetabs.com/v1/proxy" target="_blank" class="github-link">CodeTabs Proxy</a></li>
+                    </ul>
                 `;
             });
-    });
-}
-
-// 创建GitHub issue
-function createGitHubIssue(code, fileType, encryptionType) {
-    const resultElement = document.getElementById('result-content');
-    
-    try {
-        // 构造issue URL
-        const issueUrl = `https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/new`;
-        
-        // 构造issue内容
-        const issueTitle = `[Web解密请求] ${encryptionType} - ${new Date().toISOString()}`;
-        const issueBody = `
-# 解密请求
-
-**文件类型:** \`${fileType}\`
-**加密类型:** \`${encryptionType}\`
-**时间戳:** ${new Date().toISOString()}
-
-**代码:**
-\`\`\`${fileType}
-${code}
-\`\`\`
-        `;
-        
-        // 编码issue内容
-        const encodedTitle = encodeURIComponent(issueTitle);
-        const encodedBody = encodeURIComponent(issueBody);
-        
-        // 创建完整URL
-        const fullIssueUrl = `${issueUrl}?title=${encodedTitle}&body=${encodedBody}`;
-        
-        // 在新窗口中打开GitHub issue创建页面
-        const newWindow = window.open(fullIssueUrl, '_blank');
-        
-        // 更新UI提示用户操作
-        resultElement.innerHTML = `
-            <p>已打开GitHub issue创建页面，请按照以下步骤操作：</p>
-            <ol>
-                <li>在新打开的页面中点击"Submit new issue"提交issue</li>
-                <li>提交后回到本页面</li>
-                <li>记下issue编号（例如"#12"）</li>
-                <li>点击下方"开始检查结果"按钮并输入issue编号</li>
-            </ol>
-            <button id="check-result-btn">开始检查结果</button>
-        `;
-        
-        // 添加检查结果按钮事件
-        document.getElementById('check-result-btn').addEventListener('click', () => {
-            const issueNumber = prompt('请输入刚刚创建的issue编号 (仅数字部分):', '');
-            if (issueNumber && !isNaN(issueNumber)) {
-                // 更新UI
-                resultElement.innerHTML = `
-                    <p>正在检查issue #${issueNumber}的解密结果...</p>
-                    <p>请等待约60秒，GitHub Actions正在处理您的请求</p>
-                    <div class="progress-container">
-                        <div class="progress-bar" id="progress-bar"></div>
-                    </div>
-                `;
-                
-                // 启动进度条
-                startProgressBar();
-                
-                // 开始轮询结果
-                pollForIssueResults(issueNumber, fileType);
-            } else {
-                alert('请输入有效的issue编号！');
-            }
-        });
-    } catch (error) {
-        resultElement.innerHTML = `
-            <p>错误: ${error.message}</p>
-            <p>请稍后重试。</p>
-        `;
-    }
-}
-
-// 启动进度条
-function startProgressBar() {
-    const progressBar = document.getElementById('progress-bar');
-    let width = 0;
-    
-    const interval = setInterval(() => {
-        if (width >= 100) {
-            clearInterval(interval);
-        } else {
-            width++;
-            progressBar.style.width = width + '%';
-        }
-    }, 600); // 60秒完成
-    
-    // 保存interval ID
-    window.progressInterval = interval;
-}
-
-// 轮询issue结果
-function pollForIssueResults(issueNumber, fileType) {
-    const resultElement = document.getElementById('result-content');
-    let attempts = 0;
-    const maxAttempts = 20; // 最多尝试20次，每次3秒
-    
-    const checkIssue = () => {
-        attempts++;
-        
-        if (attempts > maxAttempts) {
-            // 超过最大尝试次数
-            clearInterval(window.progressInterval);
-            resultElement.innerHTML = `
-                <p>检查超时。GitHub Actions可能仍在处理您的请求。</p>
-                <p>请稍后直接查看issue #${issueNumber}的评论获取结果。</p>
-                <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/${issueNumber}" target="_blank" class="github-link">查看Issue</a>
-            `;
-            return;
-        }
-        
-        // 创建一个"模拟"检查
-        // 实际应用中，这里应该使用fetch API检查issue的评论
-        // 但由于GitHub API的跨域限制，这里只是模拟检查结果
-        
-        if (attempts >= 10) { // 模拟10次检查后找到结果
-            clearInterval(window.progressInterval);
-            document.getElementById('progress-bar').style.width = '100%';
-            
-            // 模拟解密结果
-            displayDecryptResult(`// 解密结果 - 来自issue #${issueNumber}
-// 解密时间: ${new Date().toLocaleString()}
-
-function deobfuscatedCode() {
-    console.log('代码已成功解密!');
-    return '这里会显示实际解密后的代码';
-}
-
-// 在实际使用中，这里将是GitHub Actions处理后的真实解密结果
-// 解密结果会作为issue评论返回
-`, fileType);
-            
-            clearInterval(checkInterval);
-        }
-    };
-    
-    // 开始轮询
-    const checkInterval = setInterval(checkIssue, 3000);
-}
-
-// 显示解密结果
-function displayDecryptResult(result, fileType) {
-    const resultElement = document.getElementById('result-content');
-    
-    // 显示结果
-    resultElement.innerHTML = `
-        <p>解密完成!</p>
-        <pre>${escapeHtml(result)}</pre>
-        <div class="copy-download-btns">
-            <button id="copy-btn">复制结果</button>
-            <button id="download-btn">下载结果</button>
-            <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}" target="_blank" class="github-link">查看仓库</a>
-        </div>
-    `;
-    
-    // 添加复制和下载功能
-    document.getElementById('copy-btn').addEventListener('click', () => {
-        navigator.clipboard.writeText(result)
-            .then(() => alert('已复制到剪贴板'))
-            .catch(err => console.error('复制失败:', err));
-    });
-    
-    document.getElementById('download-btn').addEventListener('click', () => {
-        const blob = new Blob([result], {type: 'text/plain'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `decrypted.${fileType}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
     });
 }
 

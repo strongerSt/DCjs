@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>pxxjs | 娱乐一下 测试效果</title>
+    <title>Mikephie | 脚本解密工具</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -172,12 +172,12 @@
         <header>
             <div class="logo">
                 <span class="logo-prefix">./</span>
-                pxxjs
-                <span class="version">0.0.2</span>
+                Mikephie
+                <span class="version">1.0.0</span>
             </div>
         </header>
         
-        <div class="subtitle">娱乐一下 测试效果</div>
+        <div class="subtitle">脚本解密工具</div>
         
         <div class="tabs">
             <div class="tab active" data-tab="paste">粘贴代码</div>
@@ -190,68 +190,36 @@
             
             <div class="encryption-types">
                 <div class="encryption-type">
-                    <input type="radio" id="type-nil" name="encryption-type" checked>
-                    <label for="type-nil">无(NIL)</label>
+                    <input type="radio" id="type-auto" name="encryption-type" checked>
+                    <label for="type-auto">自动检测</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-common" name="encryption-type">
+                    <label for="type-common">Common</label>
                 </div>
                 <div class="encryption-type">
                     <input type="radio" id="type-eval" name="encryption-type">
                     <label for="type-eval">Eval</label>
                 </div>
                 <div class="encryption-type">
-                    <input type="radio" id="type-jsjiami-v7" name="encryption-type">
-                    <label for="type-jsjiami-v7">jsjiami.v7</label>
-                </div>
-                <div class="encryption-type">
-                    <input type="radio" id="type-array" name="encryption-type">
-                    <label for="type-array">Array</label>
-                </div>
-                <div class="encryption-type">
-                    <input type="radio" id="type-obfuscator" name="encryption-type">
-                    <label for="type-obfuscator">Obfuscator IO</label>
-                </div>
-                <div class="encryption-type">
-                    <input type="radio" id="type-number" name="encryption-type">
-                    <label for="type-number">_Number</label>
-                </div>
-                <div class="encryption-type">
-                    <input type="radio" id="type-jsfuck" name="encryption-type">
-                    <label for="type-jsfuck">JSFuck</label>
-                </div>
-                <div class="encryption-type">
                     <input type="radio" id="type-jjencode" name="encryption-type">
                     <label for="type-jjencode">JJencode</label>
                 </div>
                 <div class="encryption-type">
-                    <input type="radio" id="type-aaencode" name="encryption-type">
-                    <label for="type-aaencode">AAencode</label>
+                    <input type="radio" id="type-obfuscator" name="encryption-type">
+                    <label for="type-obfuscator">Obfuscator</label>
                 </div>
                 <div class="encryption-type">
-                    <input type="radio" id="type-urlencode" name="encryption-type">
-                    <label for="type-urlencode">URLencode</label>
+                    <input type="radio" id="type-partial" name="encryption-type">
+                    <label for="type-partial">Partial</label>
                 </div>
                 <div class="encryption-type">
-                    <input type="radio" id="type-packer" name="encryption-type">
-                    <label for="type-packer">Packer</label>
+                    <input type="radio" id="type-sojson" name="encryption-type">
+                    <label for="type-sojson">Sojson</label>
                 </div>
                 <div class="encryption-type">
-                    <input type="radio" id="type-js-obfuscator" name="encryption-type">
-                    <label for="type-js-obfuscator">JS Obfuscator</label>
-                </div>
-                <div class="encryption-type">
-                    <input type="radio" id="type-my-obfuscate" name="encryption-type">
-                    <label for="type-my-obfuscate">My Obfuscate</label>
-                </div>
-                <div class="encryption-type">
-                    <input type="radio" id="type-wise-eval" name="encryption-type">
-                    <label for="type-wise-eval">Wise Eval</label>
-                </div>
-                <div class="encryption-type">
-                    <input type="radio" id="type-wise-function" name="encryption-type">
-                    <label for="type-wise-function">Wise Function</label>
-                </div>
-                <div class="encryption-type">
-                    <input type="radio" id="type-clean-source" name="encryption-type">
-                    <label for="type-clean-source">Clean Source</label>
+                    <input type="radio" id="type-sojsonv7" name="encryption-type">
+                    <label for="type-sojsonv7">SojsonV7</label>
                 </div>
             </div>
             
@@ -318,14 +286,15 @@
             <div class="footer-section">
                 <div class="footer-title">技术依赖</div>
                 <div>
-                    <p>关于依赖 <a href="#">pxxjs</a></p>
+                    <p>脚本解密工具由以下模块支持：</p>
+                    <p>common.js, eval.js, jjencode.js, obfuscator.js, part2al.js, sojson.js, sojsonv7.js</p>
                 </div>
             </div>
             <div class="footer-section">
                 <div class="footer-title">介绍</div>
                 <div>
-                    <p>项目由 <a href="https://github.com/pxx917144686">pxx917144686</a> 更新</p>
-                    <p>logo图标在 <a href="#">Eucalyp</a> 获取</p>
+                    <p>项目由 <a href="https://github.com/Mikephie">Mikephie</a> 开发与维护</p>
+                    <p>本工具支持多种JavaScript混淆解密</p>
                 </div>
             </div>
         </footer>
@@ -361,7 +330,7 @@
             }
             
             // 获取选中的加密类型
-            let encryptionType = '';
+            let encryptionType = 'auto';
             document.querySelectorAll('input[name="encryption-type"]').forEach(input => {
                 if (input.checked) {
                     encryptionType = input.id.replace('type-', '');
@@ -377,26 +346,81 @@
             // 模拟解密过程
             document.getElementById('result-content').innerHTML = 
                 `<p>解密中，请稍候...</p>
-                <p>正在处理 ${encryptionType} 类型的加密...</p>`;
+                <p>处理类型: ${encryptionType}</p>`;
             
-            // 这里你需要根据实际情况发送请求到你的GitHub Actions或其他后端服务
-            // 以下是模拟60秒后获取结果
-            setTimeout(() => {
-                document.getElementById('result-content').innerHTML = 
-                    `<pre>// 解密结果
-// 原始加密类型: ${encryptionType}
-// 解密时间: ${new Date().toLocaleString()}
-
-// 这里是解密后的代码示例
-function deobfuscatedFunction() {
-    console.log("成功解密!");
-    return "这里将显示实际解密后的代码";
-}
-
-// 解密完成
-                    </pre>`;
-            }, 2000); // 为了演示，我们用2秒代替60秒
+            // 这里是模拟解密过程的代码
+            // 实际使用时应该将代码提交到GitHub Actions或后端服务
+            simulateDecryption(code, encryptionType, features);
         });
+        
+        // 模拟解密函数
+        function simulateDecryption(code, type, features) {
+            // 在实际实现中，这里应该是提交代码到GitHub并处理
+            document.getElementById('result-content').innerHTML = `
+                <p>代码已提交。Github Actions正在处理中，请等待约60秒...</p>
+                <div style="width:100%; height:20px; background:#333; border-radius:10px; margin:15px 0;">
+                    <div class="progress" style="width:0%; height:100%; background:#9eca34; border-radius:10px;"></div>
+                </div>
+                <p>选择的加密类型: ${type}</p>
+            `;
+            
+            // 模拟进度条
+            const progress = document.querySelector('.progress');
+            let width = 0;
+            const interval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(interval);
+                    // 解密完成后显示结果
+                    displayResult(code, type);
+                } else {
+                    width++;
+                    progress.style.width = width + '%';
+                }
+            }, 600); // 60秒
+        }
+        
+        // 显示解密结果
+        function displayResult(code, type) {
+            // 在实际实现中，这里应该是从GitHub获取处理后的结果
+            let result = "// 解密结果\n";
+            result += `// 原始加密类型: ${type}\n`;
+            result += "// 解密时间: " + new Date().toLocaleString() + "\n\n";
+            
+            // 示例解密结果
+            result += "function deobfuscatedCode() {\n";
+            result += "    console.log('成功解密!');\n";
+            result += "    return '这里是解密后的代码，实际使用时会显示真实的解密结果';\n";
+            result += "}\n\n";
+            result += "// 提示: 实际使用时，这里将显示GitHub Actions处理后的真实解密结果";
+            
+            document.getElementById('result-content').innerHTML = `
+                <p>解密完成!</p>
+                <pre style="background:#1a1a1a; padding:10px; border-radius:4px; overflow:auto;">${result}</pre>
+                <div style="margin-top:15px;">
+                    <button id="copy-btn">复制结果</button>
+                    <button id="download-btn">下载结果</button>
+                </div>
+            `;
+            
+            // 添加复制和下载功能
+            document.getElementById('copy-btn').addEventListener('click', () => {
+                navigator.clipboard.writeText(result)
+                    .then(() => alert('已复制到剪贴板'))
+                    .catch(err => console.error('复制失败:', err));
+            });
+            
+            document.getElementById('download-btn').addEventListener('click', () => {
+                const blob = new Blob([result], {type: 'text/plain'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'decrypted_code.js';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
         
         // 上传本地文件
         document.getElementById('local-file').addEventListener('change', (event) => {

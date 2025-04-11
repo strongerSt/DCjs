@@ -1,4 +1,4 @@
-// ===== 大型文件处理 - 精简完整版 =====
+// ===== 大型文件处理 - 修复按钮问题 =====
 
 // 添加大型文件处理的配置
 var largeFile = {
@@ -157,82 +157,88 @@ function processLargeFile(file) {
     readNextChunk(0);
 }
 
-// 增强文件上传功能
-function enhanceFileUpload() {
-    // 保存原始的handleFileUpload函数
-    var originalHandleFileUpload = window.handleFileUpload;
-    
-    // 确保原始函数存在
-    if (typeof originalHandleFileUpload !== 'function') {
-        console.warn('原始handleFileUpload函数未找到');
-        return;
-    }
-    
-    // 替换为增强版本
-    window.handleFileUpload = function(file) {
-        // 先尝试用增强版处理大型文件
-        var isLargeFile = handleLargeFileUpload(file);
-        
-        // 如果不是大型文件，使用原始函数处理
-        if (!isLargeFile) {
-            originalHandleFileUpload(file);
-        }
-    };
-}
-
-// 增强解密按钮
-function enhanceDecryptButton() {
-    var decryptBtn = document.getElementById('decrypt-btn');
-    if (!decryptBtn) {
-        console.warn('解密按钮未找到');
-        return;
-    }
-    
-    // 保存原始onclick事件
-    var originalOnClick = decryptBtn.onclick;
-    
-    // 设置新的onclick事件
-    decryptBtn.onclick = function(event) {
-        // 检查是否有大型文件
-        if (largeFile.manager.content && largeFile.manager.content.length > 0) {
-            // 获取文件类型
-            var fileType = largeFile.manager.fileType || 'js';
-            
-            // 确保UI上的选择匹配
-            var typeRadio = document.querySelector('input[name="file-type"][value="' + fileType + '"]');
-            if (typeRadio) typeRadio.checked = true;
-            
-            // 获取选中的加密类型
-            var encryptionType = 'auto';
-            var encryptionInputs = document.querySelectorAll('input[name="encryption-type"]');
-            for (var i = 0; i < encryptionInputs.length; i++) {
-                if (encryptionInputs[i].checked) {
-                    encryptionType = encryptionInputs[i].id.replace('type-', '');
-                    break;
+// 修改版本：增强文件上传功能 - 不覆盖原始函数
+function monitorFileUploads() {
+    // 监视文件输入变化
+    var fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(function(input) {
+        input.addEventListener('change', function(event) {
+            if (event.target.files && event.target.files[0]) {
+                var file = event.target.files[0];
+                // 如果是大文件，使用我们的处理器
+                if (file.size > largeFile.CHUNK_SIZE) {
+                    handleLargeFileUpload(file);
+                    event.preventDefault();
+                    event.stopPropagation();
                 }
             }
-            
-            // 使用完整内容创建GitHub issue
-            console.log('使用大型文件内容创建解密请求...');
-            createGitHubIssue(largeFile.manager.content, fileType, encryptionType);
-            
-            // 防止原始事件处理器执行
-            event.preventDefault();
-            return false;
+        }, true); // 使用捕获阶段
+    });
+    
+    // 监视拖放区域
+    var dropZone = document.querySelector('.drop-zone');
+    if (dropZone) {
+        dropZone.addEventListener('drop', function(event) {
+            if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+                var file = event.dataTransfer.files[0];
+                // 如果是大文件，使用我们的处理器
+                if (file.size > largeFile.CHUNK_SIZE) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleLargeFileUpload(file);
+                    return false;
+                }
+            }
+        }, true); // 使用捕获阶段
+    }
+}
+
+// 监视解密按钮点击 - 不覆盖原始事件处理程序
+function monitorDecryptButton() {
+    // 添加我们自己的事件处理器，在按钮点击时检查是否有大型文件
+    document.addEventListener('click', function(event) {
+        // 检查点击的是否是解密按钮
+        if (event.target && event.target.id === 'decrypt-btn') {
+            // 检查是否有大型文件
+            if (largeFile.manager.content && largeFile.manager.content.length > 0) {
+                console.log('处理大型文件解密请求...');
+                
+                // 阻止原始点击事件
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // 获取文件类型
+                var fileType = largeFile.manager.fileType || 'js';
+                
+                // 确保UI上的选择匹配
+                var typeRadio = document.querySelector('input[name="file-type"][value="' + fileType + '"]');
+                if (typeRadio) typeRadio.checked = true;
+                
+                // 获取选中的加密类型
+                var encryptionType = 'auto';
+                var encryptionInputs = document.querySelectorAll('input[name="encryption-type"]');
+                for (var i = 0; i < encryptionInputs.length; i++) {
+                    if (encryptionInputs[i].checked) {
+                        encryptionType = encryptionInputs[i].id.replace('type-', '');
+                        break;
+                    }
+                }
+                
+                // 使用完整内容创建GitHub issue
+                createGitHubIssue(largeFile.manager.content, fileType, encryptionType);
+                return false;
+            }
         }
-        
-        // 如果没有大型文件，执行原始点击事件
-        if (originalOnClick) {
-            return originalOnClick.call(this, event);
-        }
-    };
+    }, true); // 使用捕获阶段
 }
 
 // 初始化增强功能
-setTimeout(function() {
-    console.log('正在初始化大型文件处理功能...');
-    addLargeFileStyles();
-    enhanceFileUpload();
-    enhanceDecryptButton();
-    console.log('大型文件处理功能初始化完成');
-}, 1000);
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        console.log('正在初始化大型文件处理功能...');
+        addLargeFileStyles();
+        monitorFileUploads();
+        monitorDecryptButton();
+        console.log('大型文件处理功能初始化完成');
+    }, 1000);
+});

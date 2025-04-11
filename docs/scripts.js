@@ -43,46 +43,52 @@ function initTabs() {
 // 初始化按钮事件
 function initButtons() {
     // 清空按钮点击事件
-    document.getElementById('clear-btn')?.addEventListener('click', () => {
-        document.getElementById('code-input').value = '';
-        document.getElementById('result-content').innerHTML = '';
-        
-        // 如果有拖放区域，在清空后显示它
-        const dropZone = document.querySelector('.drop-zone');
-        const textArea = document.getElementById('code-input');
-        if (dropZone && textArea) {
-            textArea.style.display = 'none';
-            dropZone.style.display = 'flex';
-        }
-    });
+    const clearBtn = document.getElementById('clear-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            document.getElementById('code-input').value = '';
+            document.getElementById('result-content').innerHTML = '';
+            
+            // 如果有拖放区域，在清空后显示它
+            const dropZone = document.querySelector('.drop-zone');
+            const textArea = document.getElementById('code-input');
+            if (dropZone && textArea) {
+                textArea.style.display = 'none';
+                dropZone.style.display = 'flex';
+            }
+        });
+    }
     
     // 解码按钮点击事件
-    document.getElementById('decrypt-btn')?.addEventListener('click', () => {
-        const code = document.getElementById('code-input').value;
-        if (!code.trim()) {
-            alert('请输入需要解密的代码');
-            return;
-        }
-        
-        // 获取文件类型
-        let fileType = 'js';
-        document.querySelectorAll('input[name="file-type"]').forEach(input => {
-            if (input.checked) {
-                fileType = input.value;
+    const decryptBtn = document.getElementById('decrypt-btn');
+    if (decryptBtn) {
+        decryptBtn.addEventListener('click', () => {
+            const code = document.getElementById('code-input').value;
+            if (!code.trim()) {
+                alert('请输入需要解密的代码');
+                return;
             }
+            
+            // 获取文件类型
+            let fileType = 'js';
+            document.querySelectorAll('input[name="file-type"]').forEach(input => {
+                if (input.checked) {
+                    fileType = input.value;
+                }
+            });
+            
+            // 获取选中的加密类型
+            let encryptionType = 'auto';
+            document.querySelectorAll('input[name="encryption-type"]').forEach(input => {
+                if (input.checked) {
+                    encryptionType = input.id.replace('type-', '');
+                }
+            });
+            
+            // 创建GitHub issue
+            createGitHubIssue(code, fileType, encryptionType);
         });
-        
-        // 获取选中的加密类型
-        let encryptionType = 'auto';
-        document.querySelectorAll('input[name="encryption-type"]').forEach(input => {
-            if (input.checked) {
-                encryptionType = input.id.replace('type-', '');
-            }
-        });
-        
-        // 创建GitHub issue
-        createGitHubIssue(code, fileType, encryptionType);
-    });
+    }
 }
 
 // 创建GitHub issue

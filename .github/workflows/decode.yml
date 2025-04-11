@@ -4,27 +4,96 @@ on:
   push:
     branches:
       - main
+  issues:
+    types: [opened, edited]
+
 jobs:
   decode:
+    # 如果是push事件或者issue标题包含[Web解密请求]，则运行
+    if: ${{ github.event_name == 'push' || contains(github.event.issue.title, '[Web解密请求]') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      issues: write  # 添加issues写入权限
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    # 如果是Issue事件，提取代码
+    - name: Extract code from issue
+      if: ${{ github.event_name == 'issues' }}
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const issue = await github.rest.issues.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number
+          });
+          
+          const issueBody = issue.data.body;
+          
+          // 解析issue内容
+          const fileTypeMatch = issueBody.match(/\*\*文件类型:\*\* `(.+?)`/);
+          const encryptTypeMatch = issueBody.match(/\*\*加密类型:\*\* `(.+?)`/);
+          
+          let fileType = 'js';
+          if (fileTypeMatch && fileTypeMatch[1]) {
+            fileType = fileTypeMatch[1];
+          }
+          
+          // 提取代码块
+          const codeBlockRegex = /```[\s\S]*?\n([\s\S]*?)```/g;
+          const codeBlocks = [...issueBody.matchAll(codeBlockRegex)];
+          
+          let code = '';
+          if (codeBlocks.length > 0) {
+            code = codeBlocks[0][1];
+          }
+          
+          // 保存文件类型
+          core.exportVariable('FILE_TYPE', fileType);
+          
+          // 写入输入文件
+          const fs = require('fs');
+          fs.writeFileSync(`input.${fileType}`, code);
+          
+          console.log(`File type: ${fileType}`);
+          console.log(`Code length: ${code.length} characters`);
+
+    # 执行Python脚本解密
     - name: Execute Python script for decoding
       run: |
         python src/decode.py
 
+    # 安装依赖并运行解密
     - name: Install dependencies and run decode
       run: |
         npm install
-        npm run decode -- [-i input.js] [-o output.js]
+        if [ "${{ github.event_name }}" == "issues" ]; then
+          FILE_TYPE=${{ env.FILE_TYPE }}
+          if [ "$FILE_TYPE" = "js" ]; then
+            npm run decode -- -i input.js -o output.js
+          elif [ "$FILE_TYPE" = "py" ]; then
+            # 如果是Python文件，可能需要特殊处理
+            echo "处理Python文件"
+          elif [ "$FILE_TYPE" = "php" ]; then
+            # 如果是PHP文件，可能需要特殊处理
+            echo "处理PHP文件"
+          fi
+        else
+          # 常规push事件，使用原始命令
+          npm run decode -- [-i input.js] [-o output.js]
+        fi
+
+    # 配置Git
     - name: Configure Git author
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "action"
+
+    # 保存解密结果到仓库
     - name: Save decoded output to repository
       run: |
         git status
@@ -33,4 +102,52 @@ jobs:
         git add output.py
         git commit -m "Add decoded output file"
         git push
-        
+    
+    # 如果是Issue事件，将结果作为评论添加到Issue
+    - name: Comment on issue with results
+      if: ${{ github.event_name == 'issues' }}
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          let resultContent = '';
+          const fileType = process.env.FILE_TYPE || 'js';
+          const outputFile = `output.${fileType}`;
+          
+          try {
+            if (fs.existsSync(outputFile)) {
+              resultContent = fs.readFileSync(outputFile, 'utf8');
+            } else {
+              // 如果指定的输出文件不存在，尝试查找其他可能的输出文件
+              if (fs.existsSync('output.js')) {
+                resultContent = fs.readFileSync('output.js', 'utf8');
+              } else if (fs.existsSync('output.py')) {
+                resultContent = fs.readFileSync('output.py', 'utf8');
+              } else {
+                resultContent = '解密过程完成，但未找到输出文件。请查看仓库中的最新文件。';
+              }
+            }
+          } catch (error) {
+            console.error(`无法读取输出文件: ${error}`);
+            resultContent = '解密过程出错，未生成结果文件。';
+          }
+          
+          const commentBody = `## 解密结果
+
+处理时间: ${new Date().toISOString()}
+
+\`\`\`${fileType}
+${resultContent.length > 65000 ? resultContent.substring(0, 65000) + '...(结果过长，已截断)' : resultContent}
+\`\`\`
+
+解密完成! 结果也已保存到仓库文件中。`;
+          
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: commentBody
+          });
+          
+          console.log(`解密结果已作为评论添加到issue #${context.issue.number}`);

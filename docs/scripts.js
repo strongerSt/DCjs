@@ -209,7 +209,7 @@ ${code}
     }
 }
 
-// 显示手动创建Issue的步骤
+// 修改showManualSteps函数，添加浮动复制按钮
 function showManualSteps(issueTitle, issueBody, fileType) {
     const resultElement = document.getElementById('result-content');
     
@@ -245,6 +245,39 @@ function showManualSteps(issueTitle, issueBody, fileType) {
     // 添加检查结果按钮事件
     document.getElementById('check-result-btn').addEventListener('click', () => {
         promptForIssueNumber(fileType);
+    });
+    
+    // 添加浮动复制按钮
+    const floatingBtn = document.createElement('button');
+    floatingBtn.textContent = '快速复制模板';
+    floatingBtn.style.cssText = 'position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#9eca34; color:white; border:none; border-radius:6px; cursor:pointer; z-index:9999; box-shadow:0 2px 5px rgba(0,0,0,0.2);';
+    
+    floatingBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(issueBody)
+            .then(() => {
+                alert('模板已复制到剪贴板！现在您可以粘贴到Issue中。');
+            })
+            .catch(err => {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动复制模板。');
+            });
+    });
+    
+    document.body.appendChild(floatingBtn);
+    
+    // 在用户离开或点击检查结果按钮时移除浮动按钮
+    const cleanupFloatingBtn = () => {
+        if (document.body.contains(floatingBtn)) {
+            document.body.removeChild(floatingBtn);
+        }
+    };
+    
+    document.getElementById('check-result-btn').addEventListener('click', cleanupFloatingBtn);
+    
+    // 当用户离开结果区域或导航到其他页面时移除浮动按钮
+    window.addEventListener('beforeunload', cleanupFloatingBtn);
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', cleanupFloatingBtn);
     });
 }
 
@@ -733,288 +766,3 @@ function escapeHtml(unsafe) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
-// 大型文件处理工具 - 独立功能模块
-(function() {
-    // 配置
-    var SIZE_LIMIT = 1 * 1024 * 1024; // 1MB
-    
-    // 等待页面完全加载
-    window.addEventListener('load', function() {
-        setTimeout(initLargeFileHelper, 1000);
-    });
-    
-    // 初始化大型文件助手
-    function initLargeFileHelper() {
-        // 添加样式
-        addStyles();
-        
-        // 添加UI元素
-        addHelperUI();
-        
-        // 监听文件上传事件
-        monitorFileUploads();
-        
-        console.log('大型文件助手已初始化');
-    }
-    
-    // 添加样式
-    function addStyles() {
-        var style = document.createElement('style');
-        style.textContent = `
-            .large-file-helper { 
-                margin: 10px 0; 
-                padding: 12px; 
-                background: #e8f5e9; 
-                border-left: 4px solid #4caf50; 
-                border-radius: 4px; 
-                font-size: 14px; 
-                display: none; 
-            }
-            .helper-title {
-                font-weight: bold;
-                margin-bottom: 8px;
-            }
-            .helper-buttons {
-                margin-top: 10px;
-                display: flex;
-                gap: 8px;
-            }
-            .helper-btn {
-                padding: 6px 12px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-weight: 500;
-                font-size: 14px;
-                border: 1px solid rgba(0,0,0,0.15);
-            }
-            .helper-primary-btn {
-                background-color: #4caf50;
-                color: white;
-            }
-            .helper-secondary-btn {
-                background-color: #f1f1f1;
-                color: #333;
-            }
-            .progress-container {
-                margin-top: 10px;
-                background-color: #f1f1f1;
-                border-radius: 4px;
-                overflow: hidden;
-                display: none;
-            }
-            .progress-bar {
-                height: 20px;
-                width: 0%;
-                background-color: #4caf50;
-                text-align: center;
-                line-height: 20px;
-                color: white;
-                transition: width 0.3s;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    // 添加助手UI
-    function addHelperUI() {
-        var targetElement = document.querySelector('#paste-content') || 
-                           document.querySelector('.tab-content') || 
-                           document.querySelector('form');
-        
-        if (!targetElement) return;
-        
-        var helperDiv = document.createElement('div');
-        helperDiv.className = 'large-file-helper';
-        helperDiv.id = 'large-file-helper';
-        helperDiv.innerHTML = `
-            <div class="helper-title">检测到大型文件</div>
-            <p>您上传的文件超过1MB，可能会导致处理问题。请考虑以下选项：</p>
-            <div class="helper-buttons">
-                <button id="split-file-btn" class="helper-btn helper-primary-btn">分割文件</button>
-                <button id="continue-anyway-btn" class="helper-btn helper-secondary-btn">继续处理</button>
-                <button id="cancel-file-btn" class="helper-btn helper-secondary-btn">取消</button>
-            </div>
-            <div class="progress-container" id="split-progress-container">
-                <div class="progress-bar" id="split-progress-bar"></div>
-            </div>
-        `;
-        
-        targetElement.insertBefore(helperDiv, targetElement.firstChild);
-        
-        // 添加按钮事件
-        document.getElementById('split-file-btn').addEventListener('click', splitLargeFile);
-        document.getElementById('continue-anyway-btn').addEventListener('click', continueProcessing);
-        document.getElementById('cancel-file-btn').addEventListener('click', cancelProcessing);
-    }
-    
-    // 监控文件上传
-    function monitorFileUploads() {
-        // 监视所有文件输入
-        var fileInputs = document.querySelectorAll('input[type="file"]');
-        fileInputs.forEach(function(input) {
-            input.addEventListener('change', checkFileSize);
-        });
-        
-        // 监视拖放区域
-        var dropZone = document.querySelector('.drop-zone');
-        if (dropZone) {
-            dropZone.addEventListener('drop', function(event) {
-                if (event.dataTransfer && event.dataTransfer.files.length) {
-                    setTimeout(function() {
-                        checkDroppedFileSize(event.dataTransfer.files[0]);
-                    }, 100);
-                }
-            });
-        }
-    }
-    
-    // 检查文件大小
-    function checkFileSize(event) {
-        if (event.target.files && event.target.files[0]) {
-            var file = event.target.files[0];
-            if (file.size > SIZE_LIMIT) {
-                currentLargeFile = file;
-                showHelper();
-            }
-        }
-    }
-    
-    // 检查拖放的文件大小
-    function checkDroppedFileSize(file) {
-        if (file && file.size > SIZE_LIMIT) {
-            currentLargeFile = file;
-            showHelper();
-        }
-    }
-    
-    // 显示助手
-    function showHelper() {
-        var helper = document.getElementById('large-file-helper');
-        if (helper) helper.style.display = 'block';
-    }
-    
-    // 隐藏助手
-    function hideHelper() {
-        var helper = document.getElementById('large-file-helper');
-        if (helper) helper.style.display = 'none';
-    }
-    
-    // 大文件引用
-    var currentLargeFile = null;
-    
-    // 分割大型文件
-    function splitLargeFile() {
-        if (!currentLargeFile) return;
-        
-        // 显示进度条
-        var progressContainer = document.getElementById('split-progress-container');
-        var progressBar = document.getElementById('split-progress-bar');
-        if (progressContainer) progressContainer.style.display = 'block';
-        if (progressBar) progressBar.style.width = '0%';
-        
-        // 读取文件内容
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            var content = e.target.result;
-            
-            // 更新进度条
-            if (progressBar) progressBar.style.width = '50%';
-            
-            // 分割文件
-            var chunkSize = SIZE_LIMIT - 1024; // 留一些余量
-            var totalChunks = Math.ceil(content.length / chunkSize);
-            
-            // 准备ZIP文件
-            loadJSZip(function(JSZip) {
-                var zip = new JSZip();
-                
-                // 添加README
-                zip.file("README.txt", 
-                    "分割的文件信息:\n" +
-                    "原始文件名: " + currentLargeFile.name + "\n" +
-                    "原始大小: " + (currentLargeFile.size / 1024).toFixed(2) + " KB\n" +
-                    "分割数量: " + totalChunks + "个部分\n\n" +
-                    "使用说明:\n" +
-                    "1. 每个部分单独上传解密\n" +
-                    "2. 所有部分解密后合并结果\n"
-                );
-                
-                // 添加每个部分
-                for (var i = 0; i < totalChunks; i++) {
-                    var start = i * chunkSize;
-                    var end = Math.min(start + chunkSize, content.length);
-                    var chunk = content.substring(start, end);
-                    
-                    // 创建文件名
-                    var parts = currentLargeFile.name.split('.');
-                    var ext = parts.length > 1 ? '.' + parts.pop() : '';
-                    var baseName = parts.join('.');
-                    var partFileName = baseName + "_part" + (i+1) + "of" + totalChunks + ext;
-                    
-                    // 添加到ZIP
-                    zip.file(partFileName, chunk);
-                }
-                
-                // 生成ZIP并提供下载
-                zip.generateAsync({type:"blob"}).then(function(content) {
-                    // 更新进度条
-                    if (progressBar) progressBar.style.width = '100%';
-                    
-                    // 创建下载链接
-                    var zipFileName = currentLargeFile.name.replace(/\.[^/.]+$/, "") + "_分割.zip";
-                    var a = document.createElement('a');
-                    a.href = URL.createObjectURL(content);
-                    a.download = zipFileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    
-                    // 清理
-                    setTimeout(function() {
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(a.href);
-                        hideHelper();
-                    }, 100);
-                });
-            });
-        };
-        
-        reader.readAsText(currentLargeFile);
-    }
-    
-    // 继续处理
-    function continueProcessing() {
-        hideHelper();
-        // 此函数不做任何干预，让原始代码继续处理文件
-    }
-    
-    // 取消处理
-    function cancelProcessing() {
-        hideHelper();
-        // 清空文件输入
-        var fileInputs = document.querySelectorAll('input[type="file"]');
-        fileInputs.forEach(function(input) {
-            input.value = '';
-        });
-        // 清空文本区域
-        var codeInput = document.getElementById('code-input');
-        if (codeInput) codeInput.value = '';
-    }
-    
-    // 加载JSZip库
-    function loadJSZip(callback) {
-        if (window.JSZip) {
-            callback(window.JSZip);
-            return;
-        }
-        
-        var script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-        script.onload = function() {
-            callback(window.JSZip);
-        };
-        script.onerror = function() {
-            alert('无法加载JSZip库，请检查网络连接');
-        };
-        document.head.appendChild(script);
-    }
-})();

@@ -1,4 +1,8 @@
-//Thu Apr 10 2025 07:36:35 GMT+0000 (Coordinated Universal Time)
+//Fri Apr 11 2025 03:39:43 GMT+0000 (Coordinated Universal Time)
 //Base:https://github.com/echo094/decode-js
 //Modify:https://github.com/smallfawn/decode_action
-粤语;
+var Mike = JSON.parse($response.body);
+Mike.payload.active = true;
+$done({
+  "body": JSON.stringify(Mike)
+});

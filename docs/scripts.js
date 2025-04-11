@@ -1,244 +1,1020 @@
-// ===== 大型文件处理 - 修复按钮问题 =====
-
-// 添加大型文件处理的配置
-var largeFile = {
-    CHUNK_SIZE: 1024 * 1024, // 1MB块大小
-    DISPLAY_LIMIT: 500 * 1024, // 界面显示限制（500KB）
-    
-    // 状态管理
-    manager: {
-        chunks: [],
-        fileName: '',
-        fileType: '',
-        totalSize: 0,
-        processed: 0,
-        content: ''
-    }
+// scripts.js
+// GitHub仓库配置
+const repoConfig = {
+    owner: 'Mikephie',
+    repo: 'DCjs',
+    branch: 'main'
 };
 
-// 重置管理器函数
-function resetLargeFileManager() {
-    largeFile.manager.chunks = [];
-    largeFile.manager.fileName = '';
-    largeFile.manager.fileType = '';
-    largeFile.manager.totalSize = 0;
-    largeFile.manager.processed = 0;
-    largeFile.manager.content = '';
+// 在页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 初始化标签页切换功能
+    initTabs();
+    
+    // 初始化按钮事件
+    initButtons();
+    
+    // 初始化文件上传
+    initFileUpload();
+    
+    // 初始化远程文件获取
+    initRemoteFile();
+    
+    // 初始化拖放功能
+    initDragDrop();
+});
+
+// 初始化标签页切换
+function initTabs() {
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // 移除所有标签页的激活状态
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 激活当前标签页
+            tab.classList.add('active');
+            const tabId = tab.getAttribute('data-tab');
+            document.getElementById(`${tabId}-content`).classList.add('active');
+        });
+    });
 }
 
-// 添加样式
-function addLargeFileStyles() {
-    var styleEl = document.createElement('style');
-    styleEl.id = 'large-file-styles';
-    styleEl.textContent = '.progress-container{width:100%;background-color:#f1f1f1;border-radius:4px;margin:10px 0;overflow:hidden}.progress-bar{height:20px;width:0%;background-color:#4CAF50;text-align:center;line-height:20px;color:white}.large-file-info{margin:10px 0;padding:10px;background-color:#e3f2fd;border-left:4px solid #2196f3;border-radius:4px}';
-    document.head.appendChild(styleEl);
-}
-
-// 处理大型文件上传
-function handleLargeFileUpload(file) {
-    if (!file || file.size <= largeFile.CHUNK_SIZE) return false;
-    
-    console.log('检测到大型文件:', file.name, '大小:', file.size);
-    
-    // 获取文件扩展名
-    var fileExtension = file.name.split('.').pop().toLowerCase();
-    
-    // 重置管理器
-    resetLargeFileManager();
-    largeFile.manager.fileName = file.name;
-    largeFile.manager.fileType = fileExtension;
-    largeFile.manager.totalSize = file.size;
-    
-    // 准备UI
-    var codeInput = document.getElementById('code-input');
-    var resultElement = document.getElementById('result-content');
-    
-    // 切换到粘贴标签页
-    var pasteTab = document.querySelector('.tab[data-tab="paste"]');
-    if (pasteTab) pasteTab.click();
-    
-    // 隐藏拖放区域
-    var dropZone = document.querySelector('.drop-zone');
-    if (dropZone) dropZone.style.display = 'none';
-    
-    // 显示处理信息
-    if (resultElement) {
-        resultElement.innerHTML = 
-            '<div class="large-file-info">' +
-            '<p>正在处理大型文件 <strong>' + file.name + '</strong> (' + (file.size / 1024).toFixed(2) + ' KB)...</p>' +
-            '<div class="progress-container">' +
-            '<div class="progress-bar" id="file-progress-bar" style="width: 0%"></div>' +
-            '</div></div>';
+// 初始化按钮事件
+function initButtons() {
+    // 清空按钮点击事件
+    const clearBtn = document.getElementById('clear-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            document.getElementById('code-input').value = '';
+            document.getElementById('result-content').innerHTML = '';
+            
+            // 如果有拖放区域，在清空后显示它
+            const dropZone = document.querySelector('.drop-zone');
+            const textArea = document.getElementById('code-input');
+            if (dropZone && textArea) {
+                textArea.style.display = 'none';
+                dropZone.style.display = 'flex';
+            }
+        });
     }
     
-    // 分块读取文件
-    processLargeFile(file);
-    return true; // 表示已处理
+    // 解码按钮点击事件
+    const decryptBtn = document.getElementById('decrypt-btn');
+    if (decryptBtn) {
+        decryptBtn.addEventListener('click', () => {
+            const code = document.getElementById('code-input').value;
+            if (!code.trim()) {
+                alert('请输入需要解密的代码');
+                return;
+            }
+            
+            // 获取文件类型
+            let fileType = 'js';
+            document.querySelectorAll('input[name="file-type"]').forEach(input => {
+                if (input.checked) {
+                    fileType = input.value;
+                }
+            });
+            
+            // 获取选中的加密类型
+            let encryptionType = 'auto';
+            document.querySelectorAll('input[name="encryption-type"]').forEach(input => {
+                if (input.checked) {
+                    encryptionType = input.id.replace('type-', '');
+                }
+            });
+            
+            // 创建GitHub issue
+            createGitHubIssue(code, fileType, encryptionType);
+        });
+    }
 }
 
-// 分块处理大型文件
-function processLargeFile(file) {
-    var totalChunks = Math.ceil(file.size / largeFile.CHUNK_SIZE);
-    var progressBar = document.getElementById('file-progress-bar');
+// 创建GitHub issue
+function createGitHubIssue(code, fileType, encryptionType) {
+    const resultElement = document.getElementById('result-content');
     
-    // 读取一个块
-    function readNextChunk(start) {
-        if (start >= file.size) {
-            onComplete();
+    try {
+        // 构造Issue标题和内容
+        const issueTitle = `[Web解密请求] ${encryptionType}`;
+        const issueBody = `# 解密请求
+
+**文件类型:** \`${fileType}\`
+**加密类型:** \`${encryptionType}\`
+**时间戳:** ${new Date().toISOString()}
+
+**代码:**
+\`\`\`${fileType}
+${code}
+\`\`\``;
+
+        // 在结果区域显示一个用户友好的表单
+        resultElement.innerHTML = `
+            <div class="info-box">
+                <p><strong>创建解密请求</strong></p>
+                <p>我们将为您自动创建一个解密请求。请检查以下信息：</p>
+                
+                <p><strong>标题:</strong> ${issueTitle}</p>
+                <p><strong>文件类型:</strong> ${fileType}</p>
+                <p><strong>加密类型:</strong> ${encryptionType}</p>
+                <p><strong>代码长度:</strong> ${code.length} 字符</p>
+                
+                <div class="auth-inputs">
+                    <input type="text" id="github-username" class="auth-input" placeholder="您的GitHub用户名（可选）">
+                    <input type="password" id="github-token" class="auth-input" placeholder="个人访问令牌（可选）">
+                </div>
+                <p style="font-size: 12px; color: #999;">注意：提供GitHub令牌可以自动创建Issue。如不提供，将引导您手动创建。您的令牌不会被保存。</p>
+                
+                <div class="action-buttons">
+                    <button id="create-issue-btn" class="primary-btn">创建解密请求</button>
+                    <button id="show-manual-btn" class="secondary-btn">手动步骤</button>
+                </div>
+            </div>
+        `;
+        
+        // 添加创建按钮事件
+        document.getElementById('create-issue-btn').addEventListener('click', async () => {
+            const username = document.getElementById('github-username').value.trim();
+            const token = document.getElementById('github-token').value.trim();
+            
+            if (token && username) {
+                // 如果提供了令牌，尝试自动创建Issue
+                try {
+                    resultElement.innerHTML = `<p>正在创建Issue...</p>`;
+                    
+                    // 使用GitHub API创建Issue
+                    const response = await fetch(`https://api.github.com/repos/${repoConfig.owner}/${repoConfig.repo}/issues`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            title: issueTitle,
+                            body: issueBody
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const issueData = await response.json();
+                        const issueNumber = issueData.number;
+                        
+                        resultElement.innerHTML = `
+                            <p>解密请求创建成功！Issue #${issueNumber}</p>
+                            <p>GitHub Actions正在处理您的请求，请稍候...</p>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="progress-bar"></div>
+                            </div>
+                            <p>您可以 <a href="${issueData.html_url}" target="_blank" class="github-link">查看Issue状态</a> 或等待结果显示在这里</p>
+                        `;
+                        
+                        // 启动进度条
+                        startProgressBar();
+                        
+                        // 开始轮询结果
+                        pollForIssueResults(issueNumber, fileType);
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(`GitHub API错误: ${errorData.message || '创建Issue失败'}`);
+                    }
+                } catch (error) {
+                    console.error('创建Issue失败:', error);
+                    resultElement.innerHTML = `
+                        <p>自动创建Issue失败: ${error.message}</p>
+                        <p>请尝试手动创建Issue。</p>
+                        <button id="show-manual-steps" class="github-link">显示手动步骤</button>
+                    `;
+                    
+                    document.getElementById('show-manual-steps').addEventListener('click', () => {
+                        showManualSteps(issueTitle, issueBody, fileType);
+                    });
+                }
+            } else {
+                // 如果没有提供令牌，显示手动步骤
+                showManualSteps(issueTitle, issueBody, fileType);
+            }
+        });
+        
+        // 添加手动按钮事件
+        document.getElementById('show-manual-btn').addEventListener('click', () => {
+            showManualSteps(issueTitle, issueBody, fileType);
+        });
+    } catch (error) {
+        resultElement.innerHTML = `
+            <p>错误: ${error.message}</p>
+            <p>请稍后重试。</p>
+        `;
+    }
+}
+
+// 显示手动创建Issue的步骤
+function showManualSteps(issueTitle, issueBody, fileType) {
+    const resultElement = document.getElementById('result-content');
+    
+    resultElement.innerHTML = `
+        <p>请按照以下步骤创建解密请求：</p>
+        <ol>
+            <li>手动创建一个新Issue: <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/new" target="_blank" class="github-link">创建Issue</a></li>
+            <li>使用标题: <strong>${issueTitle}</strong></li>
+            <li>在内容中粘贴以下模板:</li>
+        </ol>
+        <div class="code-template">
+            <pre>${escapeHtml(issueBody)}</pre>
+            <button id="copy-template-btn" class="secondary-btn" style="margin-top: 10px;">复制模板</button>
+        </div>
+        <ol start="4">
+            <li>提交Issue后回到此页面，点击下方按钮输入Issue编号</li>
+        </ol>
+        <button id="check-result-btn" class="primary-btn" style="display: block; margin: 15px auto; padding: 10px 20px; font-size: 16px;">输入Issue编号</button>
+    `;
+    
+    // 添加复制模板按钮事件
+    document.getElementById('copy-template-btn').addEventListener('click', () => {
+        navigator.clipboard.writeText(issueBody)
+            .then(() => {
+                alert('模板已复制到剪贴板！现在您可以粘贴到Issue中。');
+            })
+            .catch(err => {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动复制模板。');
+            });
+    });
+    
+    // 添加检查结果按钮事件
+    document.getElementById('check-result-btn').addEventListener('click', () => {
+        promptForIssueNumber(fileType);
+    });
+}
+
+// 提示输入Issue编号
+function promptForIssueNumber(fileType) {
+    const issueNumber = prompt('请输入Issue编号 (仅数字部分):', '');
+    if (issueNumber && !isNaN(issueNumber)) {
+        const resultElement = document.getElementById('result-content');
+        resultElement.innerHTML = `
+            <p>正在检查issue #${issueNumber}的解密结果...</p>
+            <p>请等待约60秒，GitHub Actions正在处理您的请求</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        `;
+        
+        // 启动进度条
+        startProgressBar();
+        
+        // 开始轮询结果
+        pollForIssueResults(issueNumber, fileType);
+    } else {
+        alert('请输入有效的Issue编号！');
+    }
+}
+
+// 轮询issue结果
+function pollForIssueResults(issueNumber, fileType) {
+    const resultElement = document.getElementById('result-content');
+    let attempts = 0;
+    const maxAttempts = 20; // 最多尝试20次，每次3秒
+    
+    const checkIssue = () => {
+        attempts++;
+        
+        if (attempts > maxAttempts) {
+            // 超过最大尝试次数
+            clearInterval(window.progressInterval);
+            resultElement.innerHTML = `
+                <p>检查超时。GitHub Actions可能仍在处理您的请求。</p>
+                <p>请稍后直接查看issue获取结果。</p>
+                <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/${issueNumber}" target="_blank" class="github-link">查看Issue #${issueNumber}</a>
+                <button id="retry-btn" class="github-link" style="margin-top: 10px;">再次检查</button>
+            `;
+            
+            // 添加重试按钮事件
+            document.getElementById('retry-btn').addEventListener('click', () => {
+                pollForIssueResults(issueNumber, fileType);
+            });
             return;
         }
         
-        var end = Math.min(start + largeFile.CHUNK_SIZE, file.size);
-        var chunk = file.slice(start, end);
-        var reader = new FileReader();
-        
-        reader.onload = function(e) {
-            // 存储块内容
-            largeFile.manager.chunks.push(e.target.result);
-            largeFile.manager.processed += (end - start);
-            
-            // 更新进度条
-            if (progressBar) {
-                var progress = (largeFile.manager.processed / file.size) * 100;
-                progressBar.style.width = progress + '%';
-            }
-            
-            // 读取下一块
-            readNextChunk(end);
-        };
-        
-        reader.onerror = function() {
-            alert('读取文件块时出错！已处理 ' + (largeFile.manager.processed / 1024).toFixed(2) + 'KB/' + (file.size / 1024).toFixed(2) + 'KB');
-        };
-        
-        reader.readAsText(chunk);
-    }
-    
-    // 处理完成后的回调
-    function onComplete() {
-        // 更新进度条
-        if (progressBar) progressBar.style.width = '100%';
-        
-        // 组合所有块
-        largeFile.manager.content = largeFile.manager.chunks.join('');
-        
-        // 设置到输入区域，但有大小限制
-        var codeInput = document.getElementById('code-input');
-        if (!codeInput) return;
-        
-        // 如果内容太大，只显示部分
-        if (largeFile.manager.content.length > largeFile.DISPLAY_LIMIT) {
-            var truncatedContent = largeFile.manager.content.substring(0, largeFile.DISPLAY_LIMIT);
-            codeInput.value = truncatedContent + '\n\n/* 文件太大，只显示前500KB。完整内容将在解密时处理。 */';
-        } else {
-            codeInput.value = largeFile.manager.content;
+        // 由于浏览器端无法直接访问GitHub API（需要认证令牌），
+        // 我们会指导用户直接查看issue
+        if (attempts === 10) { // 等待约30秒后提示
+            resultElement.innerHTML = `
+                <p>GitHub Actions可能正在处理您的请求。</p>
+                <p>您可以直接查看issue获取最新结果：</p>
+                <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/${issueNumber}" target="_blank" class="github-link">查看Issue #${issueNumber}</a>
+                <p>或继续等待自动检查（还剩${maxAttempts - attempts}次尝试）</p>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar" style="width: ${(attempts / maxAttempts) * 100}%"></div>
+                </div>
+            `;
         }
         
-        codeInput.style.display = 'block';
-        
-        // 显示成功消息
-        var resultElement = document.getElementById('result-content');
-        if (resultElement) {
-            var notice = '';
-            if (largeFile.manager.content.length > largeFile.DISPLAY_LIMIT) {
-                notice = '<p><strong>注意:</strong> 由于文件较大，界面上只显示了部分内容。完整内容将在解密时处理。</p>';
-            }
+        // 这里我们假设解密大约需要60秒
+        // 实际应用中，如果有API访问权限，可以真正检查issue评论
+        if (attempts >= maxAttempts - 1) { // 最后一次尝试
+            clearInterval(checkInterval);
+            clearInterval(window.progressInterval);
             
-            resultElement.innerHTML = 
-                '<div class="large-file-info">' +
-                '<p>大型文件 <strong>' + file.name + '</strong> 已成功加载，大小: ' + (file.size / 1024).toFixed(2) + ' KB</p>' +
-                '<p>您现在可以选择解密类型并点击"点击解码"按钮进行解密。</p>' +
-                notice +
-                '</div>';
+            resultElement.innerHTML = `
+                <p>检查完成，请点击下方链接查看解密结果：</p>
+                <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/${issueNumber}" target="_blank" class="github-link">查看Issue #${issueNumber} 的解密结果</a>
+                <p class="info-box" style="margin-top: 15px;">
+                    <strong>提示:</strong> 如果Issue中尚未显示解密结果，GitHub Actions可能仍在处理。
+                    请稍后再查看，或检查是否有错误信息。
+                </p>
+            `;
         }
-    }
+    };
     
-    // 开始读取文件
-    readNextChunk(0);
+    // 立即执行一次
+    checkIssue();
+    
+    // 然后每3秒执行一次
+    const checkInterval = setInterval(checkIssue, 3000);
 }
 
-// 修改版本：增强文件上传功能 - 不覆盖原始函数
-function monitorFileUploads() {
-    // 监视文件输入变化
-    var fileInputs = document.querySelectorAll('input[type="file"]');
-    fileInputs.forEach(function(input) {
-        input.addEventListener('change', function(event) {
-            if (event.target.files && event.target.files[0]) {
-                var file = event.target.files[0];
-                // 如果是大文件，使用我们的处理器
-                if (file.size > largeFile.CHUNK_SIZE) {
-                    handleLargeFileUpload(file);
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
+// 启动进度条
+function startProgressBar() {
+    const progressBar = document.getElementById('progress-bar');
+    let width = 0;
+    
+    // 如果存在旧的interval，清除它
+    if (window.progressInterval) {
+        clearInterval(window.progressInterval);
+    }
+    
+    // 创建新的progress interval
+    const interval = setInterval(() => {
+        if (width >= 100) {
+            clearInterval(interval);
+        } else {
+            width += 0.5; // 更平滑的进度增长
+            progressBar.style.width = width + '%';
+        }
+    }, 300); // 60秒满进度
+    
+    // 保存interval ID
+    window.progressInterval = interval;
+}
+
+// 初始化文件上传
+function initFileUpload() {
+    const fileInput = document.getElementById('local-file');
+    if (!fileInput) return;
+    
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // 检查文件类型
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        if (!['js', 'py', 'php', 'txt'].includes(fileExtension)) {
+            alert('不支持的文件类型！只支持 .js, .py, .php, .txt 文件。');
+            fileInput.value = ''; // 清空文件选择
+            return;
+        }
+        
+        // 创建一个文件读取器
+        const reader = new FileReader();
+        
+        // 文件读取完成后的处理函数
+        reader.onload = function(e) {
+            // 获取文件内容
+            const fileContent = e.target.result;
+            
+            // 设置到文本区域
+            const codeInput = document.getElementById('code-input');
+            codeInput.value = fileContent;
+            
+            // 根据文件类型选择相应的单选按钮
+            if (['js', 'py', 'php'].includes(fileExtension)) {
+                document.querySelector(`input[name="file-type"][value="${fileExtension}"]`).checked = true;
             }
-        }, true); // 使用捕获阶段
+            
+            // 跳转到粘贴代码标签页
+            document.querySelector('.tab[data-tab="paste"]').click();
+            
+            // 显示成功消息
+            document.getElementById('result-content').innerHTML = `
+                <div class="info-box">
+                    <p>文件 <strong>${file.name}</strong> 已成功加载，大小: ${(file.size / 1024).toFixed(2)} KB</p>
+                    <p>您现在可以选择解密类型并点击"点击解码"按钮进行解密。</p>
+                </div>
+            `;
+            
+            // 隐藏拖放区域（如果存在）
+            const dropZone = document.querySelector('.drop-zone');
+            if (dropZone) {
+                dropZone.style.display = 'none';
+                codeInput.style.display = 'block';
+            }
+        };
+        
+        // 文件读取失败的处理函数
+        reader.onerror = function() {
+            alert('读取文件时出错！');
+            console.error('FileReader error:', reader.error);
+        };
+        
+        // 以文本形式读取文件
+        reader.readAsText(file);
+    });
+}
+
+// 初始化远程文件获取
+function initRemoteFile() {
+    const fetchBtn = document.getElementById('fetch-remote');
+    const urlInput = document.getElementById('remote-url');
+    
+    if (!fetchBtn || !urlInput) return;
+    
+    // 获取远程文件的函数
+    const fetchRemoteFile = async () => {
+        const url = urlInput.value.trim();
+        
+        if (!url) {
+            alert('请输入远程文件URL');
+            return;
+        }
+        
+        // 验证URL格式
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            alert('URL必须以http://或https://开头！');
+            return;
+        }
+        
+        // 更新UI
+        const resultContent = document.getElementById('result-content');
+        resultContent.innerHTML = '<p>正在获取远程文件...</p>';
+        
+        // 定义多个CORS代理服务，依次尝试
+        const corsProxies = [
+            '', // 首先尝试直接请求，某些服务器可能允许跨域
+            'https://corsproxy.io/?', 
+            'https://api.allorigins.win/raw?url=',
+            'https://api.codetabs.com/v1/proxy?quest='
+        ];
+        
+        // 尝试所有代理
+        let success = false;
+        let lastError = null;
+        
+        for (const proxy of corsProxies) {
+            if (success) break;
+            
+            try {
+                resultContent.innerHTML = `<p>正在尝试获取远程文件... ${proxy ? '(使用代理)' : '(直接请求)'}</p>`;
+                
+                // 准备请求URL
+                let requestUrl;
+                if (proxy === '') {
+                    // 直接请求
+                    requestUrl = url;
+                } else if (proxy.includes('?url=')) {
+                    // 代理需要url参数
+                    requestUrl = proxy + encodeURIComponent(url);
+                } else if (proxy.includes('?quest=')) {
+                    // 特殊代理格式
+                    requestUrl = proxy + encodeURIComponent(url);
+                } else {
+                    // 直接拼接
+                    requestUrl = proxy + url;
+                }
+                
+                const response = await fetch(requestUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    headers: {
+                        'Accept': 'text/plain,text/html,application/javascript,application/json,*/*'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误，状态码: ${response.status}`);
+                }
+                
+                const code = await response.text();
+                
+                // 设置文本区域内容
+                const codeInput = document.getElementById('code-input');
+                codeInput.value = code;
+                
+                // 根据URL扩展名设置文件类型
+                const fileExtension = url.split('.').pop().toLowerCase();
+                if (['js', 'py', 'php'].includes(fileExtension)) {
+                    document.querySelector(`input[name="file-type"][value="${fileExtension}"]`).checked = true;
+                }
+                
+                // 切换到粘贴代码标签页
+                document.querySelector('.tab[data-tab="paste"]').click();
+                resultContent.innerHTML = `
+                    <div class="info-box">
+                        <p>远程文件获取成功！文件大小: ${(code.length / 1024).toFixed(2)} KB</p>
+                        <p>您现在可以选择解密类型并点击"点击解码"按钮进行解密。</p>
+                    </div>
+                `;
+                
+                // 隐藏拖放区域（如果存在）
+                const dropZone = document.querySelector('.drop-zone');
+                if (dropZone) {
+                    dropZone.style.display = 'none';
+                    codeInput.style.display = 'block';
+                }
+                
+                success = true;
+                break;
+            } catch (error) {
+                console.error(`使用代理 ${proxy || '直接请求'} 获取失败:`, error);
+                lastError = error;
+                // 继续尝试下一个代理
+            }
+        }
+        
+        // 如果所有代理都失败
+        if (!success) {
+            resultContent.innerHTML = `
+                <div class="info-box" style="border-left-color: #F44336;">
+                    <p><strong>获取远程文件失败:</strong> ${lastError?.message || '未知错误'}</p>
+                    <p>可能的原因:</p>
+                    <ul>
+                        <li>URL地址不正确</li>
+                        <li>目标服务器拒绝访问</li>
+                        <li>目标服务器设置了严格的跨域限制</li>
+                    </ul>
+                    <p>您可以尝试:</p>
+                    <ul>
+                        <li>手动下载文件并使用本地文件上传功能</li>
+                        <li>直接复制文件内容到文本区域</li>
+                        <li>确认URL是否正确，包括协议(http/https)</li>
+                    </ul>
+                </div>
+            `;
+        }
+    };
+    
+    // 点击按钮获取远程文件
+    fetchBtn.addEventListener('click', fetchRemoteFile);
+    
+    // 按回车键获取远程文件
+    urlInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            fetchRemoteFile();
+        }
+    });
+}
+
+// 初始化拖放功能
+function initDragDrop() {
+    // 获取代码输入区域
+    const codeInput = document.getElementById('code-input');
+    if (!codeInput) return;
+    
+    // 准备拖放区域
+    const pasteContent = document.getElementById('paste-content');
+    if (!pasteContent) return;
+    
+    // 检查是否已经存在拖放区域
+    let dropZone = document.querySelector('.drop-zone');
+    
+    // 如果没有拖放区域，创建一个
+    if (!dropZone) {
+        dropZone = document.createElement('div');
+        dropZone.className = 'drop-zone';
+        dropZone.innerHTML = `
+            <div class="drop-message">
+                <i class="drop-icon">📄</i>
+                <p>拖放文件到这里</p>
+                <p class="drop-sub">或点击此处选择文件</p>
+            </div>
+        `;
+        
+        // 只有在代码输入为空时才显示拖放区域
+        if (!codeInput.value.trim()) {
+            codeInput.style.display = 'none';
+            // 在代码输入区域前插入拖放区域
+            pasteContent.insertBefore(dropZone, codeInput);
+        }
+    }
+    
+    // 添加隐藏的文件输入
+    let hiddenFileInput = document.getElementById('hidden-file-input');
+    if (!hiddenFileInput) {
+        hiddenFileInput = document.createElement('input');
+        hiddenFileInput.type = 'file';
+        hiddenFileInput.id = 'hidden-file-input';
+        hiddenFileInput.style.display = 'none';
+        hiddenFileInput.accept = '.js,.py,.php,.txt';
+        document.body.appendChild(hiddenFileInput);
+    }
+    
+    // 点击拖放区域打开文件选择器
+    dropZone.addEventListener('click', () => {
+        hiddenFileInput.click();
     });
     
-    // 监视拖放区域
-    var dropZone = document.querySelector('.drop-zone');
-    if (dropZone) {
-        dropZone.addEventListener('drop', function(event) {
-            if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
-                var file = event.dataTransfer.files[0];
-                // 如果是大文件，使用我们的处理器
-                if (file.size > largeFile.CHUNK_SIZE) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    handleLargeFileUpload(file);
-                    return false;
-                }
-            }
-        }, true); // 使用捕获阶段
-    }
+    // 处理文件选择
+    hiddenFileInput.addEventListener('change', (event) => {
+        if (event.target.files.length) {
+            handleFileUpload(event.target.files[0]);
+        }
+    });
+    
+    // 拖放区域的事件处理
+    dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropZone.classList.add('active');
+    });
+    
+    dropZone.addEventListener('dragleave', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropZone.classList.remove('active');
+    });
+    
+    dropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropZone.classList.remove('active');
+        
+        if (event.dataTransfer.files.length) {
+            handleFileUpload(event.dataTransfer.files[0]);
+        }
+    });
+    
+    // 直接拖放到文本区域
+    codeInput.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        codeInput.style.borderColor = '#9eca34';
+    });
+    
+    codeInput.addEventListener('dragleave', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        codeInput.style.borderColor = '';
+    });
+    
+    codeInput.addEventListener('drop', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        codeInput.style.borderColor = '';
+        
+        if (event.dataTransfer.files.length) {
+            handleFileUpload(event.dataTransfer.files[0]);
+        }
+    });
 }
 
-// 监视解密按钮点击 - 不覆盖原始事件处理程序
-function monitorDecryptButton() {
-    // 添加我们自己的事件处理器，在按钮点击时检查是否有大型文件
-    document.addEventListener('click', function(event) {
-        // 检查点击的是否是解密按钮
-        if (event.target && event.target.id === 'decrypt-btn') {
-            // 检查是否有大型文件
-            if (largeFile.manager.content && largeFile.manager.content.length > 0) {
-                console.log('处理大型文件解密请求...');
-                
-                // 阻止原始点击事件
-                event.preventDefault();
-                event.stopPropagation();
-                
-                // 获取文件类型
-                var fileType = largeFile.manager.fileType || 'js';
-                
-                // 确保UI上的选择匹配
-                var typeRadio = document.querySelector('input[name="file-type"][value="' + fileType + '"]');
-                if (typeRadio) typeRadio.checked = true;
-                
-                // 获取选中的加密类型
-                var encryptionType = 'auto';
-                var encryptionInputs = document.querySelectorAll('input[name="encryption-type"]');
-                for (var i = 0; i < encryptionInputs.length; i++) {
-                    if (encryptionInputs[i].checked) {
-                        encryptionType = encryptionInputs[i].id.replace('type-', '');
-                        break;
-                    }
+// 统一处理文件上传
+function handleFileUpload(file) {
+    if (!file) return;
+    
+    // 检查文件类型
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    if (!['js', 'py', 'php', 'txt'].includes(fileExtension)) {
+        alert('不支持的文件类型！只支持 .js, .py, .php, .txt 文件。');
+        return;
+    }
+    
+    // 创建文件读取器
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        // 获取文件内容
+        const fileContent = e.target.result;
+        
+        // 设置文本区域内容
+        const codeInput = document.getElementById('code-input');
+        codeInput.value = fileContent;
+        codeInput.style.display = 'block';
+        
+        // 隐藏拖放区域（如果存在）
+        const dropZone = document.querySelector('.drop-zone');
+        if (dropZone) {
+            dropZone.style.display = 'none';
+        }
+        
+        // 根据文件类型选择相应的单选按钮
+        if (['js', 'py', 'php'].includes(fileExtension)) {
+            document.querySelector(`input[name="file-type"][value="${fileExtension}"]`).checked = true;
+        }
+        
+        // 显示成功消息
+        document.getElementById('result-content').innerHTML = `
+            <div class="info-box">
+                <p>文件 <strong>${file.name}</strong> 已成功加载，大小: ${(file.size / 1024).toFixed(2)} KB</p>
+                <p>您现在可以选择解密类型并点击"点击解码"按钮进行解密。</p>
+            </div>
+        `;
+        
+        // 跳转到粘贴代码标签页
+        document.querySelector('.tab[data-tab="paste"]').click();
+    };
+    
+    reader.onerror = function() {
+        alert('读取文件时出错！');
+        console.error('FileReader error:', reader.error);
+    };
+    
+    // 以文本形式读取文件
+    reader.readAsText(file);
+}
+
+// HTML转义防止XSS
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+// 大型文件处理工具 - 独立功能模块
+(function() {
+    // 配置
+    var SIZE_LIMIT = 1 * 1024 * 1024; // 1MB
+    
+    // 等待页面完全加载
+    window.addEventListener('load', function() {
+        setTimeout(initLargeFileHelper, 1000);
+    });
+    
+    // 初始化大型文件助手
+    function initLargeFileHelper() {
+        // 添加样式
+        addStyles();
+        
+        // 添加UI元素
+        addHelperUI();
+        
+        // 监听文件上传事件
+        monitorFileUploads();
+        
+        console.log('大型文件助手已初始化');
+    }
+    
+    // 添加样式
+    function addStyles() {
+        var style = document.createElement('style');
+        style.textContent = `
+            .large-file-helper { 
+                margin: 10px 0; 
+                padding: 12px; 
+                background: #e8f5e9; 
+                border-left: 4px solid #4caf50; 
+                border-radius: 4px; 
+                font-size: 14px; 
+                display: none; 
+            }
+            .helper-title {
+                font-weight: bold;
+                margin-bottom: 8px;
+            }
+            .helper-buttons {
+                margin-top: 10px;
+                display: flex;
+                gap: 8px;
+            }
+            .helper-btn {
+                padding: 6px 12px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: 500;
+                font-size: 14px;
+                border: 1px solid rgba(0,0,0,0.15);
+            }
+            .helper-primary-btn {
+                background-color: #4caf50;
+                color: white;
+            }
+            .helper-secondary-btn {
+                background-color: #f1f1f1;
+                color: #333;
+            }
+            .progress-container {
+                margin-top: 10px;
+                background-color: #f1f1f1;
+                border-radius: 4px;
+                overflow: hidden;
+                display: none;
+            }
+            .progress-bar {
+                height: 20px;
+                width: 0%;
+                background-color: #4caf50;
+                text-align: center;
+                line-height: 20px;
+                color: white;
+                transition: width 0.3s;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // 添加助手UI
+    function addHelperUI() {
+        var targetElement = document.querySelector('#paste-content') || 
+                           document.querySelector('.tab-content') || 
+                           document.querySelector('form');
+        
+        if (!targetElement) return;
+        
+        var helperDiv = document.createElement('div');
+        helperDiv.className = 'large-file-helper';
+        helperDiv.id = 'large-file-helper';
+        helperDiv.innerHTML = `
+            <div class="helper-title">检测到大型文件</div>
+            <p>您上传的文件超过1MB，可能会导致处理问题。请考虑以下选项：</p>
+            <div class="helper-buttons">
+                <button id="split-file-btn" class="helper-btn helper-primary-btn">分割文件</button>
+                <button id="continue-anyway-btn" class="helper-btn helper-secondary-btn">继续处理</button>
+                <button id="cancel-file-btn" class="helper-btn helper-secondary-btn">取消</button>
+            </div>
+            <div class="progress-container" id="split-progress-container">
+                <div class="progress-bar" id="split-progress-bar"></div>
+            </div>
+        `;
+        
+        targetElement.insertBefore(helperDiv, targetElement.firstChild);
+        
+        // 添加按钮事件
+        document.getElementById('split-file-btn').addEventListener('click', splitLargeFile);
+        document.getElementById('continue-anyway-btn').addEventListener('click', continueProcessing);
+        document.getElementById('cancel-file-btn').addEventListener('click', cancelProcessing);
+    }
+    
+    // 监控文件上传
+    function monitorFileUploads() {
+        // 监视所有文件输入
+        var fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(function(input) {
+            input.addEventListener('change', checkFileSize);
+        });
+        
+        // 监视拖放区域
+        var dropZone = document.querySelector('.drop-zone');
+        if (dropZone) {
+            dropZone.addEventListener('drop', function(event) {
+                if (event.dataTransfer && event.dataTransfer.files.length) {
+                    setTimeout(function() {
+                        checkDroppedFileSize(event.dataTransfer.files[0]);
+                    }, 100);
                 }
-                
-                // 使用完整内容创建GitHub issue
-                createGitHubIssue(largeFile.manager.content, fileType, encryptionType);
-                return false;
+            });
+        }
+    }
+    
+    // 检查文件大小
+    function checkFileSize(event) {
+        if (event.target.files && event.target.files[0]) {
+            var file = event.target.files[0];
+            if (file.size > SIZE_LIMIT) {
+                currentLargeFile = file;
+                showHelper();
             }
         }
-    }, true); // 使用捕获阶段
-}
-
-// 初始化增强功能
-window.addEventListener('load', function() {
-    setTimeout(function() {
-        console.log('正在初始化大型文件处理功能...');
-        addLargeFileStyles();
-        monitorFileUploads();
-        monitorDecryptButton();
-        console.log('大型文件处理功能初始化完成');
-    }, 1000);
-});
+    }
+    
+    // 检查拖放的文件大小
+    function checkDroppedFileSize(file) {
+        if (file && file.size > SIZE_LIMIT) {
+            currentLargeFile = file;
+            showHelper();
+        }
+    }
+    
+    // 显示助手
+    function showHelper() {
+        var helper = document.getElementById('large-file-helper');
+        if (helper) helper.style.display = 'block';
+    }
+    
+    // 隐藏助手
+    function hideHelper() {
+        var helper = document.getElementById('large-file-helper');
+        if (helper) helper.style.display = 'none';
+    }
+    
+    // 大文件引用
+    var currentLargeFile = null;
+    
+    // 分割大型文件
+    function splitLargeFile() {
+        if (!currentLargeFile) return;
+        
+        // 显示进度条
+        var progressContainer = document.getElementById('split-progress-container');
+        var progressBar = document.getElementById('split-progress-bar');
+        if (progressContainer) progressContainer.style.display = 'block';
+        if (progressBar) progressBar.style.width = '0%';
+        
+        // 读取文件内容
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var content = e.target.result;
+            
+            // 更新进度条
+            if (progressBar) progressBar.style.width = '50%';
+            
+            // 分割文件
+            var chunkSize = SIZE_LIMIT - 1024; // 留一些余量
+            var totalChunks = Math.ceil(content.length / chunkSize);
+            
+            // 准备ZIP文件
+            loadJSZip(function(JSZip) {
+                var zip = new JSZip();
+                
+                // 添加README
+                zip.file("README.txt", 
+                    "分割的文件信息:\n" +
+                    "原始文件名: " + currentLargeFile.name + "\n" +
+                    "原始大小: " + (currentLargeFile.size / 1024).toFixed(2) + " KB\n" +
+                    "分割数量: " + totalChunks + "个部分\n\n" +
+                    "使用说明:\n" +
+                    "1. 每个部分单独上传解密\n" +
+                    "2. 所有部分解密后合并结果\n"
+                );
+                
+                // 添加每个部分
+                for (var i = 0; i < totalChunks; i++) {
+                    var start = i * chunkSize;
+                    var end = Math.min(start + chunkSize, content.length);
+                    var chunk = content.substring(start, end);
+                    
+                    // 创建文件名
+                    var parts = currentLargeFile.name.split('.');
+                    var ext = parts.length > 1 ? '.' + parts.pop() : '';
+                    var baseName = parts.join('.');
+                    var partFileName = baseName + "_part" + (i+1) + "of" + totalChunks + ext;
+                    
+                    // 添加到ZIP
+                    zip.file(partFileName, chunk);
+                }
+                
+                // 生成ZIP并提供下载
+                zip.generateAsync({type:"blob"}).then(function(content) {
+                    // 更新进度条
+                    if (progressBar) progressBar.style.width = '100%';
+                    
+                    // 创建下载链接
+                    var zipFileName = currentLargeFile.name.replace(/\.[^/.]+$/, "") + "_分割.zip";
+                    var a = document.createElement('a');
+                    a.href = URL.createObjectURL(content);
+                    a.download = zipFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // 清理
+                    setTimeout(function() {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(a.href);
+                        hideHelper();
+                    }, 100);
+                });
+            });
+        };
+        
+        reader.readAsText(currentLargeFile);
+    }
+    
+    // 继续处理
+    function continueProcessing() {
+        hideHelper();
+        // 此函数不做任何干预，让原始代码继续处理文件
+    }
+    
+    // 取消处理
+    function cancelProcessing() {
+        hideHelper();
+        // 清空文件输入
+        var fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(function(input) {
+            input.value = '';
+        });
+        // 清空文本区域
+        var codeInput = document.getElementById('code-input');
+        if (codeInput) codeInput.value = '';
+    }
+    
+    // 加载JSZip库
+    function loadJSZip(callback) {
+        if (window.JSZip) {
+            callback(window.JSZip);
+            return;
+        }
+        
+        var script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        script.onload = function() {
+            callback(window.JSZip);
+        };
+        script.onerror = function() {
+            alert('无法加载JSZip库，请检查网络连接');
+        };
+        document.head.appendChild(script);
+    }
+})();

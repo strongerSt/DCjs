@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pxxjs | 娱乐一下 测试效果</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background-color: #121212;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #9eca34;
+            display: flex;
+            align-items: center;
+        }
+        .logo-prefix {
+            color: #9eca34;
+            margin-right: 5px;
+        }
+        .version {
+            font-size: 12px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 10px;
+        }
+        .subtitle {
+            color: #999;
+            margin-top: 5px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            color: #ccc;
+            margin-right: 10px;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active {
+            color: #9eca34;
+            border-bottom: 3px solid #9eca34;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            padding: 10px;
+            font-family: Monaco, Consolas, "Courier New", monospace;
+            resize: vertical;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .encryption-types {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .encryption-type {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .encryption-type input[type="radio"] {
+            margin: 0;
+        }
+        .encryption-type label {
+            cursor: pointer;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .feature input[type="checkbox"] {
+            margin: 0;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #333;
+            color: #e0e0e0;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #444;
+        }
+        .result-container {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .result-header {
+            background-color: #121212;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+        }
+        .footer-section {
+            flex: 1;
+            margin-right: 20px;
+        }
+        .footer-title {
+            color: #9eca34;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        a {
+            color: #9eca34;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span class="logo-prefix">./</span>
+                pxxjs
+                <span class="version">0.0.2</span>
+            </div>
+        </header>
+        
+        <div class="subtitle">娱乐一下 测试效果</div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="paste">粘贴代码</div>
+            <div class="tab" data-tab="local">本地文件</div>
+            <div class="tab" data-tab="remote">远程文件</div>
+        </div>
+        
+        <div class="tab-content active" id="paste-content">
+            <textarea placeholder="这里 粘贴代码..."></textarea>
+            
+            <div class="encryption-types">
+                <div class="encryption-type">
+                    <input type="radio" id="type-nil" name="encryption-type" checked>
+                    <label for="type-nil">无(NIL)</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-eval" name="encryption-type">
+                    <label for="type-eval">Eval</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-jsjiami-v7" name="encryption-type">
+                    <label for="type-jsjiami-v7">jsjiami.v7</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-array" name="encryption-type">
+                    <label for="type-array">Array</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-obfuscator" name="encryption-type">
+                    <label for="type-obfuscator">Obfuscator IO</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-number" name="encryption-type">
+                    <label for="type-number">_Number</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-jsfuck" name="encryption-type">
+                    <label for="type-jsfuck">JSFuck</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-jjencode" name="encryption-type">
+                    <label for="type-jjencode">JJencode</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-aaencode" name="encryption-type">
+                    <label for="type-aaencode">AAencode</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-urlencode" name="encryption-type">
+                    <label for="type-urlencode">URLencode</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-packer" name="encryption-type">
+                    <label for="type-packer">Packer</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-js-obfuscator" name="encryption-type">
+                    <label for="type-js-obfuscator">JS Obfuscator</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-my-obfuscate" name="encryption-type">
+                    <label for="type-my-obfuscate">My Obfuscate</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-wise-eval" name="encryption-type">
+                    <label for="type-wise-eval">Wise Eval</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-wise-function" name="encryption-type">
+                    <label for="type-wise-function">Wise Function</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-clean-source" name="encryption-type">
+                    <label for="type-clean-source">Clean Source</label>
+                </div>
+            </div>
+            
+            <div class="features">
+                <div class="feature">
+                    <input type="checkbox" id="feature-run">
+                    <label for="feature-run">行号</label>
+                </div>
+                <div class="feature">
+                    <input type="checkbox" id="feature-format" checked>
+                    <label for="feature-format">代码格式</label>
+                </div>
+                <div class="feature">
+                    <input type="checkbox" id="feature-remove-literals">
+                    <label for="feature-remove-literals">取消字符串</label>
+                </div>
+                <div class="feature">
+                    <input type="checkbox" id="feature-remove-route" checked>
+                    <label for="feature-remove-route">还原代码中的路径</label>
+                </div>
+                <div class="feature">
+                    <input type="checkbox" id="feature-style">
+                    <label for="feature-style">表达方式</label>
+                </div>
+                <div class="feature">
+                    <input type="checkbox" id="feature-merge" checked>
+                    <label for="feature-merge">合并字符串</label>
+                </div>
+                <div class="feature">
+                    <input type="checkbox" id="feature-remove-deadcode">
+                    <label for="feature-remove-deadcode">删除分组</label>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button id="clear-btn">清空 内容</button>
+                <button id="decrypt-btn">点击 解码</button>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="local-content">
+            <div class="file-upload">
+                <p>请选择本地文件上传解密</p>
+                <input type="file" id="local-file" accept=".js,.py,.php">
+                <p>支持 .js, .py, .php 文件</p>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="remote-content">
+            <div class="remote-url">
+                <p>输入远程文件URL</p>
+                <input type="text" id="remote-url" placeholder="https://example.com/script.js">
+                <button id="fetch-remote">获取远程文件</button>
+                <p>支持 HTTP 和 HTTPS 协议</p>
+            </div>
+        </div>
+        
+        <div class="result-container">
+            <div class="result-header">这里 显示结果</div>
+            <div id="result-content"></div>
+        </div>
+        
+        <footer>
+            <div class="footer-section">
+                <div class="footer-title">技术依赖</div>
+                <div>
+                    <p>关于依赖 <a href="#">pxxjs</a></p>
+                </div>
+            </div>
+            <div class="footer-section">
+                <div class="footer-title">介绍</div>
+                <div>
+                    <p>项目由 <a href="https://github.com/pxx917144686">pxx917144686</a> 更新</p>
+                    <p>logo图标在 <a href="#">Eucalyp</a> 获取</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // 切换标签页
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 移除所有标签页的激活状态
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // 激活当前标签页
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-content`).classList.add('active');
+            });
+        });
+        
+        // 清空按钮点击事件
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            document.querySelector('textarea').value = '';
+            document.getElementById('result-content').innerHTML = '';
+        });
+        
+        // 解码按钮点击事件
+        document.getElementById('decrypt-btn').addEventListener('click', () => {
+            const code = document.querySelector('textarea').value;
+            if (!code.trim()) {
+                alert('请输入需要解密的代码');
+                return;
+            }
+            
+            // 获取选中的加密类型
+            let encryptionType = '';
+            document.querySelectorAll('input[name="encryption-type"]').forEach(input => {
+                if (input.checked) {
+                    encryptionType = input.id.replace('type-', '');
+                }
+            });
+            
+            // 获取选中的功能选项
+            const features = {};
+            document.querySelectorAll('.feature input[type="checkbox"]').forEach(input => {
+                features[input.id.replace('feature-', '')] = input.checked;
+            });
+            
+            // 模拟解密过程
+            document.getElementById('result-content').innerHTML = 
+                `<p>解密中，请稍候...</p>
+                <p>正在处理 ${encryptionType} 类型的加密...</p>`;
+            
+            // 这里你需要根据实际情况发送请求到你的GitHub Actions或其他后端服务
+            // 以下是模拟60秒后获取结果
+            setTimeout(() => {
+                document.getElementById('result-content').innerHTML = 
+                    `<pre>// 解密结果
+// 原始加密类型: ${encryptionType}
+// 解密时间: ${new Date().toLocaleString()}
+
+// 这里是解密后的代码示例
+function deobfuscatedFunction() {
+    console.log("成功解密!");
+    return "这里将显示实际解密后的代码";
+}
+
+// 解密完成
+                    </pre>`;
+            }, 2000); // 为了演示，我们用2秒代替60秒
+        });
+        
+        // 上传本地文件
+        document.getElementById('local-file').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.querySelector('textarea').value = e.target.result;
+                    // 切换到粘贴代码标签页
+                    document.querySelectorAll('.tab')[0].click();
+                };
+                reader.readAsText(file);
+            }
+        });
+        
+        // 获取远程文件
+        document.getElementById('fetch-remote').addEventListener('click', () => {
+            const url = document.getElementById('remote-url').value;
+            if (!url) {
+                alert('请输入远程文件URL');
+                return;
+            }
+            
+            // 模拟获取远程文件
+            document.getElementById('result-content').innerHTML = '<p>获取远程文件中...</p>';
+            
+            // 这里你需要根据实际情况实现远程文件获取
+            // 由于浏览器同源策略限制，可能需要后端代理或CORS支持
+            setTimeout(() => {
+                document.querySelector('textarea').value = '// 这里是从远程获取的代码\nconsole.log("Hello World!");';
+                document.querySelectorAll('.tab')[0].click();
+                document.getElementById('result-content').innerHTML = '<p>远程文件获取成功，已填充到文本框</p>';
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

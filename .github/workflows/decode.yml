@@ -9,12 +9,10 @@ on:
 
 jobs:
   decode:
-    # 如果是push事件或者issue标题包含[Web解密请求]，则运行
-    if: ${{ github.event_name == 'push' || contains(github.event.issue.title, '[Web解密请求]') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      issues: write  # 添加issues写入权限
+      issues: write
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -36,7 +34,6 @@ jobs:
           
           // 解析issue内容
           const fileTypeMatch = issueBody.match(/\*\*文件类型:\*\* `(.+?)`/);
-          const encryptTypeMatch = issueBody.match(/\*\*加密类型:\*\* `(.+?)`/);
           
           let fileType = 'js';
           if (fileTypeMatch && fileTypeMatch[1]) {
@@ -71,20 +68,21 @@ jobs:
     - name: Install dependencies and run decode
       run: |
         npm install
-        if [ "${{ github.event_name }}" == "issues" ]; then
-          FILE_TYPE=${{ env.FILE_TYPE }}
-          if [ "$FILE_TYPE" = "js" ]; then
+        if [[ "${{ github.event_name }}" == "issues" ]]; then
+          # 处理Issue事件
+          FILE_TYPE="${{ env.FILE_TYPE }}"
+          if [[ "$FILE_TYPE" == "js" ]]; then
             npm run decode -- -i input.js -o output.js
-          elif [ "$FILE_TYPE" = "py" ]; then
+          elif [[ "$FILE_TYPE" == "py" ]]; then
             # 如果是Python文件，可能需要特殊处理
             echo "处理Python文件"
-          elif [ "$FILE_TYPE" = "php" ]; then
+          elif [[ "$FILE_TYPE" == "php" ]]; then
             # 如果是PHP文件，可能需要特殊处理
             echo "处理PHP文件"
           fi
         else
           # 常规push事件，使用原始命令
-          npm run decode -- [-i input.js] [-o output.js]
+          npm run decode -- -i input.js -o output.js
         fi
 
     # 配置Git
@@ -98,10 +96,10 @@ jobs:
       run: |
         git status
         ls
-        git add output.js
-        git add output.py
-        git commit -m "Add decoded output file"
-        git push
+        git add output.js || true
+        git add output.py || true
+        git commit -m "Add decoded output file" || echo "No changes to commit"
+        git push || echo "No changes to push"
     
     # 如果是Issue事件，将结果作为评论添加到Issue
     - name: Comment on issue with results
@@ -149,5 +147,3 @@ ${resultContent.length > 65000 ? resultContent.substring(0, 65000) + '...(结果
             issue_number: context.issue.number,
             body: commentBody
           });
-          
-          console.log(`解密结果已作为评论添加到issue #${context.issue.number}`);

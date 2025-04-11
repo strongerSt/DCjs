@@ -1,0 +1,534 @@
+// scripts.js
+// GitHub仓库配置
+const repoConfig = {
+    owner: 'Mikephie',
+    repo: 'DCjs',
+    branch: 'main'
+};
+
+// 在页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 初始化标签页切换功能
+    initTabs();
+    
+    // 初始化按钮事件
+    initButtons();
+    
+    // 初始化文件上传
+    initFileUpload();
+    
+    // 初始化远程文件获取
+    initRemoteFile();
+    
+    // 初始化拖放功能
+    initDragDrop();
+});
+
+// 初始化标签页切换
+function initTabs() {
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // 移除所有标签页的激活状态
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 激活当前标签页
+            tab.classList.add('active');
+            const tabId = tab.getAttribute('data-tab');
+            document.getElementById(`${tabId}-content`).classList.add('active');
+        });
+    });
+}
+
+// 初始化按钮事件
+function initButtons() {
+    // 清空按钮点击事件
+    document.getElementById('clear-btn')?.addEventListener('click', () => {
+        document.getElementById('code-input').value = '';
+        document.getElementById('result-content').innerHTML = '';
+    });
+    
+    // 解码按钮点击事件
+    document.getElementById('decrypt-btn')?.addEventListener('click', () => {
+        const code = document.getElementById('code-input').value;
+        if (!code.trim()) {
+            alert('请输入需要解密的代码');
+            return;
+        }
+        
+        // 获取文件类型
+        let fileType = 'js';
+        document.querySelectorAll('input[name="file-type"]').forEach(input => {
+            if (input.checked) {
+                fileType = input.value;
+            }
+        });
+        
+        // 获取选中的加密类型
+        let encryptionType = 'auto';
+        document.querySelectorAll('input[name="encryption-type"]').forEach(input => {
+            if (input.checked) {
+                encryptionType = input.id.replace('type-', '');
+            }
+        });
+        
+        // 创建GitHub issue
+        createGitHubIssue(code, fileType, encryptionType);
+    });
+}
+
+// 创建GitHub issue
+function createGitHubIssue(code, fileType, encryptionType) {
+    const resultElement = document.getElementById('result-content');
+    
+    try {
+        // 构造Issue标题和内容
+        const issueTitle = `[Web解密请求] ${encryptionType}`;
+        const issueBody = `# 解密请求
+
+**文件类型:** \`${fileType}\`
+**加密类型:** \`${encryptionType}\`
+**时间戳:** ${new Date().toISOString()}
+
+**代码:**
+\`\`\`${fileType}
+${code}
+\`\`\``;
+
+        // 在结果区域显示一个用户友好的表单
+        resultElement.innerHTML = `
+            <div class="info-box">
+                <p><strong>创建解密请求</strong></p>
+                <p>我们将为您自动创建一个解密请求。请检查以下信息：</p>
+                
+                <p><strong>标题:</strong> ${issueTitle}</p>
+                <p><strong>文件类型:</strong> ${fileType}</p>
+                <p><strong>加密类型:</strong> ${encryptionType}</p>
+                <p><strong>代码长度:</strong> ${code.length} 字符</p>
+                
+                <div style="margin: 15px 0;">
+                    <input type="text" id="github-username" placeholder="您的GitHub用户名（可选）" style="padding: 8px; margin-right: 10px; width: 200px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px;">
+                    <input type="password" id="github-token" placeholder="个人访问令牌（可选）" style="padding: 8px; width: 200px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px;">
+                </div>
+                <p style="font-size: 12px; color: #999;">注意：提供GitHub令牌可以自动创建Issue。如不提供，将引导您手动创建。您的令牌不会被保存。</p>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button id="create-issue-btn" class="github-link">创建解密请求</button>
+                    <button id="show-manual-btn" class="github-link" style="background: #333;">手动步骤</button>
+                </div>
+            </div>
+        `;
+        
+        // 添加创建按钮事件
+        document.getElementById('create-issue-btn').addEventListener('click', async () => {
+            const username = document.getElementById('github-username').value.trim();
+            const token = document.getElementById('github-token').value.trim();
+            
+            if (token && username) {
+                // 如果提供了令牌，尝试自动创建Issue
+                try {
+                    resultElement.innerHTML = `<p>正在创建Issue...</p>`;
+                    
+                    // 使用GitHub API创建Issue
+                    const response = await fetch(`https://api.github.com/repos/${repoConfig.owner}/${repoConfig.repo}/issues`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            title: issueTitle,
+                            body: issueBody
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const issueData = await response.json();
+                        const issueNumber = issueData.number;
+                        
+                        resultElement.innerHTML = `
+                            <p>解密请求创建成功！Issue #${issueNumber}</p>
+                            <p>GitHub Actions正在处理您的请求，请稍候...</p>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="progress-bar"></div>
+                            </div>
+                            <p>您可以 <a href="${issueData.html_url}" target="_blank" class="github-link">查看Issue状态</a> 或等待结果显示在这里</p>
+                        `;
+                        
+                        // 启动进度条
+                        startProgressBar();
+                        
+                        // 开始轮询结果
+                        pollForIssueResults(issueNumber, fileType);
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(`GitHub API错误: ${errorData.message || '创建Issue失败'}`);
+                    }
+                } catch (error) {
+                    console.error('创建Issue失败:', error);
+                    resultElement.innerHTML = `
+                        <p>自动创建Issue失败: ${error.message}</p>
+                        <p>请尝试手动创建Issue。</p>
+                        <button id="show-manual-steps" class="github-link">显示手动步骤</button>
+                    `;
+                    
+                    document.getElementById('show-manual-steps').addEventListener('click', () => {
+                        showManualSteps(issueTitle, issueBody, fileType);
+                    });
+                }
+            } else {
+                // 如果没有提供令牌，显示手动步骤
+                showManualSteps(issueTitle, issueBody, fileType);
+            }
+        });
+        
+        // 添加手动按钮事件
+        document.getElementById('show-manual-btn').addEventListener('click', () => {
+            showManualSteps(issueTitle, issueBody, fileType);
+        });
+    } catch (error) {
+        resultElement.innerHTML = `
+            <p>错误: ${error.message}</p>
+            <p>请稍后重试。</p>
+        `;
+    }
+}
+
+// 显示手动创建Issue的步骤
+function showManualSteps(issueTitle, issueBody, fileType) {
+    const resultElement = document.getElementById('result-content');
+    
+    resultElement.innerHTML = `
+        <p>请按照以下步骤创建解密请求：</p>
+        <ol>
+            <li>手动创建一个新Issue: <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/new" target="_blank" class="github-link">创建Issue</a></li>
+            <li>使用标题: <strong>${issueTitle}</strong></li>
+            <li>在内容中粘贴以下模板:</li>
+        </ol>
+        <div style="background: #1a1a1a; padding: 15px; border-radius: 4px; margin: 15px 0; border: 1px solid #333;">
+            <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">${escapeHtml(issueBody)}</pre>
+            <button id="copy-template-btn" style="margin-top: 10px; background-color: #333; color: #e0e0e0; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">复制模板</button>
+        </div>
+        <ol start="4">
+            <li>提交Issue后回到此页面，点击下方按钮输入Issue编号</li>
+        </ol>
+        <button id="check-result-btn" class="github-link" style="display: block; margin: 15px auto; padding: 10px 20px; font-size: 16px;">输入Issue编号</button>
+    `;
+    
+    // 添加复制模板按钮事件
+    document.getElementById('copy-template-btn').addEventListener('click', () => {
+        navigator.clipboard.writeText(issueBody)
+            .then(() => {
+                alert('模板已复制到剪贴板！现在您可以粘贴到Issue中。');
+            })
+            .catch(err => {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动复制模板。');
+            });
+    });
+    
+    // 添加检查结果按钮事件
+    document.getElementById('check-result-btn').addEventListener('click', () => {
+        promptForIssueNumber(fileType);
+    });
+}
+
+// 提示输入Issue编号
+function promptForIssueNumber(fileType) {
+    const issueNumber = prompt('请输入Issue编号 (仅数字部分):', '');
+    if (issueNumber && !isNaN(issueNumber)) {
+        const resultElement = document.getElementById('result-content');
+        resultElement.innerHTML = `
+            <p>正在检查issue #${issueNumber}的解密结果...</p>
+            <p>请等待约60秒，GitHub Actions正在处理您的请求</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        `;
+        
+        // 启动进度条
+        startProgressBar();
+        
+        // 开始轮询结果
+        pollForIssueResults(issueNumber, fileType);
+    } else {
+        alert('请输入有效的Issue编号！');
+    }
+}
+
+// 轮询issue结果
+function pollForIssueResults(issueNumber, fileType) {
+    const resultElement = document.getElementById('result-content');
+    let attempts = 0;
+    const maxAttempts = 20; // 最多尝试20次，每次3秒
+    
+    const checkIssue = () => {
+        attempts++;
+        
+        if (attempts > maxAttempts) {
+            // 超过最大尝试次数
+            clearInterval(window.progressInterval);
+            resultElement.innerHTML = `
+                <p>检查超时。GitHub Actions可能仍在处理您的请求。</p>
+                <p>请稍后直接查看issue获取结果。</p>
+                <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/${issueNumber}" target="_blank" class="github-link">查看Issue #${issueNumber}</a>
+                <button id="retry-btn" class="github-link" style="margin-top: 10px;">再次检查</button>
+            `;
+            
+            // 添加重试按钮事件
+            document.getElementById('retry-btn').addEventListener('click', () => {
+                pollForIssueResults(issueNumber, fileType);
+            });
+            return;
+        }
+        
+        // 由于浏览器端无法直接访问GitHub API（需要认证令牌），
+        // 我们会指导用户直接查看issue
+        if (attempts === 10) { // 等待约30秒后提示
+            resultElement.innerHTML = `
+                <p>GitHub Actions可能正在处理您的请求。</p>
+                <p>您可以直接查看issue获取最新结果：</p>
+                <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/${issueNumber}" target="_blank" class="github-link">查看Issue #${issueNumber}</a>
+                <p>或继续等待自动检查（还剩${maxAttempts - attempts}次尝试）</p>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar" style="width: ${(attempts / maxAttempts) * 100}%"></div>
+                </div>
+            `;
+        }
+        
+        // 这里我们假设解密大约需要60秒
+        // 实际应用中，如果有API访问权限，可以真正检查issue评论
+        if (attempts >= maxAttempts - 1) { // 最后一次尝试
+            clearInterval(checkInterval);
+            clearInterval(window.progressInterval);
+            
+            resultElement.innerHTML = `
+                <p>检查完成，请点击下方链接查看解密结果：</p>
+                <a href="https://github.com/${repoConfig.owner}/${repoConfig.repo}/issues/${issueNumber}" target="_blank" class="github-link">查看Issue #${issueNumber} 的解密结果</a>
+                <p class="info-box" style="margin-top: 15px;">
+                    <strong>提示:</strong> 如果Issue中尚未显示解密结果，GitHub Actions可能仍在处理。
+                    请稍后再查看，或检查是否有错误信息。
+                </p>
+            `;
+        }
+    };
+    
+    // 立即执行一次
+    checkIssue();
+    
+    // 然后每3秒执行一次
+    const checkInterval = setInterval(checkIssue, 3000);
+}
+
+// 启动进度条
+function startProgressBar() {
+    const progressBar = document.getElementById('progress-bar');
+    let width = 0;
+    
+    // 如果存在旧的interval，清除它
+    if (window.progressInterval) {
+        clearInterval(window.progressInterval);
+    }
+    
+    // 创建新的progress interval
+    const interval = setInterval(() => {
+        if (width >= 100) {
+            clearInterval(interval);
+        } else {
+            width += 0.5; // 更平滑的进度增长
+            progressBar.style.width = width + '%';
+        }
+    }, 300); // 60秒满进度
+    
+    // 保存interval ID
+    window.progressInterval = interval;
+}
+
+// 初始化文件上传
+function initFileUpload() {
+    document.getElementById('local-file')?.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('code-input').value = e.target.result;
+                
+                // 根据文件扩展名设置文件类型
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                document.querySelectorAll('input[name="file-type"]').forEach(input => {
+                    if (input.value === fileExtension) {
+                        input.checked = true;
+                    }
+                });
+                
+                // 切换到粘贴代码标签页
+                document.querySelectorAll('.tab')[0].click();
+            };
+            reader.readAsText(file);
+        }
+    });
+}
+
+// 初始化拖放功能
+function initDragDrop() {
+    // 获取文本区域元素
+    const textArea = document.getElementById('code-input');
+    if (!textArea) return;
+    
+    // 创建一个拖放区域
+    const dropZone = document.createElement('div');
+    dropZone.className = 'drop-zone';
+    dropZone.innerHTML = `
+        <div class="drop-message">
+            <i class="drop-icon">📄</i>
+            <p>拖放文件到这里</p>
+            <p class="drop-sub">或点击此处选择文件</p>
+        </div>
+    `;
+    dropZone.style.display = 'flex';
+    dropZone.style.flexDirection = 'column';
+    dropZone.style.alignItems = 'center';
+    dropZone.style.justifyContent = 'center';
+    dropZone.style.height = '300px';
+    dropZone.style.border = '2px dashed #555';
+    dropZone.style.borderRadius = '8px';
+    dropZone.style.backgroundColor = '#1a1a1a';
+    dropZone.style.margin = '20px 0';
+    dropZone.style.cursor = 'pointer';
+    
+    // 创建一个隐藏的文件输入
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.style.display = 'none';
+    fileInput.accept = '.js,.py,.php,.txt';
+    
+    // 插入到文本区域前面
+    textArea.parentNode.insertBefore(dropZone, textArea);
+    document.body.appendChild(fileInput);
+    
+    // 隐藏文本区域，直到有内容
+    textArea.style.display = 'none';
+    
+    // 点击拖放区域时触发文件选择
+    dropZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+    
+    // 处理文件选择
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // 处理拖放事件
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#9eca34';
+        dropZone.style.backgroundColor = '#232323';
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = '#555';
+        dropZone.style.backgroundColor = '#1a1a1a';
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#555';
+        dropZone.style.backgroundColor = '#1a1a1a';
+        
+        if (e.dataTransfer.files.length) {
+            handleFile(e.dataTransfer.files[0]);
+        }
+    });
+    
+    // 处理文件选择事件
+    function handleFileSelect(e) {
+        if (e.target.files.length) {
+            handleFile(e.target.files[0]);
+        }
+    }
+    
+    // 处理文件
+    function handleFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+            textArea.value = content;
+            textArea.style.display = 'block';
+            dropZone.style.display = 'none';
+            
+            // 根据文件扩展名设置文件类型
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            document.querySelectorAll('input[name="file-type"]').forEach(input => {
+                if (input.value === fileExtension) {
+                    input.checked = true;
+                }
+            });
+        };
+        reader.readAsText(file);
+    }
+}
+
+// 初始化远程文件获取
+function initRemoteFile() {
+    document.getElementById('fetch-remote')?.addEventListener('click', () => {
+        const url = document.getElementById('remote-url')?.value;
+        if (!url) {
+            alert('请输入远程文件URL');
+            return;
+        }
+        
+        // 更新UI
+        document.getElementById('result-content').innerHTML = '<p>正在获取远程文件...</p>';
+        
+        // 尝试通过CORS代理获取远程文件
+        // 注意：cors-anywhere可能对新域名有限制
+        // 考虑使用其他公共CORS代理或自建代理
+        const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+        fetch(corsProxy + url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('无法获取远程文件');
+                }
+                return response.text();
+            })
+            .then(code => {
+                // 设置文本区域内容
+                document.getElementById('code-input').value = code;
+                
+                // 根据URL扩展名设置文件类型
+                const fileExtension = url.split('.').pop().toLowerCase();
+                if (['js', 'py', 'php'].includes(fileExtension)) {
+                    document.querySelectorAll('input[name="file-type"]').forEach(input => {
+                        if (input.value === fileExtension) {
+                            input.checked = true;
+                        }
+                    });
+                }
+                
+                // 切换到粘贴代码标签页
+                document.querySelectorAll('.tab')[0].click();
+                document.getElementById('result-content').innerHTML = '<p>远程文件获取成功，已填充到文本框</p>';
+            })
+            .catch(error => {
+                document.getElementById('result-content').innerHTML = `
+                    <p>获取远程文件失败: ${error.message}</p>
+                    <p>由于浏览器的安全限制，某些远程文件可能无法直接获取。请尝试手动复制代码。</p>
+                    <p>或者尝试使用其他公共CORS代理：</p>
+                    <ul>
+                        <li><a href="https://allorigins.win/" target="_blank" class="github-link">AllOrigins</a></li>
+                        <li><a href="https://api.codetabs.com/v1/proxy" target="_blank" class="github-link">CodeTabs Proxy</a></li>
+                    </ul>
+                `;
+            });
+    });
+}
+
+// HTML转义防止XSS
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}

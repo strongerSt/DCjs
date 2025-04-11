@@ -114,87 +114,15 @@ ${code}
                 <p><strong>加密类型:</strong> ${encryptionType}</p>
                 <p><strong>代码长度:</strong> ${code.length} 字符</p>
                 
-                <div style="margin: 15px 0;">
-                    <input type="text" id="github-username" placeholder="您的GitHub用户名（可选）" style="padding: 8px; margin-right: 10px; width: 200px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px;">
-                    <input type="password" id="github-token" placeholder="个人访问令牌（可选）" style="padding: 8px; width: 200px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px;">
+                <div class="auth-inputs">
+                    <input type="text" id="github-username" class="auth-input" placeholder="您的GitHub用户名（可选）">
+                    <input type="password" id="github-token" class="auth-input" placeholder="个人访问令牌（可选）">
                 </div>
-            `;
-        }
-    });
-    
-    // 允许在远程URL输入框中按回车触发获取
-    document.getElementById('remote-url')?.addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            document.getElementById('fetch-remote')?.click();
-        }
-    });
-}
-
-// HTML转义防止XSS
-function escapeHtml(unsafe) {
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-// 添加自定义CSS样式
-function addCustomStyles() {
-    // 检查是否已经添加了样式
-    if (document.getElementById('custom-mikephie-styles')) return;
-    
-    const styleElement = document.createElement('style');
-    styleElement.id = 'custom-mikephie-styles';
-    styleElement.textContent = `
-        .progress-container {
-            width: 100%;
-            background-color: #333;
-            border-radius: 4px;
-            margin: 10px 0;
-            height: 10px;
-            overflow: hidden;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background-color: #9eca34;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        
-        .success-box {
-            background-color: rgba(76, 175, 80, 0.1);
-            border: 1px solid #4CAF50;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-        
-        .error-box {
-            background-color: rgba(244, 67, 54, 0.1);
-            border: 1px solid #F44336;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-        
-        .drop-zone.highlight {
-            border-color: #9eca34;
-            background-color: #232323;
-        }
-    `;
-    document.head.appendChild(styleElement);
-}
-
-// 在页面加载时添加自定义样式
-document.addEventListener('DOMContentLoaded', addCustomStyles);
                 <p style="font-size: 12px; color: #999;">注意：提供GitHub令牌可以自动创建Issue。如不提供，将引导您手动创建。您的令牌不会被保存。</p>
                 
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button id="create-issue-btn" class="github-link">创建解密请求</button>
-                    <button id="show-manual-btn" class="github-link" style="background: #333;">手动步骤</button>
+                <div class="action-buttons">
+                    <button id="create-issue-btn" class="primary-btn">创建解密请求</button>
+                    <button id="show-manual-btn" class="secondary-btn">手动步骤</button>
                 </div>
             </div>
         `;
@@ -286,14 +214,14 @@ function showManualSteps(issueTitle, issueBody, fileType) {
             <li>使用标题: <strong>${issueTitle}</strong></li>
             <li>在内容中粘贴以下模板:</li>
         </ol>
-        <div style="background: #1a1a1a; padding: 15px; border-radius: 4px; margin: 15px 0; border: 1px solid #333;">
-            <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">${escapeHtml(issueBody)}</pre>
-            <button id="copy-template-btn" style="margin-top: 10px; background-color: #333; color: #e0e0e0; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">复制模板</button>
+        <div class="code-template">
+            <pre>${escapeHtml(issueBody)}</pre>
+            <button id="copy-template-btn" class="secondary-btn" style="margin-top: 10px;">复制模板</button>
         </div>
         <ol start="4">
             <li>提交Issue后回到此页面，点击下方按钮输入Issue编号</li>
         </ol>
-        <button id="check-result-btn" class="github-link" style="display: block; margin: 15px auto; padding: 10px 20px; font-size: 16px;">输入Issue编号</button>
+        <button id="check-result-btn" class="primary-btn" style="display: block; margin: 15px auto; padding: 10px 20px; font-size: 16px;">输入Issue编号</button>
     `;
     
     // 添加复制模板按钮事件
@@ -425,217 +353,81 @@ function startProgressBar() {
     window.progressInterval = interval;
 }
 
-// 【改进后的文件上传功能】
 // 初始化文件上传
 function initFileUpload() {
-    // 处理本地文件上传按钮
-    document.getElementById('local-file')?.addEventListener('change', (event) => {
+    const fileInput = document.getElementById('local-file');
+    if (!fileInput) return;
+    
+    fileInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
-        if (file) {
-            handleFileUpload(file);
-        }
-    });
-}
-
-// 【改进后的拖放功能】
-// 初始化拖放功能
-function initDragDrop() {
-    // 获取文本区域元素
-    const textArea = document.getElementById('code-input');
-    if (!textArea) return;
-    
-    // 检查是否已经存在拖放区域，如果不存在才创建
-    let dropZone = document.querySelector('.drop-zone');
-    if (!dropZone) {
-        // 创建一个拖放区域
-        dropZone = document.createElement('div');
-        dropZone.className = 'drop-zone';
-        dropZone.innerHTML = `
-            <div class="drop-message">
-                <i class="drop-icon">📄</i>
-                <p>拖放文件到这里</p>
-                <p class="drop-sub">或点击此处选择文件</p>
-            </div>
-        `;
+        if (!file) return;
         
-        // 设置样式
-        dropZone.style.display = 'flex';
-        dropZone.style.flexDirection = 'column';
-        dropZone.style.alignItems = 'center';
-        dropZone.style.justifyContent = 'center';
-        dropZone.style.height = '300px';
-        dropZone.style.border = '2px dashed #555';
-        dropZone.style.borderRadius = '8px';
-        dropZone.style.backgroundColor = '#1a1a1a';
-        dropZone.style.margin = '20px 0';
-        dropZone.style.cursor = 'pointer';
-        
-        // 插入到文本区域前面
-        textArea.parentNode.insertBefore(dropZone, textArea);
-        
-        // 只有在文本区域为空时才隐藏它
-        if (!textArea.value.trim()) {
-            textArea.style.display = 'none';
-        }
-    }
-    
-    // 创建一个隐藏的文件输入
-    let fileInput = document.getElementById('hidden-file-input');
-    if (!fileInput) {
-        fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'hidden-file-input';
-        fileInput.style.display = 'none';
-        fileInput.accept = '.js,.py,.php,.txt';
-        document.body.appendChild(fileInput);
-    }
-    
-    // 点击拖放区域时触发文件选择
-    dropZone.addEventListener('click', () => {
-        fileInput.click();
-    });
-    
-    // 处理文件选择
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length) {
-            handleFileUpload(e.target.files[0]);
-        }
-    });
-    
-    // 处理拖放事件
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.style.borderColor = '#9eca34';
-        dropZone.style.backgroundColor = '#232323';
-    });
-    
-    dropZone.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.style.borderColor = '#555';
-        dropZone.style.backgroundColor = '#1a1a1a';
-    });
-    
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.style.borderColor = '#555';
-        dropZone.style.backgroundColor = '#1a1a1a';
-        
-        if (e.dataTransfer.files.length) {
-            handleFileUpload(e.dataTransfer.files[0]);
-        }
-    });
-    
-    // 为文本区域也添加拖放功能
-    textArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        textArea.style.borderColor = '#9eca34';
-        textArea.style.backgroundColor = 'rgba(158, 202, 52, 0.05)';
-    });
-    
-    textArea.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        textArea.style.borderColor = '';
-        textArea.style.backgroundColor = '';
-    });
-    
-    textArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        textArea.style.borderColor = '';
-        textArea.style.backgroundColor = '';
-        
-        if (e.dataTransfer.files.length) {
-            handleFileUpload(e.dataTransfer.files[0]);
-        }
-    });
-}
-
-// 【改进后的文件处理统一函数】
-// 统一的文件处理函数
-function handleFileUpload(file) {
-    const textArea = document.getElementById('code-input');
-    const dropZone = document.querySelector('.drop-zone');
-    const resultContent = document.getElementById('result-content');
-    
-    // 检查文件类型
-    const fileExtension = file.name.split('.').pop().toLowerCase();
-    const allowedExtensions = ['js', 'py', 'php', 'txt'];
-    
-    if (!allowedExtensions.includes(fileExtension)) {
-        resultContent.innerHTML = `
-            <div class="error-box" style="background-color: rgba(244, 67, 54, 0.1); border: 1px solid #F44336; padding: 10px; border-radius: 4px;">
-                <p>不支持的文件类型: ${fileExtension}</p>
-                <p>只支持 .js, .py, .php, .txt 文件</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // 创建FileReader对象
-    const reader = new FileReader();
-    
-    // 当文件读取成功时触发
-    reader.onload = (e) => {
-        const content = e.target.result;
-        
-        // 设置文本区域内容
-        textArea.value = content;
-        textArea.style.display = 'block';
-        
-        // 隐藏拖放区域
-        if (dropZone) {
-            dropZone.style.display = 'none';
+        // 检查文件类型
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        if (!['js', 'py', 'php', 'txt'].includes(fileExtension)) {
+            alert('不支持的文件类型！只支持 .js, .py, .php, .txt 文件。');
+            fileInput.value = ''; // 清空文件选择
+            return;
         }
         
-        // 根据文件扩展名设置文件类型
-        if (['js', 'py', 'php'].includes(fileExtension)) {
-            document.querySelectorAll('input[name="file-type"]').forEach(input => {
-                if (input.value === fileExtension) {
-                    input.checked = true;
-                }
-            });
-        }
+        // 创建一个文件读取器
+        const reader = new FileReader();
         
-        // 显示成功消息
-        resultContent.innerHTML = `
-            <div class="success-box" style="background-color: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; padding: 10px; border-radius: 4px;">
-                <p>文件上传成功！</p>
-                <p>文件名: ${file.name}</p>
-                <p>文件大小: ${(file.size / 1024).toFixed(2)} KB</p>
-            </div>
-        `;
-        
-        // 切换到粘贴代码标签页（如果不在粘贴代码标签页）
-        const activeTab = document.querySelector('.tab.active');
-        if (activeTab && activeTab.getAttribute('data-tab') !== 'paste') {
+        // 文件读取完成后的处理函数
+        reader.onload = function(e) {
+            // 获取文件内容
+            const fileContent = e.target.result;
+            
+            // 设置到文本区域
+            const codeInput = document.getElementById('code-input');
+            codeInput.value = fileContent;
+            
+            // 根据文件类型选择相应的单选按钮
+            if (['js', 'py', 'php'].includes(fileExtension)) {
+                document.querySelector(`input[name="file-type"][value="${fileExtension}"]`).checked = true;
+            }
+            
+            // 跳转到粘贴代码标签页
             document.querySelector('.tab[data-tab="paste"]').click();
-        }
-    };
-    
-    // 当文件读取失败时触发
-    reader.onerror = () => {
-        resultContent.innerHTML = `
-            <div class="error-box" style="background-color: rgba(244, 67, 54, 0.1); border: 1px solid #F44336; padding: 10px; border-radius: 4px;">
-                <p>读取文件失败!</p>
-                <p>错误信息: ${reader.error}</p>
-            </div>
-        `;
-    };
-    
-    // 开始读取文件
-    reader.readAsText(file);
+            
+            // 显示成功消息
+            document.getElementById('result-content').innerHTML = `
+                <div class="info-box">
+                    <p>文件 <strong>${file.name}</strong> 已成功加载，大小: ${(file.size / 1024).toFixed(2)} KB</p>
+                    <p>您现在可以选择解密类型并点击"点击解码"按钮进行解密。</p>
+                </div>
+            `;
+            
+            // 隐藏拖放区域（如果存在）
+            const dropZone = document.querySelector('.drop-zone');
+            if (dropZone) {
+                dropZone.style.display = 'none';
+                codeInput.style.display = 'block';
+            }
+        };
+        
+        // 文件读取失败的处理函数
+        reader.onerror = function() {
+            alert('读取文件时出错！');
+            console.error('FileReader error:', reader.error);
+        };
+        
+        // 以文本形式读取文件
+        reader.readAsText(file);
+    });
 }
 
-// 【改进后的远程文件获取功能】
 // 初始化远程文件获取
 function initRemoteFile() {
-    document.getElementById('fetch-remote')?.addEventListener('click', async () => {
-        const url = document.getElementById('remote-url')?.value.trim();
+    const fetchBtn = document.getElementById('fetch-remote');
+    const urlInput = document.getElementById('remote-url');
+    
+    if (!fetchBtn || !urlInput) return;
+    
+    // 获取远程文件的函数
+    const fetchRemoteFile = async () => {
+        const url = urlInput.value.trim();
+        
         if (!url) {
             alert('请输入远程文件URL');
             return;
@@ -656,8 +448,7 @@ function initRemoteFile() {
             '', // 首先尝试直接请求，某些服务器可能允许跨域
             'https://corsproxy.io/?', 
             'https://api.allorigins.win/raw?url=',
-            'https://api.codetabs.com/v1/proxy?quest=',
-            'https://cors-anywhere.herokuapp.com/'
+            'https://api.codetabs.com/v1/proxy?quest='
         ];
         
         // 尝试所有代理
@@ -668,11 +459,28 @@ function initRemoteFile() {
             if (success) break;
             
             try {
-                resultContent.innerHTML = `<p>正在尝试获取远程文件... (${proxy ? '使用代理' : '直接请求'})</p>`;
+                resultContent.innerHTML = `<p>正在尝试获取远程文件... ${proxy ? '(使用代理)' : '(直接请求)'}</p>`;
                 
-                const response = await fetch(proxy + encodeURIComponent(url).replace(/^https%3A/i, 'https:').replace(/^http%3A/i, 'http:'), {
+                // 准备请求URL
+                let requestUrl;
+                if (proxy === '') {
+                    // 直接请求
+                    requestUrl = url;
+                } else if (proxy.includes('?url=')) {
+                    // 代理需要url参数
+                    requestUrl = proxy + encodeURIComponent(url);
+                } else if (proxy.includes('?quest=')) {
+                    // 特殊代理格式
+                    requestUrl = proxy + encodeURIComponent(url);
+                } else {
+                    // 直接拼接
+                    requestUrl = proxy + url;
+                }
+                
+                const response = await fetch(requestUrl, {
                     method: 'GET',
                     mode: 'cors',
+                    cache: 'no-cache',
                     headers: {
                         'Accept': 'text/plain,text/html,application/javascript,application/json,*/*'
                     }
@@ -688,31 +496,27 @@ function initRemoteFile() {
                 const codeInput = document.getElementById('code-input');
                 codeInput.value = code;
                 
-                // 如果有拖放区，需要隐藏它并显示文本区域
+                // 根据URL扩展名设置文件类型
+                const fileExtension = url.split('.').pop().toLowerCase();
+                if (['js', 'py', 'php'].includes(fileExtension)) {
+                    document.querySelector(`input[name="file-type"][value="${fileExtension}"]`).checked = true;
+                }
+                
+                // 切换到粘贴代码标签页
+                document.querySelector('.tab[data-tab="paste"]').click();
+                resultContent.innerHTML = `
+                    <div class="info-box">
+                        <p>远程文件获取成功！文件大小: ${(code.length / 1024).toFixed(2)} KB</p>
+                        <p>您现在可以选择解密类型并点击"点击解码"按钮进行解密。</p>
+                    </div>
+                `;
+                
+                // 隐藏拖放区域（如果存在）
                 const dropZone = document.querySelector('.drop-zone');
                 if (dropZone) {
                     dropZone.style.display = 'none';
                     codeInput.style.display = 'block';
                 }
-                
-                // 根据URL扩展名设置文件类型
-                const fileExtension = url.split('.').pop().toLowerCase();
-                if (['js', 'py', 'php'].includes(fileExtension)) {
-                    document.querySelectorAll('input[name="file-type"]').forEach(input => {
-                        if (input.value === fileExtension) {
-                            input.checked = true;
-                        }
-                    });
-                }
-                
-                // 切换到粘贴代码标签页
-                document.querySelectorAll('.tab')[0].click();
-                resultContent.innerHTML = `
-                    <div class="success-box" style="background-color: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; padding: 10px; border-radius: 4px;">
-                        <p>远程文件获取成功！</p>
-                        <p>文件大小: ${(code.length / 1024).toFixed(2)} KB</p>
-                    </div>
-                `;
                 
                 success = true;
                 break;
@@ -726,9 +530,8 @@ function initRemoteFile() {
         // 如果所有代理都失败
         if (!success) {
             resultContent.innerHTML = `
-                <div class="error-box" style="background-color: rgba(244, 67, 54, 0.1); border: 1px solid #F44336; padding: 10px; border-radius: 4px;">
-                    <p>获取远程文件失败: ${lastError?.message || '未知错误'}</p>
-                    <p>所有可用的CORS代理都无法获取此文件。</p>
+                <div class="info-box" style="border-left-color: #F44336;">
+                    <p><strong>获取远程文件失败:</strong> ${lastError?.message || '未知错误'}</p>
                     <p>可能的原因:</p>
                     <ul>
                         <li>URL地址不正确</li>
@@ -742,3 +545,185 @@ function initRemoteFile() {
                         <li>确认URL是否正确，包括协议(http/https)</li>
                     </ul>
                 </div>
+            `;
+        }
+    };
+    
+    // 点击按钮获取远程文件
+    fetchBtn.addEventListener('click', fetchRemoteFile);
+    
+    // 按回车键获取远程文件
+    urlInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            fetchRemoteFile();
+        }
+    });
+}
+
+// 初始化拖放功能
+function initDragDrop() {
+    // 获取代码输入区域
+    const codeInput = document.getElementById('code-input');
+    if (!codeInput) return;
+    
+    // 准备拖放区域
+    const pasteContent = document.getElementById('paste-content');
+    if (!pasteContent) return;
+    
+    // 检查是否已经存在拖放区域
+    let dropZone = document.querySelector('.drop-zone');
+    
+    // 如果没有拖放区域，创建一个
+    if (!dropZone) {
+        dropZone = document.createElement('div');
+        dropZone.className = 'drop-zone';
+        dropZone.innerHTML = `
+            <div class="drop-message">
+                <i class="drop-icon">📄</i>
+                <p>拖放文件到这里</p>
+                <p class="drop-sub">或点击此处选择文件</p>
+            </div>
+        `;
+        
+        // 只有在代码输入为空时才显示拖放区域
+        if (!codeInput.value.trim()) {
+            codeInput.style.display = 'none';
+            // 在代码输入区域前插入拖放区域
+            pasteContent.insertBefore(dropZone, codeInput);
+        }
+    }
+    
+    // 添加隐藏的文件输入
+    let hiddenFileInput = document.getElementById('hidden-file-input');
+    if (!hiddenFileInput) {
+        hiddenFileInput = document.createElement('input');
+        hiddenFileInput.type = 'file';
+        hiddenFileInput.id = 'hidden-file-input';
+        hiddenFileInput.style.display = 'none';
+        hiddenFileInput.accept = '.js,.py,.php,.txt';
+        document.body.appendChild(hiddenFileInput);
+    }
+    
+    // 点击拖放区域打开文件选择器
+    dropZone.addEventListener('click', () => {
+        hiddenFileInput.click();
+    });
+    
+    // 处理文件选择
+    hiddenFileInput.addEventListener('change', (event) => {
+        if (event.target.files.length) {
+            handleFileUpload(event.target.files[0]);
+        }
+    });
+    
+    // 拖放区域的事件处理
+    dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropZone.classList.add('active');
+    });
+    
+    dropZone.addEventListener('dragleave', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropZone.classList.remove('active');
+    });
+    
+    dropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        dropZone.classList.remove('active');
+        
+        if (event.dataTransfer.files.length) {
+            handleFileUpload(event.dataTransfer.files[0]);
+        }
+    });
+    
+    // 直接拖放到文本区域
+    codeInput.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        codeInput.style.borderColor = '#9eca34';
+    });
+    
+    codeInput.addEventListener('dragleave', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        codeInput.style.borderColor = '';
+    });
+    
+    codeInput.addEventListener('drop', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        codeInput.style.borderColor = '';
+        
+        if (event.dataTransfer.files.length) {
+            handleFileUpload(event.dataTransfer.files[0]);
+        }
+    });
+}
+
+// 统一处理文件上传
+function handleFileUpload(file) {
+    if (!file) return;
+    
+    // 检查文件类型
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    if (!['js', 'py', 'php', 'txt'].includes(fileExtension)) {
+        alert('不支持的文件类型！只支持 .js, .py, .php, .txt 文件。');
+        return;
+    }
+    
+    // 创建文件读取器
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        // 获取文件内容
+        const fileContent = e.target.result;
+        
+        // 设置文本区域内容
+        const codeInput = document.getElementById('code-input');
+        codeInput.value = fileContent;
+        codeInput.style.display = 'block';
+        
+        // 隐藏拖放区域（如果存在）
+        const dropZone = document.querySelector('.drop-zone');
+        if (dropZone) {
+            dropZone.style.display = 'none';
+        }
+        
+        // 根据文件类型选择相应的单选按钮
+        if (['js', 'py', 'php'].includes(fileExtension)) {
+            document.querySelector(`input[name="file-type"][value="${fileExtension}"]`).checked = true;
+        }
+        
+        // 显示成功消息
+        document.getElementById('result-content').innerHTML = `
+            <div class="info-box">
+                <p>文件 <strong>${file.name}</strong> 已成功加载，大小: ${(file.size / 1024).toFixed(2)} KB</p>
+                <p>您现在可以选择解密类型并点击"点击解码"按钮进行解密。</p>
+            </div>
+        `;
+        
+        // 跳转到粘贴代码标签页
+        document.querySelector('.tab[data-tab="paste"]').click();
+    };
+    
+    reader.onerror = function() {
+        alert('读取文件时出错！');
+        console.error('FileReader error:', reader.error);
+    };
+    
+    // 以文本形式读取文件
+    reader.readAsText(file);
+}
+
+// HTML转义防止XSS
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}

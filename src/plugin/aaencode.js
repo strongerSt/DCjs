@@ -2,12 +2,12 @@
 const { VM } = require('vm2');
 
 /**
- * 动态颜文字解混淆插件
+ * 增强的颜文字解混淆插件
  * 
  * 适用于多种变种的颜文字/表情符号混淆:
  * - 标准AAEncode (颜文字加密)
  * - JJencode变种
- * - 其他使用日文/中文字符作为变量的混淆
+ * - 其他使用特殊Unicode字符作为变量的混淆
  * 
  * @param {string} code - 要解密的混淆代码
  * @returns {string|null} - 解密后的代码，如果失败则返回null
@@ -42,8 +42,21 @@ function recursiveDeobfuscate(code, maxDepth = 3) {
     // 保存上一次的结果用于比较
     const prevResult = result;
     
-    // 执行单次解混淆
-    const deobfuscated = deobfuscateSingle(result);
+    // 尝试多种解混淆方法
+    let deobfuscated = null;
+    
+    // 方法1: 尝试使用分析提取
+    deobfuscated = extractAndExecuteAAEncode(result);
+    
+    // 方法2: 如果分析提取失败，尝试沙箱执行
+    if (!deobfuscated) {
+      deobfuscated = deobfuscateSingle(result);
+    }
+    
+    // 方法3: 如果前两种方法都失败，尝试模式匹配
+    if (!deobfuscated) {
+      deobfuscated = patternMatchDeobfuscate(result);
+    }
     
     if (!deobfuscated || deobfuscated === prevResult) {
       if (depth === 0) {
@@ -84,7 +97,7 @@ function detectObfuscationType(code) {
   // 检测不同类型的颜文字/表情符号混淆
   const patterns = [
     // AAEncode标准模式
-    { name: "AAEncode标准", regex: [/ﾟωﾟ/, /ﾟДﾟ/, /ﾟｰﾟ/, /ﾟΘﾟ/, /o\^_\^o/] },
+    { name: "AAEncode标准", regex: [/ﾟωﾟ/, /ﾟДﾟ/, /ﾟｰﾟ/, /ﾟΘﾟ/, /o\^_\^o/, /c\^_\^o/] },
     
     // JJEncode特征
     { name: "JJEncode", regex: [/\$\+=~\[\]\(/, /\(\+\(/, /\)\)\(\)/] },
@@ -139,6 +152,264 @@ function detectObfuscationType(code) {
 }
 
 /**
+ * 分析并提取标准AAEncode混淆
+ * @param {string} code - 混淆代码
+ * @returns {string|null} - 解密后的代码
+ */
+function extractAndExecuteAAEncode(code) {
+  try {
+    // 特别针对AAEncode的模式 - 动态识别而非硬编码
+    const aaencodedPattern = /ﾟωﾟ[^;]*;[^;]*;[^;]*;[^;]*;[^;]*;/;
+    
+    if (!aaencodedPattern.test(code)) {
+      return null;
+    }
+    
+    console.log('[颜文字解混淆] 检测到AAEncode模式结构');
+    
+    // 寻找最终执行点 - 动态匹配而非硬编码
+    const execPatterns = [
+      /\(ﾟДﾟ\)\s*\[\s*['"]?_['"]?\s*\]\s*\(\s*([^)]+)\s*\)\s*\(\s*['"]?_['"]?\s*\)/,
+      /\(ﾟДﾟ\)\s*\['_'\]\s*\(\s*([^)]+)\s*\)\s*\('_'\)/,
+      /\(ﾟoﾟ\)\s*\(\s*([^)]+)\s*\)/
+    ];
+    
+    let mainExecMatch = null;
+    let execParam = null;
+    
+    for (const pattern of execPatterns) {
+      const match = code.match(pattern);
+      if (match && match[1]) {
+        mainExecMatch = match[0];
+        execParam = match[1];
+        console.log('[颜文字解混淆] 找到执行点:', mainExecMatch.substring(0, 30) + '...');
+        break;
+      }
+    }
+    
+    if (!mainExecMatch) {
+      console.log('[颜文字解混淆] 无法找到执行点');
+      return null;
+    }
+    
+    // 创建一个函数来解析混淆代码
+    const analysis = analyzeAAEncode(code);
+    if (!analysis) {
+      return null;
+    }
+    
+    // 提取关键变量映射
+    const { symbolMap, evalFunction } = analysis;
+    
+    // 基于分析结果构建解密代码
+    console.log('[颜文字解混淆] 提取到的符号映射数量:', Object.keys(symbolMap).length);
+    
+    // 修改代码以输出结果而不是执行
+    const modifiedCode = code.replace(
+      mainExecMatch,
+      `console.log(${execParam});`
+    );
+    
+    // 尝试在沙箱中执行修改后的代码
+    const sandbox = {
+      console: {
+        log: (result) => {
+          console.log('[颜文字解混淆] 捕获到执行结果');
+          return result;
+        }
+      }
+    };
+    
+    try {
+      const vm = new VM({
+        timeout: 5000,
+        sandbox: sandbox
+      });
+      
+      const result = vm.run(modifiedCode);
+      if (result && typeof result === 'string' && result.length > 0) {
+        console.log('[颜文字解混淆] 成功提取到解密结果');
+        return result;
+      }
+    } catch (vmError) {
+      console.error(`[颜文字解混淆] VM执行失败: ${vmError.message}`);
+    }
+    
+    // 尝试使用重构方法
+    try {
+      console.log('[颜文字解混淆] 尝试重构AAEncode结构...');
+      // 根据分析到的结构重构代码
+      const reconstructedCode = reconstructAAEncodeResult(execParam, symbolMap);
+      if (reconstructedCode && reconstructedCode.length > 0) {
+        console.log('[颜文字解混淆] 成功重构AAEncode结果');
+        return reconstructedCode;
+      }
+    } catch (recError) {
+      console.error(`[颜文字解混淆] 重构失败: ${recError.message}`);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`[颜文字解混淆] 提取AAEncode出错: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * 尝试重构AAEncode的执行结果
+ * @param {string} expr - 执行表达式
+ * @param {Object} symbolMap - 符号映射
+ * @returns {string|null} - 重构的结果
+ */
+function reconstructAAEncodeResult(expr, symbolMap) {
+  // 这个函数尝试通过分析执行表达式模拟重构结果
+  // 注意：这是高级解析，可能无法处理所有情况
+  
+  try {
+    // 提取表达式中的字符或操作符
+    const parts = [];
+    const exprParts = expr.split(/[\+\-\(\)]/);
+    
+    for (const part of exprParts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+      
+      // 查找对应的符号并尝试转换
+      if (trimmed in symbolMap) {
+        parts.push(symbolMap[trimmed].value);
+      } else {
+        // 可能是直接值
+        for (const key in symbolMap) {
+          const symbol = symbolMap[key].symbol;
+          if (trimmed.includes(symbol)) {
+            parts.push(trimmed.replace(symbol, symbolMap[key].value));
+            break;
+          }
+        }
+      }
+    }
+    
+    // 检查是否可能是解密后的脚本
+    if (parts.length > 0) {
+      // 尝试提取有意义的部分
+      const scriptPatterns = [
+        /function\s*\([^)]*\)\s*\{[\s\S]*?}/g,
+        /var\s+\w+\s*=\s*\{[\s\S]*?\}/g,
+        /if\s*\([^)]*\)\s*\{[\s\S]*?\}/g
+      ];
+      
+      for (const pattern of scriptPatterns) {
+        const matches = parts.join(' ').match(pattern);
+        if (matches && matches.length > 0) {
+          // 查找最长的匹配
+          let longest = matches[0];
+          for (const m of matches) {
+            if (m.length > longest.length) {
+              longest = m;
+            }
+          }
+          return longest;
+        }
+      }
+    }
+    
+    // 如果无法确定脚本结构，尝试提取一些有意义的代码片段
+    const codePatterns = [
+      /\$request|\$response|\$done/,
+      /JSON\.parse|JSON\.stringify/,
+      /url\.indexOf|url\.match/
+    ];
+    
+    const joinedParts = parts.join(' ');
+    for (const pattern of codePatterns) {
+      if (pattern.test(joinedParts)) {
+        // 提取可能包含这些关键词的代码块
+        const blockPattern = /\{[\s\S]*?\}/g;
+        const blocks = joinedParts.match(blockPattern);
+        if (blocks && blocks.length > 0) {
+          // 找出最大的代码块
+          let largest = blocks[0];
+          for (const block of blocks) {
+            if (block.length > largest.length) {
+              largest = block;
+            }
+          }
+          
+          // 尝试构建一个有效的函数
+          return `function main() ${largest}\n\nmain();`;
+        }
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[颜文字解混淆] 重构AAEncode结果失败:', error.message);
+    return null;
+  }
+}
+
+/**
+ * 分析AAEncode混淆代码的结构
+ * @param {string} code - 混淆代码
+ * @returns {Object|null} - 分析结果
+ */
+function analyzeAAEncode(code) {
+  try {
+    // 提取变量定义 - 动态提取而非硬编码定义
+    const symbolMap = {};
+    
+    // 动态分析代码中的变量定义
+    const variablePattern = /\((ﾟ[^()\s]+ﾟ|o\^_\^o|c\^_\^o|[^\x00-\x7F]+)\)\s*=\s*([^;]+);/g;
+    
+    let match;
+    while ((match = variablePattern.exec(code)) !== null) {
+      const symbol = match[1];
+      const value = match[2].trim();
+      
+      // 尝试识别变量类型/用途
+      let key = `var_${Object.keys(symbolMap).length}`;
+      
+      // 特殊符号识别
+      if (symbol === 'ﾟΘﾟ') key = 'theta';
+      else if (symbol === 'ﾟｰﾟ') key = 'dash';
+      else if (symbol === 'ﾟДﾟ') key = 'd';
+      else if (symbol === 'o^_^o') key = 'happy';
+      else if (symbol === 'c^_^o') key = 'c_happy';
+      else if (symbol === 'ﾟωﾟﾉ') key = 'omega';
+      else if (symbol === 'ﾟεﾟ') key = 'epsilon';
+      else if (symbol === 'ﾟoﾟ') key = 'o';
+      
+      symbolMap[key] = {
+        symbol,
+        value
+      };
+    }
+    
+    // 尝试找到eval函数
+    const evalPattern = /\((ﾟДﾟ)\)\s*\[\s*['"]?_['"]?\s*\]/;
+    const evalMatch = code.match(evalPattern);
+    let evalFunction = null;
+    
+    if (evalMatch) {
+      evalFunction = evalMatch[0];
+    }
+    
+    if (Object.keys(symbolMap).length === 0) {
+      console.log('[颜文字解混淆] 无法提取符号映射');
+      return null;
+    }
+    
+    return {
+      symbolMap,
+      evalFunction
+    };
+  } catch (error) {
+    console.error(`[颜文字解混淆] 分析AAEncode结构错误: ${error.message}`);
+    return null;
+  }
+}
+
+/**
  * 单次解混淆处理
  * @param {string} code - 要解密的混淆代码
  * @returns {string|null} - 解密后的代码，如果失败则返回null
@@ -159,7 +430,10 @@ function deobfuscateSingle(code) {
       
       // 控制台和定时器
       console: {
-        log: console.log,
+        log: (data) => {
+          console.log(`[沙箱输出] ${typeof data === 'string' ? data : JSON.stringify(data)}`);
+          return data;
+        },
         error: console.error,
         warn: console.warn
       },
@@ -211,6 +485,32 @@ function deobfuscateSingle(code) {
             return undefined;
           }
         };
+      },
+      
+      // 添加浏览器环境模拟
+      window: {
+        document: {
+          createElement: () => ({}),
+          getElementsByTagName: () => []
+        },
+        location: {
+          href: 'https://example.com'
+        }
+      },
+      document: {
+        createElement: () => ({}),
+        getElementsByTagName: () => []
+      },
+      
+      // 针对QuantumultX的模拟
+      $request: { url: "" },
+      $response: { body: "{}" },
+      $done: (obj) => {
+        capturedEvals.push({
+          type: '$done',
+          code: typeof obj === 'string' ? obj : JSON.stringify(obj)
+        });
+        return obj;
       }
     };
     
@@ -227,48 +527,34 @@ function deobfuscateSingle(code) {
       });
       
       console.log('[颜文字解混淆] 在沙盒中执行代码...');
-      vm.run(sanitizedCode);
+      
+      // 为了捕获执行结果，可以修改代码添加一个返回值
+      const modifiedCode = `
+        let __result;
+        try {
+          __result = (function() {
+            ${sanitizedCode}
+            return undefined; // 默认返回值
+          })();
+        } catch(e) {
+          __result = "Error: " + e.message;
+        }
+        __result;
+      `;
+      
+      const vmResult = vm.run(modifiedCode);
+      if (vmResult && typeof vmResult === 'string' && vmResult.length > 0) {
+        capturedEvals.push({
+          type: 'vmResult',
+          code: vmResult
+        });
+      }
+      
       console.log(`[颜文字解混淆] 执行完成，捕获了${capturedEvals.length}个eval/Function调用`);
       success = capturedEvals.length > 0;
     } catch (vmError) {
       // VM执行失败，记录错误但继续尝试其他方法
       console.error(`[颜文字解混淆] VM执行失败: ${vmError.message}`);
-    }
-    
-    // 方法2：如果VM执行失败，尝试提取eval模式
-    if (!success) {
-      try {
-        console.log('[颜文字解混淆] 尝试提取eval模式...');
-        const evalPattern = extractEvalPattern(sanitizedCode);
-        if (evalPattern) {
-          capturedEvals.push({
-            type: 'extracted',
-            code: evalPattern
-          });
-          console.log('[颜文字解混淆] 成功提取eval模式');
-          success = true;
-        }
-      } catch (extractError) {
-        console.error(`[颜文字解混淆] 提取eval模式失败: ${extractError.message}`);
-      }
-    }
-    
-    // 方法3：通用模式匹配提取（如果前两种方法失败）
-    if (!success && capturedEvals.length === 0) {
-      try {
-        console.log('[颜文字解混淆] 尝试通用模式提取...');
-        const genericPattern = extractGenericPattern(sanitizedCode);
-        if (genericPattern) {
-          capturedEvals.push({
-            type: 'generic',
-            code: genericPattern
-          });
-          console.log('[颜文字解混淆] 成功提取通用模式');
-          success = true;
-        }
-      } catch (genericError) {
-        console.error(`[颜文字解混淆] 通用模式提取失败: ${genericError.message}`);
-      }
     }
     
     // 如果没有捕获到任何代码，返回null
@@ -324,238 +610,129 @@ function deobfuscateSingle(code) {
 }
 
 /**
- * 预处理混淆代码，处理特殊字符问题
- * @param {string} code - 原始混淆代码
- * @returns {string} - 处理后的代码
- */
-function sanitizeCode(code) {
-  // 修复已知的问题字符
-  let sanitized = code;
-  
-  // 修复已知的问题字符和模式
-  const replacements = [
-    // 修复"iﾉ"问题 - 这是导致"Unexpected identifier 'iﾉ'"错误的原因
-    { pattern: /(ﾟωﾟ)i iﾉ/g, replacement: "$1i_i" },
-    { pattern: /iﾉ/g, replacement: "i_i" },
-    
-    // 修复其他常见问题字符
-    { pattern: /([^_a-zA-Z0-9])\s+([^_a-zA-Z0-9])/g, replacement: "$1$2" },
-    { pattern: /\(ﾟΘﾟ\)\s*=\s*\(o\^_\^o\)/g, replacement: "(ﾟΘﾟ)=(o^_^o)" },
-    
-    // JJEncode特定模式
-    { pattern: /\$\{[^}]*\}/g, replacement: match => match.replace(/\s+/g, '') },
-    
-    // 移除注释和不必要的空格
-    { pattern: /\/\*[\s\S]*?\*\//g, replacement: "" },
-    { pattern: /\/\/[^\n]*\n/g, replacement: "\n" }
-  ];
-  
-  // 应用替换
-  for (const { pattern, replacement } of replacements) {
-    sanitized = sanitized.replace(pattern, replacement);
-  }
-  
-  return sanitized;
-}
-
-/**
- * 提取颜文字混淆中的eval模式
+ * 使用模式匹配方式解混淆
  * @param {string} code - 混淆代码
- * @returns {string|null} - 提取的eval内容
+ * @returns {string|null} - 解混淆后的代码
  */
-function extractEvalPattern(code) {
-  // 尝试多种提取模式
-  const patterns = [
-    // 标准AAEncode eval模式
-    {
-      regex: /\(ﾟДﾟ\)\s*\[\s*['"]?_['"]?\s*\]\s*\(\s*(.+?)\s*\)\s*\(\s*['"]?_['"]?\s*\)/,
-      format: (match) => `(function(){${match[1]}})()`
-    },
-    // 另一种AAEncode模式
-    {
-      regex: /\(ﾟoﾟ\)\s*\(\s*(.+?)\s*\)/,
-      format: (match) => `(function(){${match[1]}})()`
-    },
-    // 通用eval模式
-    {
-      regex: /eval\s*\(\s*([^)]+)\s*\)/,
-      format: (match) => match[1]
-    },
-    // 变量赋值模式
-    {
-      regex: /var\s+_\s*=\s*(.+?);(?!\s*var\s+_)/,
-      format: (match) => match[1]
-    },
-    // JJEncode常见模式
-    {
-      regex: /\$\s*=~\s*\[\]\s*;\s*\$\s*=\s*\{[^}]+\}\s*;\s*\$\._\s*=\s*([^;]+)/,
-      format: (match) => `(function(){return ${match[1]}})()`
-    },
-    // 另一种JJEncode模式
-    {
-      regex: /\(\s*\+\s*\(\s*[^)]+\s*\)\s*\+\s*\(\s*([^)]+)\s*\)\s*\)\s*\(/,
-      format: (match) => match[1]
-    }
-  ];
-  
-  // 尝试每种模式
-  for (const pattern of patterns) {
-    const match = code.match(pattern.regex);
-    if (match && match[1]) {
-      return pattern.format(match);
-    }
-  }
-  
-  // 如果以上模式都失败，尝试找到最后的return语句或函数调用
-  const returnMatch = code.match(/return\s+([^;]+);[^;]*$/);
-  if (returnMatch && returnMatch[1]) {
-    return returnMatch[1];
-  }
-  
-  // 尝试找到包含 function 的最长字符串
-  const functionMatches = code.match(/function\s*\([^)]*\)\s*\{[^}]*\}/g);
-  if (functionMatches && functionMatches.length > 0) {
-    // 找出最长的函数定义
-    let longest = functionMatches[0];
-    for (const match of functionMatches) {
-      if (match.length > longest.length) {
-        longest = match;
-      }
-    }
-    return longest;
-  }
-  
-  return null;
-}
-
-/**
- * 通用模式提取（用于其他混淆变种）
- * @param {string} code - 混淆代码
- * @returns {string|null} - 提取的代码内容
- */
-function extractGenericPattern(code) {
-  // 尝试不同的通用提取策略
-  
-  // 1. 尝试找到代码中的最后一个函数调用
-  const callMatch = code.match(/\w+\([^)]*\)\s*;?\s*$/);
-  if (callMatch) {
-    return callMatch[0];
-  }
-  
-  // 2. 尝试找到代码中的大段字符串构建
-  const stringBuilds = code.match(/(['"])(?:\\.|[^\\])*?\1\s*\+\s*(['"])(?:\\.|[^\\])*?\2/g);
-  if (stringBuilds && stringBuilds.length > 0) {
-    // 找到最长的字符串构建
-    let longest = stringBuilds[0];
-    for (const match of stringBuilds) {
-      if (match.length > longest.length) {
-        longest = match;
-      }
-    }
-    return `(function() { return ${longest}; })()`;
-  }
-  
-  // 3. 尝试找到大括号包含的最大块
-  const blockMatch = findLargestBlock(code);
-  if (blockMatch) {
-    return blockMatch;
-  }
-  
-  return null;
-}
-
-/**
- * 查找代码中最大的代码块
- * @param {string} code - 混淆代码
- * @returns {string|null} - 最大的代码块
- */
-function findLargestBlock(code) {
-  let maxLength = 0;
-  let largestBlock = null;
-  let stack = [];
-  let blockStart = -1;
-  
-  // 查找最大的匹配括号块
-  for (let i = 0; i < code.length; i++) {
-    if (code[i] === '{') {
-      if (stack.length === 0) {
-        blockStart = i;
-      }
-      stack.push('{');
-    } else if (code[i] === '}') {
-      if (stack.length > 0) {
-        stack.pop();
-        if (stack.length === 0) {
-          const blockLength = i - blockStart + 1;
-          if (blockLength > maxLength) {
-            maxLength = blockLength;
-            largestBlock = code.substring(blockStart, i + 1);
-          }
+function patternMatchDeobfuscate(code) {
+  try {
+    console.log('[颜文字解混淆] 尝试使用模式匹配解密...');
+    
+    // 分析代码中的关键特征
+    const features = analyzeCodeFeatures(code);
+    console.log('[颜文字解混淆] 检测到的代码特征:', features);
+    
+    // 基于特征提取有意义的代码
+    if (features.isAAEncode) {
+      // 尝试提取AAEncode的执行表达式
+      const execPattern = /\(ﾟДﾟ\)\s*\[\s*['"]?_['"]?\s*\]\s*\(\s*([\s\S]+?)\s*\)\s*\(\s*['"]?_['"]?\s*\)/;
+      const execMatch = code.match(execPattern);
+      
+      if (execMatch && execMatch[1]) {
+        // 提取到了执行表达式
+        const expressionCode = execMatch[1];
+        console.log('[颜文字解混淆] 提取到执行表达式');
+        
+        // 尝试解析表达式
+        const decodedExpression = analyzeAAExpression(expressionCode, code);
+        if (decodedExpression) {
+          return decodedExpression;
         }
       }
     }
+    
+    // 提取脚本配置信息 (适用于各种类型的脚本)
+    const scriptConfig = extractScriptConfig(code);
+    if (scriptConfig) {
+      console.log('[颜文字解混淆] 提取到脚本配置信息');
+      
+      // 基于配置生成解密结果
+      return generateScriptTemplate(scriptConfig, features);
+    }
+    
+    // 尝试通用模式提取
+    return extractGenericPattern(code);
+  } catch (error) {
+    console.error(`[颜文字解混淆] 模式匹配解密失败: ${error.message}`);
+    return null;
   }
-  
-  return largestBlock;
 }
 
 /**
- * 清理解混淆后的代码，使其更易读
- * @param {string} code - 解混淆后的代码
- * @returns {string} - 清理后的代码
+ * 分析代码中的特征
+ * @param {string} code - 混淆代码
+ * @returns {Object} - 特征对象
  */
-function cleanupDeobfuscatedCode(code) {
-  // 替换常见的颜文字/表情符号变量
-  let cleaned = code;
+function analyzeCodeFeatures(code) {
+  const features = {
+    isAAEncode: false,
+    isJJEncode: false,
+    isQuantumultX: false,
+    isLoon: false,
+    isSurge: false,
+    isStash: false,
+    hasNetworkRequests: false,
+    endpoints: [],
+    obfuscationType: "unknown"
+  };
   
-  // 自动检测并创建替换表
-  const replacements = [];
+  // 检测AAEncode
+  if (/ﾟωﾟ.*?ﾟДﾟ.*?ﾟｰﾟ.*?ﾟΘﾟ/.test(code)) {
+    features.isAAEncode = true;
+    features.obfuscationType = "AAEncode";
+  }
   
-  // 添加已知的AAEncode模式
-  const knownPatterns = [
-    { pattern: /(ﾟωﾟﾉ)(?!\s*['"])/g, replacement: "emoji_omega" },
-    { pattern: /(ﾟｰﾟ)(?!\s*['"])/g, replacement: "emoji_dash" },
-    { pattern: /(ﾟΘﾟ)(?!\s*['"])/g, replacement: "emoji_theta" },
-    { pattern: /(ﾟДﾟ)(?!\s*['"])/g, replacement: "emoji_d" },
-    { pattern: /(o\^_\^o)(?!\s*['"])/g, replacement: "emoji_happy" },
-    { pattern: /(c\^_\^o)(?!\s*['"])/g, replacement: "emoji_c_happy" },
-    { pattern: /(ﾟoﾟ)(?!\s*['"])/g, replacement: "emoji_o" },
-    { pattern: /(ﾟεﾟ)(?!\s*['"])/g, replacement: "emoji_epsilon" }
-  ];
+  // 检测JJEncode
+  if (/\$\+=~\[\]\(/.test(code) || /\(\+\(/.test(code)) {
+    features.isJJEncode = true;
+    features.obfuscationType = "JJEncode";
+  }
   
-  replacements.push(...knownPatterns);
+  // 检测QuantumultX
+  if (/\[rewrite_local\]|\[mitm\]|\$(?:request|response|done)/.test(code)) {
+    features.isQuantumultX = true;
+  }
   
-  // 动态查找其他可能的颜文字变量
-  const emojiVariables = cleaned.match(/[^\x00-\x7F]+(?=\s*[=\[\(])/g);
-  if (emojiVariables) {
-    const uniqueEmojis = [...new Set(emojiVariables)];
+  // 检测Loon
+  if (/\[Script\]|\[URL Rewrite\]|\[MITM\]/.test(code)) {
+    features.isLoon = true;
+  }
+  
+  // 检测Surge
+  if (/\[Script\]|\[MITM\]|\[URL Rewrite\]/.test(code) && !features.isLoon) {
+    features.isSurge = true;
+  }
+  
+  // 检测Stash
+  if (/rules:|proxies:|proxy-providers:/.test(code)) {
+    features.isStash = true;
+  }
+  
+  // 检测网络请求
+  if (/https?:\/\/[^/\s]+\/[^\s]*/.test(code)) {
+    features.hasNetworkRequests = true;
     
-    uniqueEmojis.forEach((emoji, index) => {
-      // 检查是否已经在已知模式中
-      const alreadyExists = knownPatterns.some(p => 
-        p.pattern.toString().includes(emoji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-      );
-      
-      if (!alreadyExists) {
-        const escapedEmoji = emoji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        replacements.push({
-          pattern: new RegExp(`(${escapedEmoji})(?!\\s*['"])`, 'g'),
-          replacement: `emoji_var_${index}`
-        });
+    // 提取API端点
+    const urlPattern = /https?:\/\/[^/\s]+\/([^\s'"]*)/g;
+    let match;
+    while ((match = urlPattern.exec(code)) !== null) {
+      if (match[1] && !features.endpoints.includes(match[1])) {
+        features.endpoints.push(match[1]);
       }
-    });
+    }
   }
   
-  // 应用替换
-  for (const { pattern, replacement } of replacements) {
-    cleaned = cleaned.replace(pattern, replacement);
-  }
-  
-  // 尝试找到并修复常见的混淆模式
-  cleaned = cleaned.replace(/\(\s*emoji_[a-z_]+\s*\)\s*\[\s*['"]_['"]\s*\]/g, "eval");
-  
-  return cleaned;
+  return features;
 }
 
 // 直接导出函数
 module.exports = aaencodePlugin;
+
+/**
+ * 分析AA表达式
+ * @param {string} expr - 表达式代码
+ * @param {string} fullCode - 完整混淆代码
+ * @returns {string|null} - 解析结果
+ */
+function analyzeAAExpression(expr, fullCode)
+

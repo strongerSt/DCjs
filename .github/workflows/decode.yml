@@ -1,0 +1,132 @@
+name: Decode Script
+
+on:
+  push:
+    branches:
+      - main
+  issues:
+    types: [opened, edited]
+
+jobs:
+  decode:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Process issue data
+        if: github.event_name == 'issues'
+        id: issue-data
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            const body = issue.data.body;
+            if (!body) return;
+            
+            // 解析文件类型
+            const fileTypeMatch = body.match(/\*\*文件类型:\*\* `(.+?)`/);
+            const fileType = fileTypeMatch ? fileTypeMatch[1] : 'js';
+            
+            // 提取代码
+            const codeMatch = body.match(/```[\s\S]*?\n([\s\S]*?)```/);
+            const code = codeMatch ? codeMatch[1] : '';
+            
+            // 确保输入文件夹存在
+            const fs = require('fs');
+            if (!fs.existsSync('input')) {
+              fs.mkdirSync('input', { recursive: true });
+            }
+            
+            // 确保输出文件夹存在
+            if (!fs.existsSync('output')) {
+              fs.mkdirSync('output', { recursive: true });
+            }
+            
+            // 写入文件到正确的位置
+            fs.writeFileSync(`input/input.${fileType}`, code);
+            
+            // 输出变量
+            core.exportVariable('FILE_TYPE', fileType);
+            core.setOutput('file_type', fileType);
+
+      - name: Setup folders for push event
+        if: github.event_name == 'push'
+        run: |
+          mkdir -p input
+          mkdir -p output
+          ls -la
+
+      - name: Execute Python script
+        run: python src/decode.py
+
+      - name: List directory contents
+        run: |
+          echo "Repository root:"
+          ls -la
+          echo "input directory:"
+          ls -la input || echo "input directory not found"
+          echo "output directory:"
+          ls -la output || echo "output directory not found"
+
+      - name: Install dependencies and run decode
+        run: |
+          npm install
+          if [ "${{ github.event_name }}" == "issues" ]; then
+            npm run decode -- -i input/input.${{ env.FILE_TYPE || 'js' }} -o output/output.${{ env.FILE_TYPE || 'js' }}
+          else
+            # 保持原始工作流的参数方式，但更改为根目录的 input/output 文件夹
+            npm run decode -- [-i input/input.js] [-o output/output.js]
+          fi
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "action"
+
+      - name: Save outputs
+        run: |
+          git add output/* || true
+          git commit -m "Add decoded output files" || echo "No changes to commit"
+          git push || echo "No changes to push"
+
+      - name: Add comment to issue
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const fileType = process.env.FILE_TYPE || 'js';
+            let content = '';
+            
+            try {
+              const outputFile = `output/output.${fileType}`;
+              if (fs.existsSync(outputFile)) {
+                content = fs.readFileSync(outputFile, 'utf8');
+              } else {
+                // 尝试查找其他可能的输出文件
+                const files = fs.readdirSync('output');
+                if (files.length > 0) {
+                  content = fs.readFileSync(`output/${files[0]}`, 'utf8');
+                } else {
+                  content = "未找到输出文件";
+                }
+              }
+            } catch (e) {
+              content = `解密时出错: ${e.message}`;
+            }
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## 解密结果\n\n\`\`\`${fileType}\n${content}\n\`\`\``
+            });

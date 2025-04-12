@@ -1,6 +1,6 @@
 /**
- * AAencode (颜文字JavaScript) 解密插件 - 加强版
- * 尝试多种方法解析AAencode代码
+ * AAencode (颜文字JavaScript) 解密插件
+ * 使用多种方法尝试解码，确保产生有用结果
  */
 
 function decodeAAencode(code) {
@@ -10,230 +10,131 @@ function decodeAAencode(code) {
         return code; // 不是AAencode，返回原代码
     }
     
-    console.log("检测到AAencode编码，正在尝试解码...");
-    
     try {
-        // 提取所有可能的字符串
-        const allStrings = extractAllStrings(code);
+        // 方法1: 使用正则表达式直接提取最终的字符串结果
+        // AAencode最常见的模式是构建一个字符一个字符的字符串
+        let extractedChars = '';
+        const charExtractPattern = /\(ﾟДﾟ\)\s*\[\s*['"]([a-z])['"]]/g;
+        let match;
+        while ((match = charExtractPattern.exec(code)) !== null) {
+            extractedChars += match[1];
+        }
         
-        // 1. 尝试使用Function执行（如果环境允许）
-        let execResult = "";
+        // 如果成功提取到较长的字符串，直接返回
+        if (extractedChars.length > 5) {
+            return `// AAencode解码结果 (通过字符提取):\n${extractedChars}`;
+        }
+        
+        // 方法2: 提取并分析字符串构造
+        // AAencode常常在结尾构造最终字符串
+        const finalAssignment = code.match(/\(ﾟoﾟ\)\s*=(.+?)(?:;|$)/s);
+        if (finalAssignment && finalAssignment[1]) {
+            const construction = finalAssignment[1];
+            
+            // 分析构造的部分
+            const stringParts = [];
+            const stringLiteralPattern = /['"]([^'"]+)['"]/g;
+            while ((match = stringLiteralPattern.exec(construction)) !== null) {
+                if (match[1] && match[1].length > 0) {
+                    stringParts.push(match[1]);
+                }
+            }
+            
+            // 如果提取到多个字符串部分，合并它们
+            if (stringParts.length > 0) {
+                const combined = stringParts.join('');
+                if (combined.length > 5) {
+                    return `// AAencode解码结果 (通过字符串合并):\n${combined}`;
+                }
+            }
+        }
+        
+        // 方法3: 尝试执行代码 (如果环境允许)
         try {
-            // 创建一个安全的执行环境
-            const safeExec = new Function(`
-                try {
-                    // 定义可能需要的变量
-                    var window = {};
-                    var document = {};
-                    var navigator = { userAgent: '' };
-                    var location = { href: '' };
-                    var $response = {};
-                    var $request = {};
-                    var $data = {};
-                    
-                    // 执行AAencode代码
-                    ${code}
-                    
-                    // 尝试获取结果
-                    if (typeof ﾟoﾟ !== "undefined") {
-                        return ﾟoﾟ;
-                    }
-                    return null;
-                } catch(e) {
-                    return "执行错误: " + e.message;
-                }
-            `);
+            // 使用间接eval的方式尝试执行
+            const indirectEval = (0, eval);
             
-            execResult = safeExec();
-            if (execResult && typeof execResult === 'string' && !execResult.startsWith("执行错误")) {
-                console.log("成功通过执行获取AAencode结果");
-                return execResult;
-            }
-        } catch(e) {
-            console.log("执行AAencode失败:", e.message);
-        }
-        
-        // 2. 尝试将代码转换为可读形式并提取模式
-        const simplified = simplifyCode(code);
-        
-        // 3. 从最终赋值语句分析
-        const finalAssignment = extractFinalAssignment(code);
-        if (finalAssignment && finalAssignment.length > 10) {
-            console.log("从最终赋值语句提取内容");
-            return finalAssignment;
-        }
-        
-        // 4. 提取字符拼接
-        const charConcats = extractCharConcats(code);
-        if (charConcats && charConcats.length > 0) {
-            const longestConcat = charConcats.sort((a, b) => b.length - a.length)[0];
-            if (longestConcat.length > 10) {
-                console.log("从字符拼接提取内容");
-                return longestConcat;
-            }
-        }
-        
-        // 5. 通过正则模式提取可能有意义的块
-        const patternBlocks = extractPatternBlocks(code);
-        if (patternBlocks && patternBlocks.length > 0) {
-            console.log("通过模式提取块内容");
-            return patternBlocks.join("\n\n");
-        }
-        
-        // 6. 如果有字符串，返回最有可能的那些
-        if (allStrings.length > 0) {
-            // 过滤掉太短或可能是变量名的字符串
-            const meaningfulStrings = allStrings.filter(s => 
-                s.length > 5 && 
-                !s.match(/^[a-zA-Z0-9_]+$/) &&
-                s !== "undefined" &&
-                s !== "constructor"
-            );
-            
-            if (meaningfulStrings.length > 0) {
-                // 按长度排序
-                meaningfulStrings.sort((a, b) => b.length - a.length);
-                console.log("找到可能有意义的字符串");
+            // 创建一个预先定义变量的包装函数
+            const wrapper = `
+                // 创建一个安全的执行环境
+                var window = {};
+                var document = { createElement: function() { return {}; } };
+                var navigator = { userAgent: '' };
+                var location = { href: '' };
+                var $response = {};
+                var $request = {};
+                var $data = {};
                 
-                let result = "// AAencode提取的字符串：\n";
-                for (let i = 0; i < Math.min(5, meaningfulStrings.length); i++) {
-                    result += `// ${i+1}. ${meaningfulStrings[i]}\n`;
+                // 执行AAencode代码
+                ${code}
+                
+                // 返回可能的结果
+                if (typeof ﾟoﾟ !== 'undefined') {
+                    return ﾟoﾟ;
+                } else {
+                    // 尝试自动检测其他可能的结果变量
+                    for (var key in this) {
+                        if (key.indexOf('ﾟ') >= 0 && typeof this[key] === 'string') {
+                            return this[key];
+                        }
+                    }
+                    return "未找到结果变量";
                 }
-                return result;
+            `;
+            
+            // 尝试执行并获取结果
+            const execResult = indirectEval(wrapper);
+            if (execResult && typeof execResult === 'string' && execResult !== "未找到结果变量") {
+                return `// AAencode解码结果 (通过执行):\n${execResult}`;
             }
+        } catch (execError) {
+            // 忽略执行错误，继续尝试其他方法
         }
         
-        // 如果所有方法都失败，返回简化的代码
-        console.log("所有解码方法失败，返回简化代码");
-        return "// AAencode简化代码：\n" + simplified;
+        // 方法4: 提取代码中所有可能有意义的字符串
+        const allStrings = [];
+        code.replace(/(['"])((?:\\.|[^\\])*?)\1/g, (match, quote, content) => {
+            if (content && content.length > 3 && 
+                content !== "undefined" && 
+                content !== "constructor" &&
+                !content.match(/^[a-zA-Z0-9_]+$/)) {
+                allStrings.push(content);
+            }
+            return match;
+        });
+        
+        // 按长度排序，返回最长的几个字符串
+        if (allStrings.length > 0) {
+            const sortedStrings = [...allStrings].sort((a, b) => b.length - a.length);
+            
+            // 如果最长的字符串很长，可能就是答案
+            if (sortedStrings[0].length > 20) {
+                return `// AAencode解码结果 (最长字符串):\n${sortedStrings[0]}`;
+            }
+            
+            // 否则返回前5个最长的字符串
+            let result = "// AAencode解码结果 (可能的字符串):\n";
+            for (let i = 0; i < Math.min(5, sortedStrings.length); i++) {
+                result += `// ${i+1}. ${sortedStrings[i]}\n`;
+            }
+            return result;
+        }
+        
+        // 方法5: 如果以上方法都失败，返回简化的代码
+        const simplified = code
+            .replace(/ﾟωﾟﾉ/g, 'var1')
+            .replace(/ﾟｰﾟ/g, 'var2')
+            .replace(/ﾟΘﾟ/g, 'var3')
+            .replace(/ﾟДﾟ/g, 'var4')
+            .replace(/\(o\^_\^o\)/g, 'var5')
+            .replace(/ﾟoﾟ/g, 'result');
+            
+        return `// AAencode解码结果 (简化代码):\n${simplified}`;
         
     } catch (e) {
-        console.error("AAencode解码失败:", e.message);
+        // 发生错误时返回错误信息和原始代码
         return `// AAencode解码错误: ${e.message}\n${code}`;
     }
-}
-
-// 辅助函数：简化AAencode代码
-function simplifyCode(code) {
-    return code
-        .replace(/ﾟωﾟﾉ/g, 'var1')
-        .replace(/ﾟｰﾟ/g, 'var2')
-        .replace(/ﾟΘﾟ/g, 'var3')
-        .replace(/ﾟДﾟ/g, 'var4')
-        .replace(/\(o\^_\^o\)/g, 'var5')
-        .replace(/ﾟoﾟ/g, 'result');
-}
-
-// 辅助函数：提取所有字符串
-function extractAllStrings(code) {
-    const strings = [];
-    code.replace(/(['"])((?:\\.|[^\\])*?)\1/g, (match, quote, content) => {
-        if (content && content.trim()) {
-            strings.push(content);
-        }
-        return match;
-    });
-    return strings;
-}
-
-// 辅助函数：尝试从最终的赋值语句提取内容
-function extractFinalAssignment(code) {
-    // 查找最后的赋值语句，通常是 (ﾟoﾟ)=...
-    const finalAssignMatch = code.match(/\(ﾟoﾟ\)\s*=\s*([^;]+)/);
-    if (finalAssignMatch && finalAssignMatch[1]) {
-        // 从赋值右侧提取潜在的字符串构造
-        const assignmentRight = finalAssignMatch[1];
-        
-        // 查找所有可能的字符引用，如 (ﾟДﾟ) ['c']
-        const charRefs = [];
-        const charRefPattern = /\(ﾟДﾟ\)\s*\[\s*['"]([a-z])['"]]/g;
-        let match;
-        while ((match = charRefPattern.exec(assignmentRight)) !== null) {
-            if (match[1]) {
-                charRefs.push(match[1]);
-            }
-        }
-        
-        if (charRefs.length > 0) {
-            return charRefs.join('');
-        }
-    }
-    return null;
-}
-
-// 辅助函数：提取字符拼接
-function extractCharConcats(code) {
-    // 查找常见的字符拼接模式
-    const concats = [];
-    
-    // 模式1: +' '+ 类型的拼接
-    const pattern1 = /['"]([^'"]+)['"]\s*\+\s*['"]([^'"]+)['"]/g;
-    let fragments = [];
-    let match;
-    
-    while ((match = pattern1.exec(code)) !== null) {
-        if (match[1] && match[2]) {
-            fragments.push(match[1] + match[2]);
-        }
-    }
-    
-    if (fragments.length > 0) {
-        concats.push(fragments.join(''));
-    }
-    
-    // 模式2: 连续的字符添加
-    const charAdditions = code.match(/\+['"]([a-z])['"]|\+['"]([0-9])['"]|\+['"]([ \t])['"]|\+['"]([^a-z0-9 \t])['"]|\+['"]['"]/g);
-    if (charAdditions && charAdditions.length > 0) {
-        let concat = '';
-        charAdditions.forEach(add => {
-            const char = add.match(/\+['"]([^'"]*)['"]/) || add.match(/\+([a-z0-9])/) || add.match(/\+(['"])/) || ['', ''];
-            concat += char[1] || '';
-        });
-        if (concat.length > 0) {
-            concats.push(concat);
-        }
-    }
-    
-    return concats;
-}
-
-// 辅助函数：通过特定模式提取可能有意义的代码块
-function extractPatternBlocks(code) {
-    const blocks = [];
-    
-    // 查找通过+=操作不断添加的字符串块
-    const assignAddPattern = /([a-zA-Z0-9_$]+)\s*\+=\s*(['"])([^'"]+)\2/g;
-    const assignAdds = {};
-    
-    while ((match = assignAddPattern.exec(code)) !== null) {
-        const varName = match[1];
-        const content = match[3];
-        
-        if (!assignAdds[varName]) {
-            assignAdds[varName] = [];
-        }
-        assignAdds[varName].push(content);
-    }
-    
-    // 合并同一变量的所有+=操作
-    for (const varName in assignAdds) {
-        if (assignAdds[varName].length > 1) {
-            const combined = assignAdds[varName].join('');
-            if (combined.length > 10) {
-                blocks.push(`// ${varName} 合并内容:\n${combined}`);
-            }
-        }
-    }
-    
-    // 查找加密的正则表达式或特殊模式
-    const regexPattern = /\/[^\/]+\/[gimuy]*/g;
-    while ((match = regexPattern.exec(code)) !== null) {
-        if (match[0].length > 10) {
-            blocks.push(`// 正则表达式:\n${match[0]}`);
-        }
-    }
-    
-    return blocks;
 }
 
 // 导出函数

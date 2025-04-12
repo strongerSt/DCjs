@@ -1,6 +1,13 @@
-// src/plugins/aaencode.js
+// src/plugin/aaencode.js
 
 const { VM } = require('vm2');
+
+/**
+ * AAEncode 解混淆插件
+ * 
+ * 用于解密使用日文表情符号混淆的 JavaScript 代码
+ * 这种混淆通常以 ﾟωﾟﾉ、ﾟｰﾟ、ﾟΘﾟ 等表情符号为特征
+ */
 
 /**
  * 判断是否为 AAEncode 混淆
@@ -36,36 +43,82 @@ function isAAEncode(code) {
  * @returns {string|null} - 解密后的源码，失败返回 null
  */
 function decodeAAencode(code) {
-  if (!isAAEncode(code)) return null;
+  if (!isAAEncode(code)) {
+    console.log('[AAEncode] 未检测到 AAEncode 特征，跳过解密');
+    return null;
+  }
+  
+  console.log('[AAEncode] 检测到 AAEncode 特征，开始解密');
 
   // 捕获所有的 eval 和 Function 调用
   const capturedEvals = [];
   
   try {
-    // 准备一个更复杂的 sandbox，捕获 eval 和 Function 调用
+    // 准备一个沙盒环境，捕获 eval 和 Function 调用
     const sandbox = {
-      // 保存原始的全局对象，以便可以恢复
-      _originalEval: eval,
-      _originalFunction: Function,
+      // 基本 JavaScript 对象
+      Array,
+      Object,
+      String,
+      Boolean,
+      Number,
+      Date,
+      Math,
+      RegExp,
+      Error,
       
-      // 劫持 eval 调用
+      // 基本 JavaScript 函数
+      parseInt,
+      parseFloat,
+      isNaN,
+      isFinite,
+      decodeURI,
+      decodeURIComponent,
+      encodeURI,
+      encodeURIComponent,
+      
+      // 控制台对象
+      console: {
+        log: console.log,
+        error: console.error,
+        warn: console.warn,
+        info: console.info
+      },
+      
+      // 定时器函数
+      setTimeout: (fn) => fn(), // 简化的版本，立即执行
+      clearTimeout: () => {},
+      setInterval: (fn) => fn(),
+      clearInterval: () => {},
+      
+      // 拦截 eval 函数
       eval: function(evalCode) {
         capturedEvals.push({
           type: 'eval',
           code: evalCode
         });
         
-        // 如果代码太长，只记录摘要
-        const logCode = evalCode.length > 100 
-          ? evalCode.substring(0, 100) + '...' 
-          : evalCode;
-        console.log(`[AAEncode] 捕获到 eval 调用: ${logCode}`);
+        // 记录捕获的代码概要
+        if (evalCode && evalCode.length > 0) {
+          const summary = evalCode.length > 100 
+            ? evalCode.substring(0, 100) + '...' 
+            : evalCode;
+          console.log(`[AAEncode] 捕获 eval 代码: ${summary}`);
+        }
         
-        // 在沙盒中执行 eval 代码
-        return sandbox._originalEval(evalCode);
+        // 在沙盒中执行代码，但捕获错误
+        try {
+          // 注意：在VM2中，我们需要特殊处理eval的执行
+          // 这里我们使用Function构造函数作为替代
+          const fn = new Function(evalCode);
+          return fn.call(sandbox);
+        } catch (e) {
+          console.error(`[AAEncode] Eval 执行错误: ${e.message}`);
+          return undefined;
+        }
       },
       
-      // 劫持 Function 构造函数
+      // 拦截 Function 构造函数
       Function: function() {
         const args = Array.from(arguments);
         const functionBody = args.pop();
@@ -77,116 +130,105 @@ function decodeAAencode(code) {
           body: functionBody
         });
         
-        console.log(`[AAEncode] 捕获到 Function 构造: ${functionParams.join(', ')} => ${functionBody.substring(0, 50)}...`);
+        console.log(`[AAEncode] 捕获 Function 构造: 参数(${functionParams.length}个)，代码长度: ${functionBody.length}`);
         
-        // 返回原始的 Function 构造函数结果
-        return new sandbox._originalFunction(...functionParams, functionBody);
-      },
-      
-      // 添加常见的全局对象
-      console: {
-        log: console.log,
-        error: console.error,
-        warn: console.warn,
-        info: console.info
-      },
-      setTimeout,
-      clearTimeout,
-      setInterval,
-      clearInterval
+        // 返回一个包装的函数
+        return function() {
+          try {
+            // 为安全起见，我们使用VM的Function构造
+            const fn = new Function(...functionParams, functionBody);
+            return fn.apply(this, arguments);
+          } catch (e) {
+            console.error(`[AAEncode] Function 执行错误: ${e.message}`);
+            return undefined;
+          }
+        };
+      }
     };
 
-    // 创建 VM 实例并执行代码
+    // 在 VM 中执行代码
     const vm = new VM({
-      timeout: 3000, // 增加超时时间，因为一些 AAEncode 可能需要更多执行时间
-      sandbox
+      timeout: 5000, // 5秒超时
+      sandbox,
+      allowAsync: false
     });
     
-    // 修改代码，添加一个包装器，以便我们可以获取关键变量和结果
+    // 修改代码，添加一个包装器
     const wrappedCode = `
       try {
         ${code}
-        // 返回可能的关键变量
-        ({
-          result: (typeof _ !== 'undefined' ? _ : undefined),
-          variables: {
-            omega: (typeof ﾟωﾟﾉ !== 'undefined' ? ﾟωﾟﾉ : undefined),
-            dash: (typeof ﾟｰﾟ !== 'undefined' ? ﾟｰﾟ : undefined),
-            theta: (typeof ﾟΘﾟ !== 'undefined' ? ﾟΘﾟ : undefined),
-            cyrillic: (typeof ﾟДﾟ !== 'undefined' ? ﾟДﾟ : undefined),
-            o: (typeof ﾟoﾟ !== 'undefined' ? ﾟoﾟ : undefined),
-            c: (typeof c !== 'undefined' ? c : undefined),
-            _o: (typeof o !== 'undefined' ? o : undefined)
-          }
-        });
+        // 尝试返回结果
+        "执行完成";
       } catch (e) {
-        ({ error: e.message });
+        "执行错误: " + e.message;
       }
     `;
 
-    const result = vm.run(wrappedCode);
+    // 执行代码
+    console.log('[AAEncode] 在沙盒中执行代码...');
+    const execResult = vm.run(wrappedCode);
+    console.log(`[AAEncode] 执行结果: ${execResult}`);
+    console.log(`[AAEncode] 捕获了 ${capturedEvals.length} 个 eval/Function 调用`);
     
-    // 分析结果和捕获的 eval 调用
-    console.log(`[AAEncode] 执行完成，捕获了 ${capturedEvals.length} 个 eval/Function 调用`);
+    // 如果没有捕获到任何eval，返回null
+    if (capturedEvals.length === 0) {
+      console.log('[AAEncode] 未捕获到任何动态代码，无法解密');
+      return null;
+    }
     
-    // 确定最终解密结果
+    // 分析捕获的eval调用
+    // 通常最后一个非空的eval包含解密后的代码
     let deobfuscatedCode = null;
     
-    // 如果有捕获的 eval，使用最后一个非空的 eval 作为结果
-    if (capturedEvals.length > 0) {
-      // 按从最后到最前的顺序查找非空的 eval
-      for (let i = capturedEvals.length - 1; i >= 0; i--) {
-        const eval = capturedEvals[i];
-        const code = eval.code || eval.body;
-        if (code && code.trim().length > 0) {
-          // 确保结果是有效的 JavaScript 代码
-          if (isValidJavaScript(code)) {
-            deobfuscatedCode = code;
-            break;
-          }
+    // 按从最后到最前的顺序查找非空的有效JS代码
+    for (let i = capturedEvals.length - 1; i >= 0; i--) {
+      const evalObj = capturedEvals[i];
+      const evalCode = evalObj.code || evalObj.body;
+      
+      if (evalCode && evalCode.trim().length > 0) {
+        // 检查代码是否是有效的JS
+        if (isValidJavaScript(evalCode)) {
+          deobfuscatedCode = evalCode;
+          console.log(`[AAEncode] 找到有效的JavaScript代码(来自捕获#${i})`);
+          break;
         }
       }
     }
     
-    // 如果没有找到有效的 eval 调用，但 VM 返回了字符串结果
-    if (!deobfuscatedCode && result && typeof result === 'string') {
-      deobfuscatedCode = result;
-    }
-    
-    // 记录解密情况
+    // 如果找到了解密代码，返回它
     if (deobfuscatedCode) {
       console.log('[AAEncode] 解密成功');
       return deobfuscatedCode;
-    } else {
-      console.log('[AAEncode] 解密部分成功，但未找到有效的 JavaScript 代码');
-      
-      // 如果找不到合适的解密结果，但有 eval 调用，返回第一个非空的 eval
-      if (capturedEvals.length > 0) {
-        for (const eval of capturedEvals) {
-          const code = eval.code || eval.body;
-          if (code && code.trim().length > 0) {
-            return code;
-          }
-        }
-      }
-      
-      // 如果真的什么都没有，返回 null
-      return null;
     }
-  } catch (err) {
-    console.error('[AAEncode] 解密失败:', err.message);
     
-    // 尝试恢复部分解密结果
+    // 如果没有找到有效的JS代码，使用第一个非空的eval
+    for (const evalObj of capturedEvals) {
+      const evalCode = evalObj.code || evalObj.body;
+      if (evalCode && evalCode.trim().length > 0) {
+        console.log('[AAEncode] 未找到有效JS代码，返回第一个非空捕获');
+        return evalCode;
+      }
+    }
+    
+    // 如果真的什么都没有
+    console.log('[AAEncode] 无法解密代码');
+    return null;
+    
+  } catch (err) {
+    console.error('[AAEncode] 解密过程中发生错误:', err.message);
+    
+    // 尝试从部分执行中恢复
     if (capturedEvals.length > 0) {
       console.log('[AAEncode] 尝试从部分执行中恢复');
       
-      // 使用最后一个非空的 eval 调用
+      // 使用最后一个非空的eval
       for (let i = capturedEvals.length - 1; i >= 0; i--) {
-        const eval = capturedEvals[i];
-        const code = eval.code || eval.body;
-        if (code && code.trim().length > 0) {
+        const evalObj = capturedEvals[i];
+        const evalCode = evalObj.code || evalObj.body;
+        
+        if (evalCode && evalCode.trim().length > 0) {
           console.log('[AAEncode] 从部分执行中恢复了代码');
-          return code;
+          return evalCode;
         }
       }
     }
@@ -196,14 +238,14 @@ function decodeAAencode(code) {
 }
 
 /**
- * 检查字符串是否是有效的 JavaScript 代码
+ * 检查字符串是否是有效的JavaScript代码
  * @param {string} code - 要检查的代码
- * @returns {boolean} - 是否是有效的 JavaScript
+ * @returns {boolean} - 是否是有效的JavaScript
  */
 function isValidJavaScript(code) {
   try {
-    // 尝试解析代码，但不执行它
-    new Function(code);
+    // 尝试解析代码，但不执行
+    Function(code);
     return true;
   } catch (e) {
     return false;
@@ -211,20 +253,25 @@ function isValidJavaScript(code) {
 }
 
 /**
- * 实现 plugin 接口
- * @param {string} code - 输入的混淆源码
- * @returns {string|null} - 解密后的源码，失败返回 null
+ * 实现插件接口
+ * 
+ * 注意：根据错误消息，你的系统期望插件导出一个名为'plugin'的函数
+ * 
+ * @param {string} code - 输入的混淆源码 
+ * @returns {string|null} - 解密后的源码，失败返回null
  */
-module.exports.plugin = function(code) {
-  return decodeAAencode(code);
-};
+function plugin(code) {
+  console.log('[AAEncode] 开始处理代码...');
+  const result = decodeAAencode(code);
+  
+  if (result) {
+    console.log('[AAEncode] 解密成功，返回结果');
+    return result;
+  } else {
+    console.log('[AAEncode] 解密失败，返回null');
+    return null;
+  }
+}
 
-/**
- * 导出检测函数，以便可以在其他地方使用
- */
-module.exports.isAAEncode = isAAEncode;
-
-/**
- * 导出解密函数，以便可以在其他地方使用
- */
-module.exports.decode = decodeAAencode;
+// 导出plugin函数以符合你的系统要求
+module.exports.plugin = plugin;

@@ -8,6 +8,7 @@
     "lint": "eslint --ext .js --fix src",
     "depart2": "node src/main.js -t part2ai",
     "deaaencode": "node src/main.js -t aaencode"
+    "dejsfuck": "node src/main.js -t jsfuck"
   },
   "dependencies": {
     "@babel/generator": "^7.17.10",

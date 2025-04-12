@@ -7,7 +7,7 @@
     "desov7": "node src/main.js -t sojsonv7",
     "lint": "eslint --ext .js --fix src",
     "depart2": "node src/main.js -t part2ai",
-    "deaaencode": "node src/main.js -t aaencode"
+    "deaaencode": "node src/main.js -t aaencode",
     "dejsfuck": "node src/main.js -t jsfuck"
   },
   "dependencies": {

@@ -6,7 +6,8 @@ const PluginSojsonV7 = require('./plugin/sojsonv7.js')
 const PluginObfuscator = require('./plugin/obfuscator.js')
 const PluginAwsc = require('./plugin/awsc.js')
 const PluginPart2AI = require('./plugin/part2ai.js')
-const PluginAAencode = require('./plugin/aaencode.js') // 添加AAencode插件
+const PluginAAencode = require('./plugin/aaencode.js')
+const PluginJSFuck = require('./plugin/jsfuck.js')
 
 // 读取参数
 let encodeFile = 'input.js'

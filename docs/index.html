@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码解密工具</title>
+    <style>
+        :root {
+            --primary-color: #9eca34;
+            --primary-hover: #8ab92d;
+            --secondary-color: #6c757d;
+            --secondary-hover: #5a6268;
+            --background-color: #f8f9fa;
+            --text-color: #212529;
+            --border-color: #dee2e6;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .subtitle {
+            color: var(--secondary-color);
+            margin-top: 5px;
+        }
+        
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            background-color: white;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: #f1f1f1;
+        }
+        
+        .tab-content {
+            display: none;
+            background-color: white;
+            padding: 20px;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 250px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: monospace;
+            resize: vertical;
+        }
+        
+        .options-panel {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .options-group {
+            margin-bottom: 15px;
+        }
+        
+        .options-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .radio-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .radio-option {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .primary-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .primary-btn:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .secondary-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .secondary-btn:hover {
+            background-color: var(--secondary-hover);
+        }
+        
+        .file-input-container {
+            margin-bottom: 20px;
+        }
+        
+        .file-input-label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .url-input-container {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .url-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px 0 0 4px;
+        }
+        
+        .url-fetch-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        
+        .url-fetch-btn:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .result-container {
+            margin-top: 20px;
+        }
+        
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            width: 0%;
+            background-color: var(--primary-color);
+            transition: width 0.3s;
+        }
+        
+        .github-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .github-link:hover {
+            text-decoration: underline;
+        }
+        
+        .drop-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            border: 2px dashed var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .drop-zone.active {
+            border-color: var(--primary-color);
+            background-color: rgba(158, 202, 52, 0.05);
+        }
+        
+        .drop-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .drop-message {
+            text-align: center;
+        }
+        
+        .drop-sub {
+            color: var(--secondary-color);
+            font-size: 14px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: var(--secondary-color);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">代码解密工具</div>
+            <div class="subtitle">快速解密混淆的JavaScript、Python和PHP代码</div>
+        </header>
+        
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="paste">粘贴代码</div>
+                <div class="tab" data-tab="upload">本地文件</div>
+                <div class="tab" data-tab="remote">远程文件</div>
+                <div class="tab" data-tab="about">关于</div>
+            </div>
+            
+            <div class="tab-content active" id="paste-content">
+                <textarea id="code-input" placeholder="在此粘贴需要解密的代码..."></textarea>
+                
+                <div class="options-panel">
+                    <div class="options-group">
+                        <div class="options-title">文件类型</div>
+                        <div class="radio-options">
+                            <label class="radio-option">
+                                <input type="radio" name="file-type" value="js" checked> JavaScript
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="file-type" value="py"> Python
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="file-type" value="php"> PHP
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="file-type" value="other"> 其他
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="options-group">
+                        <div class="options-title">解密类型</div>
+                        <div class="radio-options">
+                            <label class="radio-option">
+                                <input type="radio" name="encryption-type" id="type-auto" checked> 自动检测
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="encryption-type" id="type-eval"> Eval混淆
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="encryption-type" id="type-obfuscator"> Obfuscator
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="encryption-type" id="type-jjencode"> JJEncode
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="encryption-type" id="type-aaencode"> AAEncode
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="encryption-type" id="type-jsfuck"> JSFuck
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="encryption-type" id="type-base64"> Base64
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="encryption-type" id="type-urlencode"> URL编码
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="encryption-type" id="type-hex"> 十六进制
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-container">
+                    <button id="clear-btn" class="secondary-btn">清空</button>
+                    <button id="decrypt-btn" class="primary-btn">点击解密</button>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="upload-content">
+                <div class="file-input-container">
+                    <label class="file-input-label">选择需要解密的本地文件：</label>
+                    <input type="file" id="local-file" accept=".js,.py,.php,.txt">
+                </div>
+                
+                <div class="info-box">
+                    <p>支持的文件类型: .js, .py, .php, .txt</p>
+                    <p>文件上传后，将自动跳转到"粘贴代码"标签页进行解密。</p>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="remote-content">
+                <div class="url-input-container">
+                    <input type="text" id="remote-url" class="url-input" placeholder="输入远程文件URL（例如: https://example.com/script.js）">
+                    <button id="fetch-remote" class="url-fetch-btn">获取</button>
+                </div>
+                
+                <div class="info-box">
+                    <p>支持的URL格式: http:// 或 https:// 开头的直接文件链接</p>
+                    <p>文件获取后，将自动跳转到"粘贴代码"标签页进行解密。</p>
+                    <p>注意: 由于浏览器安全限制，某些远程文件可能无法直接获取。如果遇到问题，请尝试手动下载并使用"本地文件"功能。</p>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="about-content">
+                <div class="info-box">
+                    <p><strong>代码解密工具</strong> 是一个开源工具，用于解密各种混淆的代码。</p>
+                    <p>支持的解密类型:</p>
+                    <ul>
+                        <li><strong>Eval混淆</strong> - 嵌套的eval函数混淆</li>
+                        <li><strong>Obfuscator</strong> - 使用JavaScript-Obfuscator等工具混淆的代码</li>
+                        <li><strong>JJEncode</strong> - 使用JJEncode混淆的代码</li>
+                        <li><strong>AAEncode</strong> - 使用AAEncode (ﾟДﾟ) 混淆的代码</li>
+                        <li><strong>JSFuck</strong> - 使用[]()!+字符混淆的代码</li>
+                        <li><strong>Base64</strong> - Base64编码的内容</li>
+                        <li><strong>URL编码</strong> - URL编码的内容</li>
+                        <li><strong>十六进制</strong> - 十六进制表示的内容</li>
+                    </ul>
+                    <p>全新的客户端解密实现，所有解密操作在本地完成，无需向服务器发送请求，更安全、更高效。</p>
+                </div>
+                
+                <p><strong>注意事项:</strong></p>
+                <ul>
+                    <li>本工具仅供学习和研究使用，请勿用于非法用途。</li>
+                    <li>解密操作完全在您的浏览器中进行，代码不会上传到任何服务器。</li>
+                    <li>对于复杂的混淆可能无法完全解密，但会尽可能提供最佳结果。</li>
+                    <li>如遇到无法解密的情况，您可以尝试选择不同的解密类型。</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="result-container" id="result-content">
+            <!-- 解密结果将显示在这里 -->
+        </div>
+    </div>
+    
+    <footer>
+        <p>代码解密工具 &copy; 2025 | 完全本地解密，代码不会上传到任何服务器</p>
+        <p>更多功能正在开发中...</p>
+    </footer>
+    
+    <script src="scripts.js"></script>
+</body>
+</html>

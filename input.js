@@ -1,6 +1,9 @@
 /*************************************
 
 >「 脚本名称 」         Mix、Mix2解锁Vip
+
+
+
 [rewrite_local]
 ^https?:\/\/(cdn-bm|bmall)\.camera360\.com\/api\/(mix\/(getinfo|purchase|recovery)|iap\/check-receipt|mix-asset\/assets) url script-response-body https://raw.githubusercontent.com/Mike-offers/Rewrite/refs/heads/master/QuantumultX/Mix.js
 https:\/\/mix-api\.camera360\.com\/v\d\/operational-positions url reject

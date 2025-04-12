@@ -7,6 +7,7 @@ const PluginObfuscator = require('./plugin/obfuscator.js')
 const PluginAwsc = require('./plugin/awsc.js')
 const PluginPart2AI = require('./plugin/part2ai.js')
 const PluginJsfuck = require('./plugin/jsfuck.js')
+const PluginAAEncode = require('./plugin/aaencode.js')
 const PluginJsconfuser = require('./plugin/jsconfuser.js')
 
 // 读取参数
@@ -40,6 +41,7 @@ const plugins = [
   { name: 'jsconfuser', plugin: PluginJsconfuser },
   { name: 'awsc', plugin: PluginAwsc },
   { name: 'jjencode', plugin: PluginJjencode },
+  { name: 'aaencode', plugin: PluginAAEncode },
     { name: 'common', plugin: PluginCommon },// 最后一次使用通用插件
 ];
 

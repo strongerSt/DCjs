@@ -1,91 +1,56 @@
 /**
- * AAencode (颜文字JavaScript) 解密插件 - 纯静态版本
- * 不执行代码，仅通过静态分析提取信息
+ * AAencode (颜文字JavaScript) 解密插件 - 简化版
+ * 不使用异步操作，保持与现有系统兼容
  */
+
 function decodeAAencode(code) {
     // 检测是否为AAencode编码
     const aaPattern = /ﾟ[ｰωΘДoﾉ]/;
     if (!aaPattern.test(code) || !code.includes('_') || !code.includes('+') || !code.includes('=')) {
         return code; // 不是AAencode，返回原代码
     }
-
-    // 创建一个更易读的简化版本
-    let readableCode = code
-        .replace(/ﾟωﾟﾉ/g, 'var1')
-        .replace(/ﾟｰﾟ/g, 'var2')
-        .replace(/ﾟΘﾟ/g, 'var3')
-        .replace(/ﾟДﾟ/g, 'var4')
-        .replace(/\(o\^_\^o\)/g, 'var5')
-        .replace(/ﾟoﾟ/g, 'result');
-
-    // 尝试提取所有字符串字面量
-    const stringLiterals = [];
-    code.replace(/(['"])((?:\\.|[^\\])*?)\1/g, (match, quote, content) => {
-        if (content.length > 3) stringLiterals.push(content);
-        return match;
-    });
-
-    // 尝试提取结构性信息
-    const analysis = {
-        variables: {},
-        finalConstruction: '',
-        possibleResults: []
-    };
-
-    // 分析变量赋值
-    const assignmentPattern = /\(ﾟ[^=]+=([^;]+)/g;
-    let match;
-    while ((match = assignmentPattern.exec(code)) !== null) {
-        if (match[1] && match[1].length < 100) { // 避免匹配过长的代码片段
-            const varName = match[0].split('=')[0].trim();
-            analysis.variables[varName] = match[1].trim();
-        }
-    }
-
-    // 尝试识别最终构造的结果（通常在代码最后部分）
-    const lastPart = code.split(';').pop();
-    if (lastPart.includes('ﾟoﾟ') && lastPart.includes('+')) {
-        analysis.finalConstruction = lastPart.trim();
-    }
-
-    // 尝试从字符连接模式中提取可能的结果
-    // AAencode常常将字符一个一个连接起来
-    const charPattern = /\(ﾟДﾟ\)\s*\[\s*['"]([a-z])['"]]/g;
-    const chars = [];
-    while ((match = charPattern.exec(code)) !== null) {
-        if (match[1]) chars.push(match[1]);
-    }
-
-    if (chars.length > 0) {
-        analysis.possibleResults.push(chars.join(''));
-    }
-
-    // 构建结果
-    let result = "// AAencode静态解析结果：\n\n";
     
-    // 添加最长的字符串字面量
-    if (stringLiterals.length > 0) {
-        const sortedStrings = [...stringLiterals].sort((a, b) => b.length - a.length);
-        result += "// 找到的字符串字面量：\n";
-        for (let i = 0; i < Math.min(5, sortedStrings.length); i++) {
-            result += `// ${i+1}. ${sortedStrings[i]}\n`;
-        }
-        result += "\n";
-    }
-    
-    // 添加可能的解码结果
-    if (analysis.possibleResults.length > 0) {
-        result += "// 可能的结果：\n";
-        analysis.possibleResults.forEach(r => {
-            result += `// ${r}\n`;
+    try {
+        // 创建一个安全的简化版本
+        let simplifiedCode = code
+            .replace(/ﾟωﾟﾉ/g, 'var1')
+            .replace(/ﾟｰﾟ/g, 'var2')
+            .replace(/ﾟΘﾟ/g, 'var3')
+            .replace(/ﾟДﾟ/g, 'var4')
+            .replace(/\(o\^_\^o\)/g, 'var5')
+            .replace(/ﾟoﾟ/g, 'result');
+            
+        // 尝试提取字符串字面量
+        const stringLiterals = [];
+        code.replace(/(['"])((?:\\.|[^\\])*?)\1/g, (match, quote, content) => {
+            if (content.length > 5) stringLiterals.push(content);
+            return match;
         });
-        result += "\n";
+        
+        // 如果找到了字符串，添加到结果中
+        if (stringLiterals.length > 0) {
+            // 按长度排序并取最长的几个
+            const sortedStrings = [...stringLiterals].sort((a, b) => b.length - a.length);
+            let result = "// AAencode可能的字符串：\n";
+            
+            // 添加前5个最长的字符串
+            for (let i = 0; i < Math.min(5, sortedStrings.length); i++) {
+                result += `// ${i+1}. ${sortedStrings[i]}\n`;
+            }
+            
+            // 添加简化后的代码
+            result += "\n// 简化后的代码：\n" + simplifiedCode;
+            return result;
+        }
+        
+        // 没有找到有意义的字符串，返回简化的代码
+        return "// AAencode简化代码：\n" + simplifiedCode;
+        
+    } catch (e) {
+        // 发生错误，返回错误信息和原始代码
+        return `// AAencode解码错误: ${e.message}\n${code}`;
     }
-    
-    // 添加简化代码
-    result += "// 简化的代码：\n" + readableCode;
-    
-    return result;
 }
 
+// 导出函数
 module.exports = decodeAAencode;

@@ -1,74 +1,56 @@
-// aaencode.js - 支持颜文字JavaScript解密
-// 添加到您的解密库中
-
-(function(global) {
+/**
+ * AAencode (颜文字JavaScript) 解密插件
+ * 用于解密使用日语片假名字符混淆的JavaScript代码
+ */
+function decodeAAencode(code) {
     // 检测是否为AAencode编码
-    function isAAencoded(code) {
-        // AAencode通常包含大量日语片假名字符
-        const aaPattern = /ﾟ[ｰωΘДoﾉ]/;
-        return aaPattern.test(code) && 
-               code.includes('_') && 
-               code.includes('+') && 
-               code.includes('=');
+    const aaPattern = /ﾟ[ｰωΘДoﾉ]/;
+    if (!aaPattern.test(code) || !code.includes('_') || !code.includes('+') || !code.includes('=')) {
+        return code; // 不是AAencode，返回原代码
     }
 
-    // 解码AAencode
-    function decodeAAencode(code) {
-        try {
-            // AAencode通常将结果赋值给变量 ﾟoﾟ
-            // 创建一个函数来执行代码并返回结果
-            const result = Function('"use strict";' + code + '; return typeof ﾟoﾟ !== "undefined" ? ﾟoﾟ : "无法找到解码结果";')();
-            return {
-                success: true,
-                result: result,
-                type: 'aaencode'
-            };
-        } catch (e) {
-            return {
-                success: false,
-                error: e.message,
-                type: 'aaencode'
-            };
+    try {
+        // 将代码包装在函数中执行，并尝试提取结果
+        const wrappedCode = `
+            let result;
+            try {
+                ${code}
+                // AAencode通常将结果赋值给变量 ﾟoﾟ
+                if (typeof ﾟoﾟ !== "undefined") {
+                    result = ﾟoﾟ;
+                } else {
+                    // 尝试其他可能的输出变量
+                    result = (typeof ___ !== "undefined") ? ___ : code;
+                }
+            } catch(e) {
+                result = "AAencode解密错误: " + e.message;
+            }
+            return result;
+        `;
+        
+        // 安全执行代码
+        const decodedResult = new Function(wrappedCode)();
+        
+        // 如果结果是字符串，直接返回
+        if (typeof decodedResult === 'string') {
+            return decodedResult;
         }
-    }
-
-    // 导出函数
-    global.AAencode = {
-        name: 'AAencode (颜文字JavaScript)',
-        description: '解密颜文字JavaScript加密代码，特点是使用大量日语片假名字符',
-        detect: isAAencoded,
-        decode: decodeAAencode
-    };
-
-})(typeof window !== 'undefined' ? window : this);
-```
-
-3. **整合到解密系统**：在您的主文件（可能是`common.js`或类似的文件）中引入这个新模块：
-
-```javascript
-// 在您的主文件中添加
-// 引入AAencode解密模块
-require('./aaencode.js');
-
-// 假设您有一个解密器列表
-const decoders = [
-    // 现有解密器...
-    window.AAencode, // 添加新的AAencode解密器
-];
-
-// 解密函数
-function decrypt(code) {
-    // 尝试每种解密器
-    for (const decoder of decoders) {
-        if (decoder.detect(code)) {
-            return decoder.decode(code);
+        
+        // 如果结果是对象，尝试将其转换为字符串或JSON
+        if (typeof decodedResult === 'object' && decodedResult !== null) {
+            try {
+                return JSON.stringify(decodedResult, null, 2);
+            } catch (e) {
+                return String(decodedResult);
+            }
         }
+        
+        // 其他类型的结果
+        return String(decodedResult);
+    } catch (e) {
+        console.error("AAencode解密失败:", e.message);
+        return code; // 解密失败，返回原代码
     }
-    
-    // 没有匹配的解密器
-    return {
-        success: false,
-        error: '无法识别的编码类型',
-        type: 'unknown'
-    };
 }
+
+module.exports = decodeAAencode;

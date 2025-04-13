@@ -209,7 +209,7 @@ ${code}
     }
 }
 
-// 修改showManualSteps函数，添加浮动复制按钮
+// 显示手动创建Issue的步骤
 function showManualSteps(issueTitle, issueBody, fileType) {
     const resultElement = document.getElementById('result-content');
     
@@ -245,39 +245,6 @@ function showManualSteps(issueTitle, issueBody, fileType) {
     // 添加检查结果按钮事件
     document.getElementById('check-result-btn').addEventListener('click', () => {
         promptForIssueNumber(fileType);
-    });
-    
-    // 添加浮动复制按钮
-    const floatingBtn = document.createElement('button');
-    floatingBtn.textContent = '快速复制模板';
-    floatingBtn.style.cssText = 'position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#9eca34; color:white; border:none; border-radius:6px; cursor:pointer; z-index:9999; box-shadow:0 2px 5px rgba(0,0,0,0.2);';
-    
-    floatingBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(issueBody)
-            .then(() => {
-                alert('模板已复制到剪贴板！现在您可以粘贴到Issue中。');
-            })
-            .catch(err => {
-                console.error('复制失败:', err);
-                alert('复制失败，请手动复制模板。');
-            });
-    });
-    
-    document.body.appendChild(floatingBtn);
-    
-    // 在用户离开或点击检查结果按钮时移除浮动按钮
-    const cleanupFloatingBtn = () => {
-        if (document.body.contains(floatingBtn)) {
-            document.body.removeChild(floatingBtn);
-        }
-    };
-    
-    document.getElementById('check-result-btn').addEventListener('click', cleanupFloatingBtn);
-    
-    // 当用户离开结果区域或导航到其他页面时移除浮动按钮
-    window.addEventListener('beforeunload', cleanupFloatingBtn);
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', cleanupFloatingBtn);
     });
 }
 

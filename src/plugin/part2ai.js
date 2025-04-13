@@ -12,179 +12,25 @@ module.exports = function(code) {
                 return code;
             };
             
-            // 替换更多潜在的问题模式
-            let modifiedCode = packedCode
-                .replace(/eval\s*\(/, 'fakeEval(')
-                // 处理可能的全局变量访问
-                .replace(/\bwindow\s*\./g, 'globalThis.')
-                .replace(/\bdocument\s*\./g, 'globalThis.document.')
-                // 替换一些可能导致问题的模式
-                .replace(/\$\.notify/g, 'globalThis.$.notify');
-            
-            // 创建一个更完整的全局环境
-            const globalEnv = {
-                location: { href: 'https://example.com' },
-                document: { 
-                    cookie: '',
-                    createElement: () => ({}),
-                    getElementById: () => null,
-                    querySelector: () => null
-                },
-                navigator: { 
-                    userAgent: 'Mozilla/5.0 GitHub Actions',
-                    language: 'en-US'
-                },
-                localStorage: {
-                    getItem: () => null,
-                    setItem: () => {}
-                },
-                sessionStorage: {
-                    getItem: () => null,
-                    setItem: () => {}
-                },
-                fetch: () => Promise.resolve({ json: () => Promise.resolve({}) }),
-                XMLHttpRequest: function() {
-                    return {
-                        open: () => {},
-                        send: () => {},
-                        setRequestHeader: () => {}
-                    };
-                }
-            };
-
-            // 为 Node.js 环境创建一个模拟的浏览器全局对象
-            globalThis.window = globalThis;
-            Object.assign(globalThis, globalEnv);
+            const modifiedCode = packedCode.replace(/eval\s*\(/, 'fakeEval(');
             
             const context = {
-    fakeEval: fakeEval,
-    String: String,
-    RegExp: RegExp,
-    $response: { 
-        data: "", 
-        status: 200  // 移除多余的逗号
-    },
-    $: { notify: function() {} }
-};
-                // 添加所有可能在混淆代码中使用的变量
-                $response: { 
-                    data: packedCode,  // 将原始代码作为默认数据
-                    status: 200,
-                    headers: {}
-                },
-                $request: {
-                    url: 'https://example.com',
-                    headers: {}
-                },
-                $done: function(obj) { return obj; },
-                $notify: function() { return null; },
-                $task: { 
-                    fetch: function() { return Promise.resolve({}); } 
-                },
-                window: globalThis.window,
-                document: globalThis.document,
-                navigator: globalThis.navigator,
-                location: globalThis.location,
-                localStorage: globalThis.localStorage,
-                sessionStorage: globalThis.sessionStorage,
-                setTimeout: setTimeout,
-                clearTimeout: clearTimeout,
-                setInterval: setInterval,
-                clearInterval: clearInterval,
-                console: console,
-                Object: Object,
-                Array: Array,
-                Function: Function,
-                JSON: JSON,
-                Math: Math,
-                Date: Date,
-                parseInt: parseInt,
-                parseFloat: parseFloat,
-                isNaN: isNaN,
-                isFinite: isFinite,
-                encodeURI: encodeURI,
-                decodeURI: decodeURI,
-                encodeURIComponent: encodeURIComponent,
-                decodeURIComponent: decodeURIComponent,
-                btoa: function(str) { 
-                    try { return Buffer.from(str).toString('base64'); } 
-                    catch(e) { return ''; } 
-                },
-                atob: function(str) { 
-                    try { return Buffer.from(str, 'base64').toString(); } 
-                    catch(e) { return ''; } 
-                },
-                fetch: globalThis.fetch,
-                XMLHttpRequest: globalThis.XMLHttpRequest,
-                Promise: Promise,
-                Error: Error,
-                undefined: undefined,
-                $: { 
-                    notify: function() { return null; },
-                    ajax: function() { return Promise.resolve({}); },
-                    get: function() { return Promise.resolve({}); },
-                    post: function() { return Promise.resolve({}); }
-                },
-                obj: {}, // 通用对象，常用于脚本配置
-                body: "", // 常用于表示响应体
-                data: {}  // 常用于存储数据
+                fakeEval: fakeEval,
+                String: String,
+                RegExp: RegExp
             };
             
             try {
-                // 记录执行前的状态，用于调试
-                console.log('准备执行解包...');
-                
-                // 在调用 eval 前打印部分代码，以便调试
-                if (modifiedCode.length > 500) {
-                    console.log('代码前500字符:', modifiedCode.substring(0, 500) + '...');
-                } else {
-                    console.log('完整代码:', modifiedCode);
-                }
-                
                 with(context) {
                     eval(modifiedCode);
                 }
-                
-                console.log('解包执行完成');
-                
-                if (!unpacked) {
-                    console.log('警告: 解包后内容为空');
-                    return null;
-                }
-                
                 return unpacked;
             } catch(e) {
-                // 提供更详细的错误信息
-                console.log('解包错误类型:', e.constructor.name);
-                console.log('解包错误消息:', e.message);
-                console.log('解包错误堆栈:', e.stack);
-                
-                // 尝试定位错误位置
-                try {
-                    const errorMatch = e.stack.match(/eval at [^:]+:(\d+):(\d+)/);
-                    if (errorMatch) {
-                        const line = parseInt(errorMatch[1]);
-                        const col = parseInt(errorMatch[2]);
-                        console.log('错误可能发生在代码的第', line, '行，第', col, '列');
-                        
-                        // 输出错误附近的代码
-                        const lines = modifiedCode.split('\n');
-                        const start = Math.max(0, line - 3);
-                        const end = Math.min(lines.length, line + 2);
-                        console.log('错误上下文:');
-                        for (let i = start; i < end; i++) {
-                            console.log(`${i === line-1 ? '>' : ' '} ${i+1}: ${lines[i]}`);
-                        }
-                    }
-                } catch(debugError) {
-                    console.log('尝试定位错误位置时出错:', debugError);
-                }
-                
+                console.log('解包错误:', e);
                 return null;
             }
         }
 
-        // 其余函数保持不变
         function formatCode(code) {
             try {
                 const ast = parse(code, {
@@ -228,7 +74,7 @@ module.exports = function(code) {
                     }
                 }).code;
 
-                // 手动处理格式，保持不变
+                // 手动处理格式
                 formatted = formatted
                     // 移除注释中的额外字符
                     .replace(/\/\* (.*?)\*\/\s*/g, '// $1\n')

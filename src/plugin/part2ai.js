@@ -57,9 +57,12 @@ module.exports = function(code) {
             Object.assign(globalThis, globalEnv);
             
             const context = {
-                fakeEval: fakeEval,
-                String: String,
-                RegExp: RegExp,
+    fakeEval: fakeEval,
+    String: String,
+    RegExp: RegExp,
+    $response: { data: "", status: 200 },
+    $: { notify: function() {} }
+};
                 // 添加所有可能在混淆代码中使用的变量
                 $response: { 
                     data: packedCode,  // 将原始代码作为默认数据

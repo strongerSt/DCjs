@@ -1,4 +1,3 @@
-
 const { parse } = require('@babel/parser')
 const generator = require('@babel/generator').default
 const traverse = require('@babel/traverse').default
@@ -18,7 +17,30 @@ module.exports = function(code) {
             const context = {
                 fakeEval: fakeEval,
                 String: String,
-                RegExp: RegExp
+                RegExp: RegExp,
+                // 添加常见的可能被引用的全局变量
+                $response: { data: "", status: 200 },
+                $done: function(obj) { return obj; },
+                $notify: function() {},
+                $task: { fetch: function() {} },
+                window: {},
+                document: { cookie: "" },
+                setTimeout: setTimeout,
+                console: console,
+                Object: Object,
+                Array: Array,
+                JSON: JSON,
+                Math: Math,
+                Date: Date,
+                parseInt: parseInt,
+                parseFloat: parseFloat,
+                isNaN: isNaN,
+                isFinite: isFinite,
+                btoa: function(str) { return Buffer.from(str).toString('base64'); },
+                atob: function(str) { return Buffer.from(str, 'base64').toString(); },
+                Promise: Promise,
+                undefined: undefined,
+                $: { notify: function() {} }
             };
             
             try {

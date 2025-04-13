@@ -209,7 +209,7 @@ ${code}
     }
 }
 
-// 修改showManualSteps函数，添加浮动复制按钮
+// 修改showManualSteps函数，添加浮动复制按钮 - 修复版本
 function showManualSteps(issueTitle, issueBody, fileType) {
     const resultElement = document.getElementById('result-content');
     
@@ -247,8 +247,15 @@ function showManualSteps(issueTitle, issueBody, fileType) {
         promptForIssueNumber(fileType);
     });
     
-    // 添加浮动复制按钮
+    // 移除可能已存在的浮动按钮
+    const existingBtn = document.getElementById('floating-copy-btn');
+    if (existingBtn) {
+        document.body.removeChild(existingBtn);
+    }
+    
+    // 添加浮动复制按钮 - 添加ID以便于后续引用
     const floatingBtn = document.createElement('button');
+    floatingBtn.id = 'floating-copy-btn'; // 添加ID
     floatingBtn.textContent = '快速复制模板';
     floatingBtn.style.cssText = 'position:fixed; bottom:20px; right:20px; padding:10px 15px; background:#9eca34; color:white; border:none; border-radius:6px; cursor:pointer; z-index:9999; box-shadow:0 2px 5px rgba(0,0,0,0.2);';
     
@@ -263,12 +270,16 @@ function showManualSteps(issueTitle, issueBody, fileType) {
             });
     });
     
+    // 确保按钮添加到DOM中
     document.body.appendChild(floatingBtn);
+    console.log('浮动按钮已添加:', floatingBtn); // 添加调试日志
     
     // 在用户离开或点击检查结果按钮时移除浮动按钮
     const cleanupFloatingBtn = () => {
-        if (document.body.contains(floatingBtn)) {
-            document.body.removeChild(floatingBtn);
+        const btnToRemove = document.getElementById('floating-copy-btn');
+        if (btnToRemove && document.body.contains(btnToRemove)) {
+            document.body.removeChild(btnToRemove);
+            console.log('浮动按钮已移除'); // 添加调试日志
         }
     };
     
@@ -280,6 +291,7 @@ function showManualSteps(issueTitle, issueBody, fileType) {
         tab.addEventListener('click', cleanupFloatingBtn);
     });
 }
+
 // 提示输入Issue编号
 function promptForIssueNumber(fileType) {
     const issueNumber = prompt('请输入Issue编号 (仅数字部分):', '');

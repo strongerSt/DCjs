@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mikephie | 脚本解密工具</title>
+    <title>Mikephie | 脚本解密工具 (浏览器版)</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,11 +12,11 @@
             <div class="logo">
                 <span class="logo-prefix">./</span>
                 Mikephie
-                <span class="version">1.0.0</span>
+                <span class="version">2.0.0</span>
             </div>
         </header>
         
-        <div class="subtitle">脚本解密工具</div>
+        <div class="subtitle">脚本解密工具 (浏览器版)</div>
         
         <div class="tabs">
             <div class="tab active" data-tab="paste">粘贴代码</div>
@@ -73,10 +73,9 @@
             <div class="info-box">
                 <p><strong>使用方法:</strong></p>
                 <p>1. 粘贴混淆代码，选择文件类型和解密类型</p>
-                <p>2. 点击"点击解码"按钮，系统会打开GitHub issue创建页面</p>
-                <p>3. 在打开的页面中点击"Submit new issue"按钮</p>
-                <p>4. 提交后回到本页面，记下issue编号(例如#123)</p>
-                <p>5. 输入issue编号并等待约60秒，GitHub Actions会处理你的请求</p>
+                <p>2. 点击"点击解码"按钮，系统会直接在浏览器中解密代码</p>
+                <p>3. 解密成功后，您可以复制或下载解密结果</p>
+                <p><strong>注意:</strong> 此版本直接在浏览器中解密，所有处理都在本地完成，不需要GitHub令牌</p>
             </div>
             
             <div class="actions">
@@ -89,8 +88,8 @@
         <div class="tab-content" id="local-content">
             <div class="file-upload">
                 <p>请选择本地文件上传解密</p>
-                <input type="file" id="local-file" accept=".js,.py,.php">
-                <p>支持 .js, .py, .php 文件</p>
+                <input type="file" id="local-file" accept=".js,.py,.php,.txt">
+                <p>支持 .js, .py, .php, .txt 文件</p>
                 
                 <div class="info-box">
                     <p>上传文件后，系统会自动读取文件内容并跳转到"粘贴代码"标签页。您可以在那里选择解密类型并进行解密。</p>
@@ -113,8 +112,8 @@
         </div>
         
         <div class="tab-content" id="about-content">
-            <h2>关于 Mikephie 脚本解密工具</h2>
-            <p>这是一个用于解密各种JavaScript混淆代码的在线工具。它利用GitHub Actions自动处理解密过程。</p>
+            <h2>关于 Mikephie 脚本解密工具 (浏览器版)</h2>
+            <p>这是一个用于解密各种JavaScript混淆代码的在线工具。它直接在浏览器中处理解密，无需服务器支持。</p>
             
             <h3>支持的解密类型：</h3>
             <ul>
@@ -129,22 +128,19 @@
             
             <h3>工作原理：</h3>
             <p>1. 用户提交混淆代码</p>
-            <p>2. 代码通过GitHub Issue提交到仓库</p>
-            <p>3. GitHub Actions自动触发解密工作流</p>
-            <p>4. 使用src目录下的main.js或decode.py进行解密</p>
-            <p>5. 解密后的代码保存并作为issue评论返回</p>
+            <p>2. 浏览器直接使用内置的解密库处理代码</p>
+            <p>3. 解密结果立即显示在页面上</p>
+            <p>4. 所有处理均在本地完成，不会发送到任何服务器</p>
             
-            <h3>技术栈：</h3>
-            <p>- 前端：HTML, CSS, JavaScript</p>
-            <p>- 后端：GitHub Actions, Node.js, Python</p>
-            <p>- 解密模块：src/plugin下的多种解密插件</p>
+            <h3>浏览器版与服务器版区别：</h3>
+            <p>- <strong>浏览器版</strong>: 所有解密直接在浏览器中进行，不需要GitHub令牌，但解密能力可能有限</p>
+            <p>- <strong>服务器版</strong>: 通过GitHub Actions进行解密，可以处理更复杂的混淆，但需要创建GitHub issue</p>
             
-            <h3>项目结构：</h3>
-            <p>- src/main.js - 主JavaScript解密脚本</p>
-            <p>- src/decode.py - Python解密脚本</p>
-            <p>- src/plugin/ - 包含各种解密插件</p>
-            <p>- src/utils/ - 工具函数库</p>
-            <p>- src/visitor/ - AST访问者实现</p>
+            <h3>隐私说明：</h3>
+            <p>本工具在浏览器版中不会将您的代码发送到任何服务器。所有处理都在您的浏览器中本地完成，确保您的代码安全和隐私。</p>
+            
+            <h3>局限性：</h3>
+            <p>由于浏览器环境的限制，某些高级混淆可能无法完全解密。如果浏览器版无法满足您的需求，请考虑使用GitHub版本。</p>
         </div>
         
         <div class="result-container">
@@ -157,19 +153,19 @@
                 <div class="footer-title">技术依赖</div>
                 <div>
                     <p>脚本解密工具由以下模块支持：</p>
-                    <p>src/plugin目录下的common.js, jjencode.js, sojson.js, sojsonv7.js, obfuscator.js, awsc.js, part2ai.js等</p>
+                    <p>browser-deobfuscator.js - 浏览器端解密库，支持多种混淆类型</p>
                 </div>
             </div>
             <div class="footer-section">
                 <div class="footer-title">介绍</div>
                 <div>
                     <p>项目由 <a href="https://github.com/Mikephie">Mikephie</a> 开发与维护</p>
-                    <p>本工具支持多种JavaScript混淆解密</p>
+                    <p>浏览器版由 Claude AI 构建，直接在浏览器中解密代码</p>
                 </div>
             </div>
         </footer>
     </div>
 
-    <script src="scripts.js"></script>
+    <script src="scripts-modified.js"></script>
 </body>
 </html>

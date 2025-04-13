@@ -1,74 +1,81 @@
-/* styles.css */
+:root {
+    --primary-color: #9eca34;
+    --primary-hover: #8ab92d;
+    --secondary-color: #6c757d;
+    --secondary-hover: #5a6268;
+    --background-color: #f8f9fa;
+    --text-color: #212529;
+    --border-color: #dee2e6;
+}
+
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
-    color: #e0e0e0;
-    background-color: #121212;
+    color: var(--text-color);
+    background-color: var(--background-color);
     margin: 0;
     padding: 0;
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
 }
 
 header {
-    display: flex;
-    align-items: center;
+    text-align: center;
     margin-bottom: 30px;
-    border-bottom: 1px solid #333;
-    padding-bottom: 10px;
 }
 
 .logo {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
-    color: #9eca34;
-    display: flex;
-    align-items: center;
-}
-
-.logo-prefix {
-    color: #9eca34;
-    margin-right: 5px;
-}
-
-.version {
-    font-size: 12px;
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: 2px 6px;
-    border-radius: 10px;
-    margin-left: 10px;
+    color: var(--primary-color);
 }
 
 .subtitle {
-    color: #999;
+    color: var(--secondary-color);
     margin-top: 5px;
+}
+
+.tab-container {
+    margin-bottom: 20px;
 }
 
 .tabs {
     display: flex;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #333;
+    background-color: white;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-bottom: none;
 }
 
 .tab {
-    padding: 10px 20px;
+    padding: 12px 20px;
     cursor: pointer;
-    color: #ccc;
-    margin-right: 10px;
-    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    text-align: center;
+    flex: 1;
 }
 
 .tab.active {
-    color: #9eca34;
-    border-bottom: 3px solid #9eca34;
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.tab:hover:not(.active) {
+    background-color: #f1f1f1;
 }
 
 .tab-content {
     display: none;
+    background-color: white;
+    padding: 20px;
+    border-radius: 0 0 8px 8px;
+    border: 1px solid var(--border-color);
 }
 
 .tab-content.active {
@@ -77,304 +84,286 @@ header {
 
 textarea {
     width: 100%;
-    min-height: 300px;
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    border: 1px solid #333;
-    padding: 10px;
-    font-family: Monaco, Consolas, "Courier New", monospace;
+    min-height: 250px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: monospace;
     resize: vertical;
-    margin-bottom: 20px;
+}
+
+.options-panel {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
     border-radius: 4px;
+    border: 1px solid var(--border-color);
 }
 
-.encryption-types {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.encryption-type {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.encryption-type input[type="radio"] {
-    margin: 0;
-}
-
-.encryption-type label {
-    cursor: pointer;
-}
-
-.features {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.feature {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.feature input[type="checkbox"] {
-    margin: 0;
-}
-
-.actions {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-button {
-    background-color: #333;
-    color: #e0e0e0;
-    border: none;
-    padding: 10px 15px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-}
-
-button:hover {
-    background-color: #444;
-}
-
-.result-container {
-    background-color: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 20px;
-}
-
-.result-header {
-    background-color: #121212;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-}
-
-footer {
-    margin-top: 50px;
-    padding-top: 20px;
-    border-top: 1px solid #333;
-    display: flex;
-    justify-content: space-between;
-}
-
-.footer-section {
-    flex: 1;
-    margin-right: 20px;
-}
-
-.footer-title {
-    color: #9eca34;
-    margin-bottom: 10px;
-    font-weight: bold;
-}
-
-a {
-    color: #9eca34;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-.file-type-selector {
+.options-group {
     margin-bottom: 15px;
 }
 
-.file-type-label {
+.options-title {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.radio-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
     margin-right: 15px;
 }
 
-.copy-download-btns {
+.button-container {
     display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-pre {
-    background-color: #1a1a1a;
-    padding: 10px;
-    border-radius: 4px;
-    overflow: auto;
-    max-height: 500px;
-}
-
-.github-link {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 5px 10px;
-    border-radius: 4px;
-    background-color: #333;
-    transition: background-color 0.3s;
-}
-
-.github-link:hover {
-    background-color: #444;
-}
-
-.info-box {
-    background-color: rgba(158, 202, 52, 0.1);
-    border-left: 4px solid #9eca34;
-    padding: 10px;
-    margin: 15px 0;
-    border-radius: 0 4px 4px 0;
-}
-
-/* 为拖放区域添加的CSS样式 */
-.drop-zone {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 300px;
-    border: 2px dashed #555;
-    border-radius: 8px;
-    background-color: #1a1a1a;
-    margin: 20px 0;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.drop-zone:hover {
-    background-color: #232323;
-    border-color: #666;
-}
-
-.drop-message {
-    text-align: center;
-    color: #999;
-}
-
-.drop-icon {
-    font-size: 48px;
-    display: block;
-    margin-bottom: 10px;
-    opacity: 0.6;
-}
-
-.drop-sub {
-    font-size: 14px;
-    margin-top: 5px;
-    color: #777;
-}
-
-.drop-zone.active {
-    border-color: #9eca34;
-    background-color: rgba(158, 202, 52, 0.05);
-}
-
-/* GitHub令牌输入样式 */
-.auth-inputs {
-    display: flex;
-    gap: 10px;
-    margin: 15px 0;
-    flex-wrap: wrap;
-}
-
-.auth-input {
-    padding: 8px;
-    background: #333;
-    color: #fff;
-    border: 1px solid #555;
-    border-radius: 4px;
-    flex: 1;
-    min-width: 200px;
-}
-
-/* 改进的按钮样式 */
-.action-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-top: 20px;
 }
 
 .primary-btn {
-    background-color: #9eca34;
-    color: #000;
+    background-color: var(--primary-color);
+    color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 10px 20px;
     border-radius: 4px;
     cursor: pointer;
-    font-weight: bold;
-    flex: 1;
-}
-
-.secondary-btn {
-    background-color: #333;
-    color: #e0e0e0;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    flex: 1;
+    font-size: 16px;
+    transition: background-color 0.3s;
 }
 
 .primary-btn:hover {
-    background-color: #b8e84a;
+    background-color: var(--primary-hover);
+}
+
+.secondary-btn {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
 }
 
 .secondary-btn:hover {
-    background-color: #444;
+    background-color: var(--secondary-hover);
 }
 
-/* 代码模板框样式 */
-.code-template {
-    background: #1a1a1a;
+.file-input-container {
+    margin-bottom: 20px;
+}
+
+.file-input-label {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.url-input-container {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.url-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px 0 0 4px;
+}
+
+.url-fetch-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+}
+
+.url-fetch-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+.result-container {
+    margin-top: 20px;
+}
+
+.info-box {
+    background-color: #f8f9fa;
+    border-left: 4px solid #17a2b8;
     padding: 15px;
-    border-radius: 4px;
     margin: 15px 0;
-    border: 1px solid #333;
-    max-height: 300px;
-    overflow: auto;
+    border-radius: 4px;
 }
 
-.code-template pre {
-    margin: 0;
-    white-space: pre-wrap;
-    word-break: break-all;
+.success-box {
+    background-color: #f8f9fa;
+    border-left: 4px solid #4CAF50;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 4px;
 }
 
-/* 进度指示器样式改进 */
+.error-box {
+    background-color: #fff8f8;
+    border-left: 4px solid #F44336;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 4px;
+}
+
 .progress-container {
     width: 100%;
-    height: 6px;
-    background-color: #333;
-    border-radius: 3px;
+    background-color: #e9ecef;
+    border-radius: 4px;
     margin: 15px 0;
     overflow: hidden;
 }
 
 .progress-bar {
-    height: 100%;
-    background-color: #9eca34;
-    border-radius: 3px;
-    transition: width 0.3s ease;
+    height: 10px;
+    width: 0%;
+    background-color: var(--primary-color);
+    transition: width 0.3s;
 }
 
-/* 移动端适配 */
+.github-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.github-link:hover {
+    text-decoration: underline;
+}
+
+.drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+    border: 2px dashed var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.drop-zone.active {
+    border-color: var(--primary-color);
+    background-color: rgba(158, 202, 52, 0.05);
+}
+
+.drop-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.drop-message {
+    text-align: center;
+}
+
+.drop-sub {
+    color: var(--secondary-color);
+    font-size: 14px;
+}
+
+.code-container {
+    background-color: #282c34;
+    color: #abb2bf;
+    overflow: auto;
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 10px;
+    max-height: 500px;
+    font-family: monospace;
+    white-space: pre;
+}
+
+.options-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.action-btn {
+    background-color: #9eca34;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background-color: #8ab92d;
+}
+
+.toggle-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.toggle-btn:hover {
+    background-color: #5a6268;
+}
+
+footer {
+    text-align: center;
+    margin-top: 50px;
+    padding: 20px;
+    color: var(--secondary-color);
+    font-size: 14px;
+}
+
+/* 移动端响应式调整 */
 @media (max-width: 768px) {
-    .auth-inputs {
+    .radio-options {
         flex-direction: column;
+        align-items: flex-start;
     }
     
-    .auth-input {
+    .button-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .button-container button {
         width: 100%;
     }
     
-    .action-buttons {
+    .url-input-container {
         flex-direction: column;
+    }
+    
+    .url-input {
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
+    
+    .url-fetch-btn {
+        border-radius: 4px;
+        width: 100%;
+    }
+    
+    .options-box {
+        flex-direction: column;
+    }
+    
+    .options-box button {
+        width: 100%;
     }
 }

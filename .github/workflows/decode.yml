@@ -1,4 +1,4 @@
-name: Decode Script
+name: Decode JavaScript File
 
 on:
   push:
@@ -8,95 +8,121 @@ on:
     types: [opened, edited]
 
 jobs:
-  decode:
+  decode-push:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Execute Python script for decoding
+      run: |
+        python src/decode.py
+
+    - name: Install dependencies and run decode
+      run: |
+        npm install
+        npm run decode -- [-i input.js] [-o output.js]
+    
+    - name: Configure Git author
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "action"
+    
+    - name: Save decoded output to repository
+      run: |
+        git status
+        ls
+        git add output.js
+        git add output.py
+        git commit -m "Add decoded output file"
+        git push
+
+  decode-issue:
+    if: github.event_name == 'issues'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       issues: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Process issue data
-        if: github.event_name == 'issues'
-        id: issue-data
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const issue = await github.rest.issues.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number
-            });
-            
-            const body = issue.data.body;
-            if (!body) return;
-            
-            // 解析文件类型
-            const fileTypeMatch = body.match(/\*\*文件类型:\*\* `(.+?)`/);
-            const fileType = fileTypeMatch ? fileTypeMatch[1] : 'js';
-            
-            // 提取代码
-            const codeMatch = body.match(/```[\s\S]*?\n([\s\S]*?)```/);
-            const code = codeMatch ? codeMatch[1] : '';
-            
-            // 写入文件
-            const fs = require('fs');
-            fs.writeFileSync(`input.${fileType}`, code);
-            
-            // 输出变量
-            core.exportVariable('FILE_TYPE', fileType);
-            core.setOutput('file_type', fileType);
+    - name: Process issue data
+      id: issue-data
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const issue = await github.rest.issues.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number
+          });
+          
+          const body = issue.data.body;
+          if (!body) return;
+          
+          // 解析文件类型
+          const fileTypeMatch = body.match(/\*\*文件类型:\*\* `(.+?)`/);
+          const fileType = fileTypeMatch ? fileTypeMatch[1] : 'js';
+          
+          // 提取代码
+          const codeMatch = body.match(/```[\s\S]*?\n([\s\S]*?)```/);
+          const code = codeMatch ? codeMatch[1] : '';
+          
+          // 写入文件
+          const fs = require('fs');
+          fs.writeFileSync(`input.${fileType}`, code);
+          
+          // 输出变量
+          core.exportVariable('FILE_TYPE', fileType);
+          core.setOutput('file_type', fileType);
 
-      - name: Execute Python script
-        run: python src/decode.py
+    - name: Execute Python script for decoding
+      run: |
+        python src/decode.py
 
-      - name: Install dependencies and run decode
-        run: |
-          npm install
-          if [ "${{ github.event_name }}" == "issues" ]; then
-            npm run decode -- -i input.${{ env.FILE_TYPE || 'js' }} -o output.${{ env.FILE_TYPE || 'js' }}
-          else
-            npm run decode -- -i input.js -o output.js
-          fi
+    - name: Install dependencies and run decode
+      run: |
+        npm install
+        npm run decode -- -i input.${{ env.FILE_TYPE || 'js' }} -o output.${{ env.FILE_TYPE || 'js' }}
+    
+    - name: Configure Git author
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "action"
+    
+    - name: Save decoded output to repository
+      run: |
+        git status
+        ls
+        git add output.${{ env.FILE_TYPE || 'js' }}
+        git commit -m "Add decoded output file from issue #${{ github.event.issue.number }}"
+        git push
 
-      - name: Configure Git
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "action"
-
-      - name: Save outputs
-        run: |
-          git add output.* || true
-          git commit -m "Add decoded output files" || echo "No changes to commit"
-          git push || echo "No changes to push"
-
-      - name: Add comment to issue
-        if: github.event_name == 'issues'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            const fileType = process.env.FILE_TYPE || 'js';
-            let content = '';
-            
-            try {
-              if (fs.existsSync(`output.${fileType}`)) {
-                content = fs.readFileSync(`output.${fileType}`, 'utf8');
-              } else {
-                const files = fs.readdirSync('.');
-                const outputFiles = files.filter(f => f.startsWith('output.'));
-                if (outputFiles.length > 0) {
-                  content = fs.readFileSync(outputFiles[0], 'utf8');
-                }
-              }
-            } catch (e) {
-              content = `解密时出错: ${e.message}`;
+    - name: Add comment to issue
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const fileType = process.env.FILE_TYPE || 'js';
+          let content = '';
+          
+          try {
+            if (fs.existsSync(`output.${fileType}`)) {
+              content = fs.readFileSync(`output.${fileType}`, 'utf8');
+            } else {
+              content = "未找到输出文件";
             }
-            
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: `## 解密结果\n\n\`\`\`${fileType}\n${content}\n\`\`\``
-            });
+          } catch (e) {
+            content = `解密时出错: ${e.message}`;
+          }
+          
+          github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: `## 解密结果\n\n\`\`\`${fileType}\n${content}\n\`\`\``
+          });

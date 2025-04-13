@@ -3,148 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>代码解密工具</title>
+    <title>Mikephie | 脚本解密工具</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="logo">代码解密工具</div>
-            <div class="subtitle">快速解密混淆的JavaScript、Python和PHP代码</div>
+            <div class="logo">
+                <span class="logo-prefix">./</span>
+                Mikephie
+                <span class="version">1.0.0</span>
+            </div>
         </header>
         
-        <div class="tab-container">
-            <div class="tabs">
-                <div class="tab active" data-tab="paste">粘贴代码</div>
-                <div class="tab" data-tab="upload">本地文件</div>
-                <div class="tab" data-tab="remote">远程文件</div>
-                <div class="tab" data-tab="about">关于</div>
+        <div class="subtitle">脚本解密工具</div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="paste">粘贴代码</div>
+            <div class="tab" data-tab="local">本地文件</div>
+            <div class="tab" data-tab="remote">远程文件</div>
+            <div class="tab" data-tab="about">关于工具</div>
+        </div>
+        
+        <div class="tab-content active" id="paste-content">
+            <div class="file-type-selector">
+                <span class="file-type-label">文件类型:</span>
+                <label><input type="radio" name="file-type" value="js" checked> JavaScript (.js)</label>
+                <label><input type="radio" name="file-type" value="py"> Python (.py)</label>
+                <label><input type="radio" name="file-type" value="php"> PHP (.php)</label>
             </div>
             
-            <div class="tab-content active" id="paste-content">
-                <textarea id="code-input" placeholder="在此粘贴需要解密的代码..."></textarea>
-                
-                <div class="options-panel">
-                    <div class="options-group">
-                        <div class="options-title">文件类型</div>
-                        <div class="radio-options">
-                            <label class="radio-option">
-                                <input type="radio" name="file-type" value="js" checked> JavaScript
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="file-type" value="py"> Python
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="file-type" value="php"> PHP
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="file-type" value="other"> 其他
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="options-group">
-                        <div class="options-title">解密类型</div>
-                        <div class="radio-options">
-                            <label class="radio-option">
-                                <input type="radio" name="encryption-type" id="type-auto" checked> 自动检测
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="encryption-type" id="type-eval"> Eval混淆
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="encryption-type" id="type-obfuscator"> Obfuscator
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="encryption-type" id="type-jjencode"> JJEncode
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="encryption-type" id="type-aaencode"> AAEncode
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="encryption-type" id="type-jsfuck"> JSFuck
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="encryption-type" id="type-base64"> Base64
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="encryption-type" id="type-urlencode"> URL编码
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="encryption-type" id="type-hex"> 十六进制
-                            </label>
-                        </div>
-                    </div>
+            <textarea id="code-input" placeholder="这里 粘贴代码..."></textarea>
+            
+            <div class="encryption-types">
+                <div class="encryption-type">
+                    <input type="radio" id="type-auto" name="encryption-type" checked>
+                    <label for="type-auto">自动检测</label>
                 </div>
-                
-                <div class="button-container">
-                    <button id="clear-btn" class="secondary-btn">清空</button>
-                    <button id="decrypt-btn" class="primary-btn">点击解密</button>
+                <div class="encryption-type">
+                    <input type="radio" id="type-common" name="encryption-type">
+                    <label for="type-common">Common</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-jjencode" name="encryption-type">
+                    <label for="type-jjencode">JJencode</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-sojson" name="encryption-type">
+                    <label for="type-sojson">Sojson</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-sojsonv7" name="encryption-type">
+                    <label for="type-sojsonv7">SojsonV7</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-obfuscator" name="encryption-type">
+                    <label for="type-obfuscator">Obfuscator</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-awsc" name="encryption-type">
+                    <label for="type-awsc">Awsc</label>
+                </div>
+                <div class="encryption-type">
+                    <input type="radio" id="type-part2ai" name="encryption-type">
+                    <label for="type-part2ai">Part2AI</label>
                 </div>
             </div>
             
-            <div class="tab-content" id="upload-content">
-                <div class="file-input-container">
-                    <label class="file-input-label">选择需要解密的本地文件：</label>
-                    <input type="file" id="local-file" accept=".js,.py,.php,.txt">
-                </div>
-                
-                <div class="info-box">
-                    <p>支持的文件类型: .js, .py, .php, .txt</p>
-                    <p>文件上传后，将自动跳转到"粘贴代码"标签页进行解密。</p>
-                </div>
+            <div class="info-box">
+                <p><strong>使用方法:</strong></p>
+                <p>1. 粘贴混淆代码，选择文件类型和解密类型</p>
+                <p>2. 点击"点击解码"按钮，系统会打开GitHub issue创建页面</p>
+                <p>3. 在打开的页面中点击"Submit new issue"按钮</p>
+                <p>4. 提交后回到本页面，记下issue编号(例如#123)</p>
+                <p>5. 输入issue编号并等待约60秒，GitHub Actions会处理你的请求</p>
             </div>
             
-            <div class="tab-content" id="remote-content">
-                <div class="url-input-container">
-                    <input type="text" id="remote-url" class="url-input" placeholder="输入远程文件URL（例如: https://example.com/script.js）">
-                    <button id="fetch-remote" class="url-fetch-btn">获取</button>
-                </div>
-                
-                <div class="info-box">
-                    <p>支持的URL格式: http:// 或 https:// 开头的直接文件链接</p>
-                    <p>文件获取后，将自动跳转到"粘贴代码"标签页进行解密。</p>
-                    <p>注意: 由于浏览器安全限制，某些远程文件可能无法直接获取。如果遇到问题，请尝试手动下载并使用"本地文件"功能。</p>
-                </div>
-            </div>
-            
-            <div class="tab-content" id="about-content">
-                <div class="info-box">
-                    <p><strong>代码解密工具</strong> 是一个开源工具，用于解密各种混淆的代码。</p>
-                    <p>支持的解密类型:</p>
-                    <ul>
-                        <li><strong>Eval混淆</strong> - 嵌套的eval函数混淆</li>
-                        <li><strong>Obfuscator</strong> - 使用JavaScript-Obfuscator等工具混淆的代码</li>
-                        <li><strong>JJEncode</strong> - 使用JJEncode混淆的代码</li>
-                        <li><strong>AAEncode</strong> - 使用AAEncode (ﾟДﾟ) 混淆的代码</li>
-                        <li><strong>JSFuck</strong> - 使用[]()!+字符混淆的代码</li>
-                        <li><strong>Base64</strong> - Base64编码的内容</li>
-                        <li><strong>URL编码</strong> - URL编码的内容</li>
-                        <li><strong>十六进制</strong> - 十六进制表示的内容</li>
-                    </ul>
-                    <p>全新的客户端解密实现，所有解密操作在本地完成，无需向服务器发送请求，更安全、更高效。</p>
-                </div>
-                
-                <p><strong>注意事项:</strong></p>
-                <ul>
-                    <li>本工具仅供学习和研究使用，请勿用于非法用途。</li>
-                    <li>解密操作完全在您的浏览器中进行，代码不会上传到任何服务器。</li>
-                    <li>对于复杂的混淆可能无法完全解密，但会尽可能提供最佳结果。</li>
-                    <li>如遇到无法解密的情况，您可以尝试选择不同的解密类型。</li>
-                </ul>
+            <div class="actions">
+                <button id="clear-btn">清空 内容</button>
+                <button id="decrypt-btn">点击 解码</button>
+                <a href="https://github.com/Mikephie/DCjs" target="_blank" class="github-link">查看 GitHub</a>
             </div>
         </div>
         
-        <div class="result-container" id="result-content">
-            <!-- 解密结果将显示在这里 -->
+        <div class="tab-content" id="local-content">
+            <div class="file-upload">
+                <p>请选择本地文件上传解密</p>
+                <input type="file" id="local-file" accept=".js,.py,.php">
+                <p>支持 .js, .py, .php 文件</p>
+                
+                <div class="info-box">
+                    <p>上传文件后，系统会自动读取文件内容并跳转到"粘贴代码"标签页。您可以在那里选择解密类型并进行解密。</p>
+                </div>
+            </div>
         </div>
+        
+        <div class="tab-content" id="remote-content">
+            <div class="remote-url">
+                <p>输入远程文件URL</p>
+                <input type="text" id="remote-url" placeholder="https://example.com/script.js">
+                <button id="fetch-remote">获取远程文件</button>
+                <p>支持 HTTP 和 HTTPS 协议</p>
+                
+                <div class="info-box">
+                    <p>获取远程文件后，系统会自动读取文件内容并跳转到"粘贴代码"标签页。您可以在那里选择解密类型并进行解密。</p>
+                    <p>注意：由于浏览器安全限制，此功能可能无法获取某些跨域资源。如遇到问题，请手动复制代码。</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="about-content">
+            <h2>关于 Mikephie 脚本解密工具</h2>
+            <p>这是一个用于解密各种JavaScript混淆代码的在线工具。它利用GitHub Actions自动处理解密过程。</p>
+            
+            <h3>支持的解密类型：</h3>
+            <ul>
+                <li><strong>Common</strong> - 通用混淆解密</li>
+                <li><strong>JJencode</strong> - JJencode混淆解密</li>
+                <li><strong>Sojson</strong> - Sojson混淆解密</li>
+                <li><strong>SojsonV7</strong> - Sojson V7混淆解密</li>
+                <li><strong>Obfuscator</strong> - JavaScript Obfuscator混淆解密</li>
+                <li><strong>Awsc</strong> - 阿里云混淆解密</li>
+                <li><strong>Part2AI</strong> - 部分AI混淆解密</li>
+            </ul>
+            
+            <h3>工作原理：</h3>
+            <p>1. 用户提交混淆代码</p>
+            <p>2. 代码通过GitHub Issue提交到仓库</p>
+            <p>3. GitHub Actions自动触发解密工作流</p>
+            <p>4. 使用src目录下的main.js或decode.py进行解密</p>
+            <p>5. 解密后的代码保存并作为issue评论返回</p>
+            
+            <h3>技术栈：</h3>
+            <p>- 前端：HTML, CSS, JavaScript</p>
+            <p>- 后端：GitHub Actions, Node.js, Python</p>
+            <p>- 解密模块：src/plugin下的多种解密插件</p>
+            
+            <h3>项目结构：</h3>
+            <p>- src/main.js - 主JavaScript解密脚本</p>
+            <p>- src/decode.py - Python解密脚本</p>
+            <p>- src/plugin/ - 包含各种解密插件</p>
+            <p>- src/utils/ - 工具函数库</p>
+            <p>- src/visitor/ - AST访问者实现</p>
+        </div>
+        
+        <div class="result-container">
+            <div class="result-header">这里 显示结果</div>
+            <div id="result-content"></div>
+        </div>
+        
+        <footer>
+            <div class="footer-section">
+                <div class="footer-title">技术依赖</div>
+                <div>
+                    <p>脚本解密工具由以下模块支持：</p>
+                    <p>src/plugin目录下的common.js, jjencode.js, sojson.js, sojsonv7.js, obfuscator.js, awsc.js, part2ai.js等</p>
+                </div>
+            </div>
+            <div class="footer-section">
+                <div class="footer-title">介绍</div>
+                <div>
+                    <p>项目由 <a href="https://github.com/Mikephie">Mikephie</a> 开发与维护</p>
+                    <p>本工具支持多种JavaScript混淆解密</p>
+                </div>
+            </div>
+        </footer>
     </div>
-    
-    <footer>
-        <p>代码解密工具 &copy; 2025 | 完全本地解密，代码不会上传到任何服务器</p>
-        <p>更多功能正在开发中...</p>
-    </footer>
-    
+
     <script src="scripts.js"></script>
 </body>
 </html>

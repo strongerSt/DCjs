@@ -60,7 +60,10 @@ module.exports = function(code) {
     fakeEval: fakeEval,
     String: String,
     RegExp: RegExp,
-    $response: { data: "", status: 200 },
+    $response: { 
+        data: "", 
+        status: 200  // 移除多余的逗号
+    },
     $: { notify: function() {} }
 };
                 // 添加所有可能在混淆代码中使用的变量

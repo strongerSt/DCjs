@@ -1,22 +1,24 @@
 /**
- * 极简版 AADecode 插件
- * 基于 jamtg 的 aadecode 实现核心功能
+ * AADecode插件 - 符合框架期望的结构
  */
 
-// 直接导出处理函数
-module.exports = function(sourceCode) {
+// 创建一个带有plugin方法的对象
+const PluginAADecode = {};
+
+// 添加plugin方法
+PluginAADecode.plugin = function(sourceCode) {
   // 基本检查
   if (typeof sourceCode !== 'string') {
     return sourceCode;
   }
   
-  // 检查是否是 AAEncode 格式
-  if (!sourceCode.includes('ﾟωﾟ') && !sourceCode.includes('ﾟДﾟ')) {
+  // 检查是否是AAEncode格式
+  if (!(sourceCode.includes('ﾟωﾟ') || sourceCode.includes('ﾟДﾟ'))) {
     return sourceCode;
   }
   
   try {
-    // 简单的解码尝试
+    // 尝试解码
     const sandbox = `
       var c = '';
       var document = {
@@ -38,14 +40,11 @@ module.exports = function(sourceCode) {
       return result;
     }
     
-    // 备用：尝试提取字符串
-    const strMatch = sourceCode.match(/c\s*=\s*(['"])(.*?)\1/);
-    if (strMatch && strMatch[2]) {
-      return strMatch[2];
-    }
-    
     return sourceCode;
   } catch (e) {
     return sourceCode;
   }
 };
+
+// 导出整个对象
+module.exports = PluginAADecode;

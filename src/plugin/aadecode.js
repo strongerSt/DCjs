@@ -1,6 +1,7 @@
 /**
- * AAEncode 通用解码插件
- * 自动适配所有脚本，动态还原完整 JavaScript 源码
+ * AAEncode 解码插件（完整源码还原版）
+ * 适配 MITM Hook 脚本 / 普通 JS / 规则脚本
+ * 输出完整 JavaScript 源码
  */
 
 const { VM } = require('vm2')
@@ -10,7 +11,7 @@ function isAAEncode(code) {
   return /ﾟωﾟﾉ\s*=/.test(code) && /(ﾟДﾟ|ﾟΘﾟ)/.test(code)
 }
 
-// 模拟浏览器执行环境，捕获 write/log 内容
+// 沙盒执行，仅捕获 document.write 或 console.log 内容作为源码
 function safeSimulateOutput(code) {
   let result = ''
 
@@ -26,13 +27,14 @@ function safeSimulateOutput(code) {
         warn: () => {},
         error: () => {}
       },
-      setTimeout: () => {},
-      setInterval: () => {},
+      // 防止环境报错
       $response: { body: '{}' },
       $request: { url: '', method: 'GET', headers: {} },
       $done: () => {},
       $notify: () => {},
-      $argument: ''
+      $argument: '',
+      setTimeout: () => {},
+      setInterval: () => {}
     }
   })
 

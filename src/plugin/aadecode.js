@@ -1,11 +1,9 @@
 const { VM } = require('vm2')
 
-// 判断 AAEncode 混淆
 function isAAEncode(code) {
   return /ﾟωﾟﾉ\s*=/.test(code) && /(ﾟДﾟ|ﾟΘﾟ)/.test(code)
 }
 
-// 模拟浏览器环境执行，捕获结果
 function safeSimulateBrowser(code) {
   let result = ''
 
@@ -21,7 +19,9 @@ function safeSimulateBrowser(code) {
         log: (str) => { result += str },
         warn: () => {},
         error: () => {}
-      }
+      },
+      $response: { body: '{}' }, // 防止报错
+      $done: () => {} // 防止报错
     }
   })
 

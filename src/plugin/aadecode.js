@@ -20,8 +20,13 @@ function safeSimulateBrowser(code) {
         warn: () => {},
         error: () => {}
       },
-      $response: { body: '{}' }, // 防止报错
-      $done: () => {} // 防止报错
+      $response: { body: '{}' },
+      $request: { url: '', method: 'GET', headers: {} },
+      $done: () => {},
+      $notify: () => {},
+      $argument: '',
+      setTimeout: () => {},
+      setInterval: () => {}
     }
   })
 

@@ -1,92 +1,76 @@
 /**
- * AAEncode 自动递归解码插件 - Node.js 专业版
- * 自动解 N 层，直到明文
+ * AAEncode 解码插件（模拟浏览器执行环境）
+ * 支持 document.write / console.log / atob 等
+ * 专为仅一层 AAEncode 脚本适配
  */
 
 const { VM } = require('vm2')
 
+// 判断是否 AAEncode
 function isAAEncode(code) {
   return /ﾟωﾟﾉ\s*=/.test(code) && /(ﾟДﾟ|ﾟΘﾟ)/.test(code)
 }
 
-function extractFinalString(code) {
-  const patterns = [
-    /\(ﾟДﾟ\)\s*\[\s*['_']\s*\]\s*\(\s*['"]([\s\S]+?)['"]\s*\)/,
-    /\(['"]([^'"]+)['"]\)\s*;?\s*$/,
-    /return\s+['"]([^'"]+)['"]\s*;/,
-    /document\.write\s*\(\s*['"]([\s\S]+?)['"]\s*\)/
-  ]
-  for (const pattern of patterns) {
-    const match = code.match(pattern)
-    if (match && match[1]) return match[1]
-  }
-  return null
+// 提取封装脚本体
+function extractCodeBlock(code) {
+  const match = code.match(/\(ﾟДﾟ\)\s*\[\s*['_']\s*\]\s*\(\s*['"]([\s\S]+?)['"]\s*\)/)
+  return match ? match[1] : null
 }
 
-function safeExec(code) {
+// 构造带浏览器兼容环境的沙盒执行器
+function safeSimulateBrowser(code) {
+  let result = ''
+
   const vm = new VM({
     timeout: 3000,
-    sandbox: {}
+    sandbox: {
+      window: {},
+      document: {
+        write: (str) => { result += str }
+      },
+      atob: (str) => Buffer.from(str, 'base64').toString('binary'),
+      console: {
+        log: (str) => { result += str },
+        warn: () => {},
+        error: () => {}
+      }
+    }
   })
+
   try {
-    return vm.run(code)
+    vm.run(code)
   } catch (e) {
     console.warn('[AAEncode] 沙盒执行失败:', e.message)
-    return null
   }
+
+  return result
 }
 
-function unpack(code) {
-  const str = extractFinalString(code)
-  if (str) return str
-
-  let result = ''
-  const fakeEval = (inner) => { result = inner; return inner }
-
-  let modifiedCode = code.replace(/eval\s*\(/g, 'fakeEval(')
-                         .replace(/\(ﾟДﾟ\)\s*\[\s*['_']\s*\]\s*\(/g, 'fakeEval(')
-
-  safeExec(`const fakeEval=${fakeEval.toString()}; ${modifiedCode}`)
-
-  return result || code
-}
-
-function recursiveUnpack(code, depth = 0) {
-  if (depth > 10) return code
-
-  console.log(`[AAEncode] 正在进行第 ${depth + 1} 层解码...`)
-
-  const res = unpack(code)
-
-  if (res && res !== code) {
-    if (/eval\(function/.test(res)) {
-      console.log('[AAEncode] 检测到 eval(function...) 自动递归解码下一层')
-      return recursiveUnpack(res, depth + 1)
-    }
-    if (isAAEncode(res)) {
-      console.log('[AAEncode] 检测到 AAEncode 混淆，继续解码')
-      return recursiveUnpack(res, depth + 1)
-    }
-    return res
-  }
-  return code
-}
-
+// 主处理函数
 function decodeAAencode(code) {
   if (!code || typeof code !== 'string' || !isAAEncode(code)) {
     return code
   }
 
   console.log('[AAEncode] 检测到 AAEncode 混淆，开始解码...')
-  const result = recursiveUnpack(code)
 
-  if (!result || result.trim() === '') {
-    console.log('[AAEncode] 解码结果为空，自动 fallback 返回原始代码')
+  const extracted = extractCodeBlock(code)
+
+  if (!extracted) {
+    console.warn('[AAEncode] 无法提取混淆主体，返回原始代码')
     return code
   }
 
-  console.log('[AAEncode] 成功提取最终明文，结束')
-  return result
+  // 直接执行解码内容
+  const decoded = safeSimulateBrowser(extracted)
+
+  if (!decoded || decoded.trim() === '') {
+    console.warn('[AAEncode] 执行后结果为空，可能为动态构造内容，返回原始代码')
+    return code
+  }
+
+  console.log('[AAEncode] 解码成功，输出解密内容')
+  return decoded
 }
 
 module.exports = decodeAAencode

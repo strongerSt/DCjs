@@ -6,9 +6,6 @@ const PluginSojsonV7 = require('./plugin/sojsonv7.js')
 const PluginObfuscator = require('./plugin/obfuscator.js')
 const PluginAwsc = require('./plugin/awsc.js')
 const PluginPart2AI = require('./plugin/part2ai.js')
-const PluginJsfuck = require('./plugin/jsfuck.js')
-const PluginAAEncode = require('./plugin/aaencode.js')
-const PluginJsconfuser = require('./plugin/jsconfuser.js')
 
 // 读取参数
 let encodeFile = 'input.js'
@@ -33,15 +30,12 @@ let pluginUsed = '';
 // 循环尝试不同的插件，直到源代码与处理后的代码不一致
 const plugins = [
   { name: 'part2ai', plugin: PluginPart2AI },
-  { name: 'jsfuck', plugin: PluginJsfuck },
   { name: 'obfuscator', plugin: PluginObfuscator },
   { name: 'sojsonv7', plugin: PluginSojsonV7 },
   { name: 'sojson', plugin: PluginSojson },
 
-  { name: 'jsconfuser', plugin: PluginJsconfuser },
   { name: 'awsc', plugin: PluginAwsc },
   { name: 'jjencode', plugin: PluginJjencode },
-  { name: 'aaencode', plugin: PluginAAEncode },
     { name: 'common', plugin: PluginCommon },// 最后一次使用通用插件
 ];
 

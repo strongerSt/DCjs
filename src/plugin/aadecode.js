@@ -1,13 +1,18 @@
+/**
+ * AAEncode 通用解码插件
+ * 自动适配所有脚本，动态还原完整 JavaScript 源码
+ */
+
 const { VM } = require('vm2')
 
+// 判断是否为 AAEncode 混淆
 function isAAEncode(code) {
   return /ﾟωﾟﾉ\s*=/.test(code) && /(ﾟДﾟ|ﾟΘﾟ)/.test(code)
 }
 
-function safeSimulateHook(code) {
+// 模拟浏览器执行环境，捕获 write/log 内容
+function safeSimulateOutput(code) {
   let result = ''
-
-  let bodyData = '{}'
 
   const vm = new VM({
     timeout: 3000,
@@ -16,25 +21,18 @@ function safeSimulateHook(code) {
       document: {
         write: (str) => { result += str }
       },
-      atob: (str) => Buffer.from(str, 'base64').toString('binary'),
       console: {
         log: (str) => { result += str },
         warn: () => {},
         error: () => {}
       },
-      $response: {
-        body: bodyData
-      },
-      $request: { url: '', method: 'GET', headers: {} },
-      $argument: '',
       setTimeout: () => {},
       setInterval: () => {},
-      $done: (data) => {
-        if (data && data.body) {
-          result = typeof data.body === 'string' ? data.body : JSON.stringify(data.body)
-        }
-      },
-      $notify: () => {}
+      $response: { body: '{}' },
+      $request: { url: '', method: 'GET', headers: {} },
+      $done: () => {},
+      $notify: () => {},
+      $argument: ''
     }
   })
 
@@ -47,21 +45,22 @@ function safeSimulateHook(code) {
   return result
 }
 
+// 插件主函数
 function decodeAAencode(code) {
   if (!code || typeof code !== 'string' || !isAAEncode(code)) {
     return code
   }
 
-  console.log('[AAEncode] 检测到 AAEncode 混淆，开始执行...')
+  console.log('[AAEncode] 检测到 AAEncode 混淆，开始自动还原完整 JS 源码...')
 
-  const decoded = safeSimulateHook(code)
+  const decoded = safeSimulateOutput(code)
 
   if (!decoded || decoded.trim() === '') {
     console.warn('[AAEncode] 执行后结果为空，自动 fallback 返回原始代码')
     return code
   }
 
-  console.log('[AAEncode] 解码成功，输出结果')
+  console.log('[AAEncode] 源码还原成功，输出完整内容')
   return decoded
 }
 

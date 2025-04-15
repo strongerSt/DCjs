@@ -6,6 +6,7 @@ const PluginSojsonV7 = require('./plugin/sojsonv7.js')
 const PluginObfuscator = require('./plugin/obfuscator.js')
 const PluginAwsc = require('./plugin/awsc.js')
 const PluginPart2AI = require('./plugin/part2ai.js')
+const PluginAADecode = require('./plugin/aadecode.js') // 新增的AADecode插件
 
 // 读取参数
 let encodeFile = 'input.js'
@@ -29,14 +30,14 @@ let pluginUsed = '';
 
 // 循环尝试不同的插件，直到源代码与处理后的代码不一致
 const plugins = [
+  { name: 'aadecode', plugin: PluginAADecode }, // 添加AADecode插件在前面的位置
   { name: 'part2ai', plugin: PluginPart2AI },
   { name: 'obfuscator', plugin: PluginObfuscator },
   { name: 'sojsonv7', plugin: PluginSojsonV7 },
   { name: 'sojson', plugin: PluginSojson },
-
   { name: 'awsc', plugin: PluginAwsc },
   { name: 'jjencode', plugin: PluginJjencode },
-    { name: 'common', plugin: PluginCommon },// 最后一次使用通用插件
+  { name: 'common', plugin: PluginCommon },// 最后一次使用通用插件
 ];
 
 for (let plugin of plugins) {
@@ -45,7 +46,7 @@ for (let plugin of plugins) {
   }
   try {
     const code = plugin.plugin(sourceCode);
-    if (code && code !== processedCode) {
+    if (code && code !== sourceCode) {
       processedCode = code;
       pluginUsed = plugin.name;
       break;

@@ -1,10 +1,17 @@
 /**
- * 严格模式兼容的 AAEncode 解码器
- * 避免使用 with 语句，符合严格模式要求
+ * AADecode 解码插件
+ * 用于解码 AAEncode 混淆的 JavaScript 代码
  */
 
-// 判断是否为 Node.js 环境
-const isNode = typeof module !== 'undefined' && module.exports;
+/**
+ * 检测代码是否为 AAEncode 混淆
+ * @param {string} code - 要检查的代码
+ * @returns {boolean} - 是否为 AAEncode 混淆
+ */
+function isAAEncode(code) {
+    return /ﾟωﾟﾉ\s*=/.test(code) && 
+           (/\(ﾟДﾟ\)/.test(code) || /\(ﾟΘﾟ\)/.test(code));
+}
 
 /**
  * 解码 AAEncode 混淆的 JavaScript
@@ -34,16 +41,6 @@ function decodeAAencode(code) {
         console.error('[AAEncode] 处理时发生错误:', error);
         return code;
     }
-}
-
-/**
- * 检测代码是否为 AAEncode 混淆
- * @param {string} code - 要检查的代码
- * @returns {boolean} - 是否为 AAEncode 混淆
- */
-function isAAEncode(code) {
-    return /ﾟωﾟﾉ\s*=/.test(code) && 
-           (/\(ﾟДﾟ\)/.test(code) || /\(ﾟΘﾟ\)/.test(code));
 }
 
 /**
@@ -161,10 +158,5 @@ function recursiveUnpack(code, depth = 0) {
     return code;
 }
 
-// 导出模块
-if (isNode) {
-    module.exports = decodeAAencode;
-} else {
-    // ES模块导出
-    export default decodeAAencode;
-}
+// 导出插件函数
+module.exports = decodeAAencode;

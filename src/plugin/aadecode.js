@@ -1,23 +1,11 @@
-/**
- * AAEncode 解码插件（模拟浏览器执行环境）
- * 支持 document.write / console.log / atob 等
- * 专为仅一层 AAEncode 脚本适配
- */
-
 const { VM } = require('vm2')
 
-// 判断是否 AAEncode
+// 判断 AAEncode 混淆
 function isAAEncode(code) {
   return /ﾟωﾟﾉ\s*=/.test(code) && /(ﾟДﾟ|ﾟΘﾟ)/.test(code)
 }
 
-// 提取封装脚本体
-function extractCodeBlock(code) {
-  const match = code.match(/\(ﾟДﾟ\)\s*\[\s*['_']\s*\]\s*\(\s*['"]([\s\S]+?)['"]\s*\)/)
-  return match ? match[1] : null
-}
-
-// 构造带浏览器兼容环境的沙盒执行器
+// 模拟浏览器环境执行，捕获结果
 function safeSimulateBrowser(code) {
   let result = ''
 
@@ -46,30 +34,21 @@ function safeSimulateBrowser(code) {
   return result
 }
 
-// 主处理函数
 function decodeAAencode(code) {
   if (!code || typeof code !== 'string' || !isAAEncode(code)) {
     return code
   }
 
-  console.log('[AAEncode] 检测到 AAEncode 混淆，开始解码...')
+  console.log('[AAEncode] 检测到 AAEncode 混淆，开始执行...')
 
-  const extracted = extractCodeBlock(code)
-
-  if (!extracted) {
-    console.warn('[AAEncode] 无法提取混淆主体，返回原始代码')
-    return code
-  }
-
-  // 直接执行解码内容
-  const decoded = safeSimulateBrowser(extracted)
+  const decoded = safeSimulateBrowser(code)
 
   if (!decoded || decoded.trim() === '') {
-    console.warn('[AAEncode] 执行后结果为空，可能为动态构造内容，返回原始代码')
+    console.warn('[AAEncode] 执行后结果为空，自动 fallback 返回原始代码')
     return code
   }
 
-  console.log('[AAEncode] 解码成功，输出解密内容')
+  console.log('[AAEncode] 解码成功，输出结果')
   return decoded
 }
 

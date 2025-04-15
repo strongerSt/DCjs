@@ -1,8 +1,9 @@
 /**
- * AAEncode 解码插件 - 稳定兼容版
- * 逻辑优化：优先提取真实字符串，不执行代码
- * 最佳实践方案
+ * AAEncode 自动递归解码插件 - Node.js 专业版
+ * 自动解 N 层，直到明文
  */
+
+const { VM } = require('vm2')
 
 function isAAEncode(code) {
   return /ﾟωﾟﾉ\s*=/.test(code) && /(ﾟДﾟ|ﾟΘﾟ)/.test(code)
@@ -10,10 +11,10 @@ function isAAEncode(code) {
 
 function extractFinalString(code) {
   const patterns = [
-    /\(ﾟДﾟ\)\s*\[\s*['_']\s*\]\s*\(\s*['"]([\s\S]+?)['"]\s*\)/, // return "xxx"
-    /\(['"]([^'"]+)['"]\)\s*;?\s*$/,                             // 末尾字符串
-    /return\s+['"]([^'"]+)['"]\s*;/,                            // return 'xxx';
-    /document\.write\s*\(\s*['"]([\s\S]+?)['"]\s*\)/            // document.write('xxx')
+    /\(ﾟДﾟ\)\s*\[\s*['_']\s*\]\s*\(\s*['"]([\s\S]+?)['"]\s*\)/,
+    /\(['"]([^'"]+)['"]\)\s*;?\s*$/,
+    /return\s+['"]([^'"]+)['"]\s*;/,
+    /document\.write\s*\(\s*['"]([\s\S]+?)['"]\s*\)/
   ]
   for (const pattern of patterns) {
     const match = code.match(pattern)
@@ -22,21 +23,69 @@ function extractFinalString(code) {
   return null
 }
 
+function safeExec(code) {
+  const vm = new VM({
+    timeout: 3000,
+    sandbox: {}
+  })
+  try {
+    return vm.run(code)
+  } catch (e) {
+    console.warn('[AAEncode] 沙盒执行失败:', e.message)
+    return null
+  }
+}
+
+function unpack(code) {
+  const str = extractFinalString(code)
+  if (str) return str
+
+  let result = ''
+  const fakeEval = (inner) => { result = inner; return inner }
+
+  let modifiedCode = code.replace(/eval\s*\(/g, 'fakeEval(')
+                         .replace(/\(ﾟДﾟ\)\s*\[\s*['_']\s*\]\s*\(/g, 'fakeEval(')
+
+  safeExec(`const fakeEval=${fakeEval.toString()}; ${modifiedCode}`)
+
+  return result || code
+}
+
+function recursiveUnpack(code, depth = 0) {
+  if (depth > 10) return code
+
+  console.log(`[AAEncode] 正在进行第 ${depth + 1} 层解码...`)
+
+  const res = unpack(code)
+
+  if (res && res !== code) {
+    if (/eval\(function/.test(res)) {
+      console.log('[AAEncode] 检测到 eval(function...) 自动递归解码下一层')
+      return recursiveUnpack(res, depth + 1)
+    }
+    if (isAAEncode(res)) {
+      console.log('[AAEncode] 检测到 AAEncode 混淆，继续解码')
+      return recursiveUnpack(res, depth + 1)
+    }
+    return res
+  }
+  return code
+}
+
 function decodeAAencode(code) {
   if (!code || typeof code !== 'string' || !isAAEncode(code)) {
     return code
   }
 
   console.log('[AAEncode] 检测到 AAEncode 混淆，开始解码...')
-
-  const result = extractFinalString(code)
+  const result = recursiveUnpack(code)
 
   if (!result || result.trim() === '') {
-    console.log('[AAEncode] 无法提取字符串，自动 fallback 返回原始代码')
+    console.log('[AAEncode] 解码结果为空，自动 fallback 返回原始代码')
     return code
   }
 
-  console.log('[AAEncode] 提取字符串成功，返回结果')
+  console.log('[AAEncode] 成功提取最终明文，结束')
   return result
 }
 

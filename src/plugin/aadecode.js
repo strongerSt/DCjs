@@ -1,156 +1,11 @@
 /**
- * AADecode - 解码日式表情符号加密的JavaScript代码
- * 基于jamtg的aadecode实现，针对解码器项目进行了优化
+ * AADecode插件 - 用于解码日式表情符号加密的JavaScript
+ * 基于jamtg的aadecode实现
  */
 
-// 主解码函数
-function aadecode(text) {
-  var evalPreamble = "var _ = String.fromCharCode; var __ = 'AAAAA'; ";
-  var decodePreamble = "( ﾟДﾟ) ['_'] ( ﾟДﾟ) ['_'] (ﾟΘﾟ) ";
-  var decodeChars = {
-    "(c^_^o)": "0",
-    "(ﾟΘﾟ)": "1",
-    "((o^_^o) - (ﾟΘﾟ))": "1",
-    "(o^_^o)": "2",
-    "((ﾟｰﾟ) + (ﾟΘﾟ))": "3",
-    "((o^_^o) + (o^_^o))": "4",
-    "((ﾟｰﾟ) + (o^_^o))": "5",
-    "((ﾟｰﾟ) + (ﾟｰﾟ))": "6",
-    "((ﾟｰﾟ) + (ﾟｰﾟ) + (ﾟΘﾟ))": "7",
-    "((ﾟｰﾟ) + (ﾟｰﾟ) + (o^_^o))": "8",
-    "((ﾟｰﾟ) + (ﾟｰﾟ) + (ﾟｰﾟ))": "9"
-  };
-
-  try {
-    // 如果不是AAEncode格式，直接返回原文本
-    if (!isAAEncoded(text)) {
-      return null;
-    }
-
-    // 移除空格和注释
-    text = text.replace(/\/\*.*?\*\//g, "").trim();
-
-    // 检查是否有典型的AAEncode头部
-    if (!/ﾟωﾟﾉ/.test(text) && !/(ﾟДﾟ)\s*\[\s*'\s*_\s*'\s*\]/.test(text)) {
-      return tryAlternativeDecoding(text);
-    }
-
-    // 从AAEncode格式中提取有效内容
-    const extractCodeBody = () => {
-      // 寻找自执行函数
-      const execMatch = text.match(/\(([^]*)\)\(\);?$/);
-      if (execMatch) {
-        return execMatch[1];
-      }
-
-      // 寻找代码体
-      const bodyMatch = text.match(/ﾟωﾟﾉ\s*=\s*\/(.+?)\/(.+?)(?:\(|$)/);
-      if (bodyMatch) {
-        return bodyMatch[2];
-      }
-
-      // 如果上述方法都失败，尝试提取括号中的内容
-      const parenMatch = text.match(/\(([^()]+(?:\([^()]*\)[^()]*)*)\)/);
-      if (parenMatch) {
-        return parenMatch[1];
-      }
-
-      return text;
-    };
-
-    // 提取代码体
-    const codeBody = extractCodeBody();
-
-    // 准备执行环境
-    const sandbox = `
-      // AAEncode 执行环境
-      var ﾟωﾟ, _ﾟωﾟ, __ﾟωﾟ, ___ﾟωﾟ, ____ﾟωﾟ;
-      var ﾟΘﾟ, _ﾟΘﾟ, __ﾟΘﾟ, ___ﾟΘﾟ, ____ﾟΘﾟ;
-      var ﾟｰﾟ, _ﾟｰﾟ, __ﾟｰﾟ, ___ﾟｰﾟ, ____ﾟｰﾟ;
-      var ﾟДﾟ, _ﾟДﾟ, __ﾟДﾟ, ___ﾟДﾟ, ____ﾟДﾟ;
-      var o, c, _, oo, cc;
-      var ﾟεﾟ, oﾟｰﾟo, ﾟωﾟﾉ = {};
-      var ﾟㅣﾟ = '';
-      
-      // 捕获输出
-      var result = '';
-      var originalAlert = alert;
-      var originalDocument = document;
-      
-      // 重定向输出函数
-      window = {
-        document: {
-          write: function(str) {
-            result += str;
-          },
-          writeln: function(str) {
-            result += str + '\\n';
-          }
-        }
-      };
-      
-      document = window.document;
-      
-      // 重定向console.log和alert
-      console.log = function(str) {
-        result += str;
-      };
-      
-      alert = function(str) {
-        result += str;
-      };
-      
-      // 尝试执行AAEncode代码
-      try {
-        ${codeBody}
-        
-        // 捕获常见的输出变量
-        if (typeof c !== 'undefined') {
-          result = c + result;
-        }
-        
-        if (typeof oﾟｰﾟo !== 'undefined' && typeof oﾟｰﾟo === 'string') {
-          result = oﾟｰﾟo + result;
-        }
-        
-        if (typeof ﾟㅣﾟ !== 'undefined' && typeof ﾟㅣﾟ === 'string') {
-          result = ﾟㅣﾟ + result;
-        }
-      } catch (e) {
-        console.error("AADecode执行错误:", e);
-        result = "ERROR: " + e.message;
-      }
-      
-      // 还原环境
-      alert = originalAlert;
-      document = originalDocument;
-      
-      return result;
-    `;
-
-    try {
-      // 执行解码
-      const sandboxFn = new Function(sandbox);
-      const decodedResult = sandboxFn();
-      
-      if (decodedResult && decodedResult !== "ERROR: " && decodedResult.length > 0) {
-        return decodedResult;
-      }
-    } catch (e) {
-      console.error("AADecode沙箱执行错误:", e);
-    }
-
-    // 如果主要方法失败，尝试替代方法
-    return tryAlternativeDecoding(text);
-  } catch (e) {
-    console.error("AADecode总体错误:", e);
-    return null;
-  }
-}
-
 // 检查是否是AAEncode加密的代码
-function isAAEncoded(text) {
-  if (typeof text !== 'string') {
+function isAAEncoded(code) {
+  if (typeof code !== 'string') {
     return false;
   }
   
@@ -164,5 +19,125 @@ function isAAEncoded(text) {
     '(o^_^o)',
     '(ﾟДﾟ)[',
     'ヽ(',
-    'c="',
-    '(╯°□°）
+    'c="'
+  ];
+  
+  // 检查是否包含这些特殊模式中的至少两个
+  let matchCount = 0;
+  for (const pattern of patterns) {
+    if (code.includes(pattern)) {
+      matchCount++;
+    }
+    if (matchCount >= 2) {
+      return true;
+    }
+  }
+  
+  // 检查是否有大量的日文字符和特殊符号 (这是AAEncode的特点)
+  const japaneseAndSymbolsCount = (code.match(/[ﾟωДΘｰ々（）ヽ・]/g) || []).length;
+  const codeLength = code.length;
+  
+  // 如果日文字符和特殊符号比例超过5%，可能是AAEncode
+  return japaneseAndSymbolsCount > 0 && japaneseAndSymbolsCount / codeLength > 0.05;
+}
+
+// 主解码函数
+function AADecode(encryptedCode) {
+  try {
+    // 如果不是AAEncode格式，直接返回null
+    if (!isAAEncoded(encryptedCode)) {
+      return null;
+    }
+    
+    // 构建一个安全的执行环境
+    const sandbox = `
+      // 设置AAEncode环境变量
+      var ﾟωﾟ, _ﾟωﾟ, __ﾟωﾟ, ___ﾟωﾟ;
+      var ﾟΘﾟ, _ﾟΘﾟ, __ﾟΘﾟ, ___ﾟΘﾟ;
+      var ﾟｰﾟ, _ﾟｰﾟ, __ﾟｰﾟ, ___ﾟｰﾟ;
+      var ﾟДﾟ, _ﾟДﾟ, __ﾟДﾟ, ___ﾟДﾟ;
+      var o, c = '', oo, cc;
+      var ﾟεﾟ, oﾟｰﾟo, ﾟωﾟﾉ = {};
+      
+      // 模拟document
+      var document = { write: function(str) { c += str; } };
+      var window = { document: document };
+      
+      // 尝试执行
+      try {
+        ${encryptedCode}
+        // 尝试收集潜在的输出
+        if (typeof c !== 'undefined' && c.length > 0) return c;
+        if (typeof oﾟｰﾟo !== 'undefined' && typeof oﾟｰﾟo === 'string') return oﾟｰﾟo;
+        return null;
+      } catch(e) {
+        // 如果直接执行失败，尝试替代方法
+        try {
+          // 寻找可能的自执行函数
+          const execMatch = \`${encryptedCode}\`.match(/\\(([^\\(\\)]*(?:\\([^\\(\\)]*\\)[^\\(\\)]*)*?)\\)\\(\\)/);
+          if (execMatch && execMatch[1]) {
+            const result = new Function('return (' + execMatch[1] + ')();')();
+            if (result && typeof result === 'string') return result;
+          }
+          
+          // 尝试找到document.write语句
+          const writeMatch = \`${encryptedCode}\`.match(/document\\.write\\((['"])([^\\1]*?)\\1\\)/);
+          if (writeMatch && writeMatch[2]) {
+            return writeMatch[2];
+          }
+          
+          return null;
+        } catch(ex) {
+          return null;
+        }
+      }
+    `;
+    
+    try {
+      // 使用Function构造函数创建一个新的函数并执行
+      const sandboxFn = new Function(sandbox);
+      const result = sandboxFn();
+      
+      if (result && typeof result === 'string' && result.length > 0) {
+        // 检查结果是否是有效的JavaScript
+        try {
+          new Function(result);
+          return result;
+        } catch (e) {
+          // 如果不是有效的JavaScript，但确实解码出了内容，仍然返回结果
+          if (result.length > 50) {
+            return result;
+          }
+        }
+      }
+    } catch (e) {
+      // 如果沙箱执行失败，尝试基础方法提取字符串
+      const stringMatch = encryptedCode.match(/c\\s*=\\s*["']([^"']+)["']/);
+      if (stringMatch && stringMatch[1]) {
+        return stringMatch[1].replace(/\\\\(['"])/g, '$1');
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+// 模块导出
+module.exports = function(sourceCode) {
+  if (typeof sourceCode !== 'string') {
+    return null;
+  }
+  
+  // 尝试解码
+  if (isAAEncoded(sourceCode)) {
+    const decodedCode = AADecode(sourceCode);
+    if (decodedCode && typeof decodedCode === 'string' && decodedCode !== sourceCode) {
+      return decodedCode;
+    }
+  }
+  
+  // 如果不是AAEncode或解码失败，返回null
+  return null;
+};

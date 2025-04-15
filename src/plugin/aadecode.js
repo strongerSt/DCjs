@@ -1,6 +1,6 @@
 /**
- * 纯粹的 AAEncode 解码器
- * 专门用于解码日语颜文字(Kaomoji)混淆的 JavaScript
+ * 严格模式兼容的 AAEncode 解码器
+ * 避免使用 with 语句，符合严格模式要求
  */
 
 // 判断是否为 Node.js 环境
@@ -52,6 +52,13 @@ function isAAEncode(code) {
  * @returns {string|null} - 解包后的代码或 null
  */
 function unpack(packedCode) {
+    // 首先尝试提取字符串方法
+    const extractedString = extractFinalString(packedCode);
+    if (extractedString) {
+        return extractedString;
+    }
+    
+    // 如果提取失败，尝试模拟执行方法
     let unpacked = '';
     
     // 创建一个假的 eval 函数捕获结果
@@ -61,33 +68,34 @@ function unpack(packedCode) {
     };
     
     // 替换最终的执行函数
-    const modifiedCode = packedCode.replace(/eval\s*\(/, 'fakeEval(');
+    // AAEncode 通常使用 (ﾟДﾟ)['_'] 或类似的方式来执行代码
+    let modifiedCode = packedCode;
+    
+    // 替换 eval 调用
+    modifiedCode = modifiedCode.replace(/eval\s*\(/, 'fakeEval(');
+    
+    // 替换 (ﾟДﾟ)['_'] 调用
+    modifiedCode = modifiedCode.replace(
+        /\(ﾟДﾟ\)\s*\[\s*['"]?_['"]?\s*\]\s*\(/g, 
+        'fakeEval('
+    );
     
     try {
-        // 创建执行上下文
-        const context = {
-            fakeEval: fakeEval,
-            String: String,
-            RegExp: RegExp
-        };
+        // 创建一个Function来执行代码，避免使用with和直接eval
+        const safeExec = new Function('fakeEval', 'String', 'RegExp', modifiedCode);
         
-        // 使用 with 语句执行修改后的代码
-        with(context) {
-            eval(modifiedCode);
-        }
+        // 执行修改后的代码
+        safeExec(fakeEval, String, RegExp);
         
         // 如果成功解包，返回结果
         if (unpacked) {
             return unpacked;
         }
         
-        // 尝试直接提取字符串
-        return extractFinalString(packedCode);
+        return null;
     } catch(e) {
-        console.log('[AAEncode] 解包错误:', e);
-        
-        // 解包失败时尝试提取字符串
-        return extractFinalString(packedCode);
+        console.log('[AAEncode] 执行解包错误:', e);
+        return null;
     }
 }
 

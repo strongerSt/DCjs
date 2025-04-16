@@ -118,18 +118,24 @@
   
   // ====== 结束: 原始jsjiami-v6-decoder.js代码 ======
   
-  // 将插件注册到全局解密插件库
-  window.DecodePlugins = window.DecodePlugins || {};
-  window.DecodePlugins.jsjiami_v6 = {
+  // 将插件注册到全局解密插件库（适配DCjs工具格式）
+  if (typeof window.plugins === 'undefined') {
+    window.plugins = {};
+  }
+  
+  // 注册到DCjs插件系统
+  window.plugins["sojson"] = {
+    name: "sojson", // 使用sojson名称以匹配工具期望的插件名
+    desc: "JSJiami/Sojson v6解密工具",
+    // 检测函数
     detect: function(code) {
-      // 检测是否是JSJiami v6加密的代码
       return code.includes('function _0x') && code.includes('var _0x') && code.includes('_0x.push(_0x.shift())');
     },
-    plugin: function(code) {
-      // 使用原始模块的功能
-      return module.exports.plugin(code);
+    // 解密函数
+    run: function(code) {
+      return module.exports.plugin(code) || code;
     }
   };
   
-  console.log("JSJiami v6 解密插件已加载");
+  console.log("JSJiami/Sojson v6 解密插件已加载");
 })();

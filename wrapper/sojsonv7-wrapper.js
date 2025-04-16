@@ -1,5 +1,5 @@
 /**
- * JSJiami v7解密工具包装器 - 专门用于解密JSJiami v7版本混淆的代码
+ * JSJiami v7解密包装器 - 将JSJiami v7解密工具转换为浏览器可用版本
  */
 // 创建自执行函数来隔离作用域
 (function() {
@@ -7,8 +7,8 @@
   const module = { exports: {} };
   const exports = module.exports;
   
-  // 以下粘贴原始jsjiami-v7-decoder.js插件代码
-  // ====== 开始: 原始jsjiami-v7-decoder.js代码 ======
+  // 以下粘贴原始插件代码
+  // ====== 开始: 原始插件代码 ======
   
   function plugin(code) {
     try {
@@ -186,13 +186,13 @@
     return plugin(code);
   };
   
-  // ====== 结束: 原始jsjiami-v7-decoder.js代码 ======
+  // ====== 结束: 原始插件代码 ======
   
   // 将插件注册到全局解密插件库
   window.DecodePlugins = window.DecodePlugins || {};
   window.DecodePlugins.jsjiamiV7 = {
     detect: function(code) {
-      // 使用isJSJiamiV7函数检测
+      // 检测代码是否是这种混淆
       return isJSJiamiV7(code);
     },
     plugin: function(code) {

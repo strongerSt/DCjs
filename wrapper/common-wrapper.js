@@ -1,141 +1,63 @@
-/**
- * 代码优化工具包装器 - 将基于Babel的代码优化工具转换为浏览器可用版本
- */
-// 创建自执行函数来隔离作用域
-(function() {
-  // 模拟Node.js环境
-  const module = { exports: {} };
-  const exports = module.exports;
-  
-  // 以下粘贴原始code-optimizer.js插件代码
-  // ====== 开始: 原始code-optimizer.js代码 ======
-  
-  function plugin(code) {
-    let ast;
-    try {
-      ast = window.Babel.parse(code, { errorRecovery: true });
-    } catch (e) {
-      console.error(`Cannot parse code: ${e.reasonCode}`);
-      return null;
-    }
-    
-    // 删除不可达代码
-    window.Babel.traverse(ast, deleteUnreachableCode);
-    // 删除嵌套的块语句
-    window.Babel.traverse(ast, deleteNestedBlocks);
-    // 计算常量表达式
-    window.Babel.traverse(ast, calculateConstantExp);
-    // 计算字符串连接
-    window.Babel.traverse(ast, calculateRString);
-    
-    // 生成优化后的代码
-    code = window.Babel.generator(ast).code;
-    return code;
-  }
-  
-  // 删除不可达代码的访问器
-  const deleteUnreachableCode = {
-    IfStatement(path) {
-      const { consequent, alternate, test } = path.node;
-      
-      if (test.type === 'BooleanLiteral') {
-        if (test.value === true) {
-          path.replaceWith(consequent);
-        } else if (alternate) {
-          path.replaceWith(alternate);
-        } else {
-          path.remove();
-        }
-      }
-    },
-    ConditionalExpression(path) {
-      const { consequent, alternate, test } = path.node;
-      
-      if (test.type === 'BooleanLiteral') {
-        if (test.value === true) {
-          path.replaceWith(consequent);
-        } else {
-          path.replaceWith(alternate);
-        }
-      }
-    }
-  };
-  
-  // 删除嵌套块的访问器
-  const deleteNestedBlocks = {
-    BlockStatement(path) {
-      const { body } = path.node;
-      
-      if (path.parent.type === 'BlockStatement') {
-        path.replaceWithMultiple(body);
-      }
-    }
-  };
-  
-  // 计算常量表达式的访问器
-  const calculateConstantExp = {
-    BinaryExpression(path) {
-      const { left, right, operator } = path.node;
-      
-      // 只处理数字和字符串的常量表达式
-      if (left.type === 'NumericLiteral' && right.type === 'NumericLiteral') {
-        let result;
-        switch (operator) {
-          case '+': result = left.value + right.value; break;
-          case '-': result = left.value - right.value; break;
-          case '*': result = left.value * right.value; break;
-          case '/': result = left.value / right.value; break;
-          case '%': result = left.value % right.value; break;
-          case '**': result = Math.pow(left.value, right.value); break;
-          default: return;
-        }
-        path.replaceWith(window.Babel.types.numericLiteral(result));
-      }
-    }
-  };
-  
-  // 计算字符串连接的访问器
-  const calculateRString = {
-    BinaryExpression(path) {
-      const { left, right, operator } = path.node;
-      
-      // 处理字符串连接
-      if (operator === '+' && 
-          (left.type === 'StringLiteral' || right.type === 'StringLiteral')) {
-        
-        if (left.type === 'StringLiteral' && right.type === 'StringLiteral') {
-          const result = left.value + right.value;
-          path.replaceWith(window.Babel.types.stringLiteral(result));
-        }
-      }
-    }
-  };
-  
-  // 导出插件接口
-  exports.plugin = function(code) {
-    return plugin(code);
-  };
-  
-  // ====== 结束: 原始code-optimizer.js代码 ======
-  
-  // 将插件注册到全局解密插件库
-  window.DecodePlugins = window.DecodePlugins || {};
-  window.DecodePlugins.codeOptimizer = {
+// Common通用解密插件 - 作为最后的备选方案
+console.log("Common解密插件加载中...");
+
+if(!window.DecodePlugins) {
+    window.DecodePlugins = {};
+}
+
+window.DecodePlugins.common = {
     detect: function(code) {
-      // 检测可能需要优化的代码特征
-      return code.includes('if (true)') || 
-             code.includes('if(true)') || 
-             code.includes('false?') ||
-             code.includes('{}{}') || 
-             code.includes('{{') ||
-             code.includes('1 + 2') ||
-             code.includes('"a" + "b"');
+        // 通用插件总是返回true，因为它是最后的备选方案
+        return true;
     },
+    
     plugin: function(code) {
-      // 使用原始模块的功能
-      return module.exports.plugin(code);
-    }
-  };
-  
-  console.log("代码优化插件已加载");
-})();
+        try {
+            console.log("开始通用代码处理");
+            
+            // 如果代码长度太短，直接返回
+            if (!code || code.length < 50) {
+                return code;
+            }
+            
+            // 1. 处理基本编码和转义
+            code = this.decodeBasicEncodings(code);
+            
+            // 2. 移除死代码和无用注释
+            code = this.removeDeadCode(code);
+            
+            // 3. 尝试简化常见的混淆模式
+            code = this.simplifyCommonPatterns(code);
+            
+            console.log("通用代码处理完成");
+            return code;
+        } catch (e) {
+            console.error("通用解密错误:", e);
+            return code; // 出错时返回原始代码
+        }
+    },
+    
+    // 解码基本编码和转义序列
+    decodeBasicEncodings: function(code) {
+        var result = code;
+        
+        // 解码十六进制字符串
+        result = result.replace(/\\x([0-9A-Fa-f]{2})/g, function(match, p1) {
+            try {
+                return String.fromCharCode(parseInt(p1, 16));
+            } catch (e) {
+                return match;
+            }
+        });
+        
+        // 解码Unicode转义序列
+        result = result.replace(/\\u([0-9a-fA-F]{4})/g, function(match, grp) {
+            try {
+                return String.fromCharCode(parseInt(grp, 16));
+            } catch (e) {
+                return match;
+            }
+        });
+        
+        // 处理八进制转义
+        result = result.replace(/\\([0-7]{1

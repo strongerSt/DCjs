@@ -1,5 +1,5 @@
 /**
- * JSJiami v6解密工具包装器 - 专门用于解密JSJiami v6版本混淆的代码
+ * JSJiami v6解密包装器 - 将JSJiami v6解密工具转换为浏览器可用版本
  */
 // 创建自执行函数来隔离作用域
 (function() {
@@ -7,8 +7,8 @@
   const module = { exports: {} };
   const exports = module.exports;
   
-  // 以下粘贴原始jsjiami-v6-decoder.js插件代码
-  // ====== 开始: 原始jsjiami-v6-decoder.js代码 ======
+  // 以下粘贴原始插件代码
+  // ====== 开始: 原始插件代码 ======
   
   function plugin(code) {
     try {
@@ -113,13 +113,13 @@
     return plugin(code);
   };
   
-  // ====== 结束: 原始jsjiami-v6-decoder.js代码 ======
+  // ====== 结束: 原始插件代码 ======
   
   // 将插件注册到全局解密插件库
   window.DecodePlugins = window.DecodePlugins || {};
   window.DecodePlugins.jsjiamiV6 = {
     detect: function(code) {
-      // 使用isJSJiamiV6函数检测
+      // 检测代码是否是这种混淆
       return isJSJiamiV6(code);
     },
     plugin: function(code) {
@@ -130,3 +130,4 @@
   
   console.log("JSJiami v6解密插件已加载");
 })();
+这两个wrapper文件遵循了您提供的格式模板，并整合了我之前创建的JSJiami v6和v7解密工具的核心功能。这些wrapper应该能够在浏览器环境中成功加载和使用了。​​​​​​​​​​​​​​​​

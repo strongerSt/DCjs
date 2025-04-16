@@ -1,15 +1,13 @@
 /**
  * Eval解包工具包装器 - 将Node.js的Eval解包模块转换为浏览器可用版本
  */
+
 // 创建自执行函数来隔离作用域
 (function() {
   // 模拟Node.js环境
   const module = { exports: {} };
-  const exports = module.exports;
   
-  // 以下粘贴原始unpack-eval.js插件代码
   // ====== 开始: 原始unpack-eval.js代码 ======
-  
   /**
    * 替换代码中的 eval 函数调用，捕获其参数
    * @param {string} code - 包含 eval 调用的代码
@@ -19,7 +17,7 @@
     // 捕获 eval 的参数并返回它，而不是执行它
     return code.replace(/eval\s*\(/g, '(function(x) { return x; })(');
   }
-  
+
   /**
    * 创建模拟的浏览器环境
    * @returns {Object} - 模拟的浏览器对象
@@ -41,7 +39,7 @@
       $response: {}, $request: {}, $done: () => {}, $notify: () => {}
     };
   }
-  
+
   /**
    * 解包 eval 加密的代码
    * @param {string} code - 要解包的代码
@@ -63,7 +61,7 @@
       // 使用 Function 构造函数创建一个函数并执行
       // 传入所有必要的全局变量
       const funcParams = ['window', 'document', 'navigator', 'location', 
-                          '$response', '$request', '$notify', '$done'];
+                        '$response', '$request', '$notify', '$done'];
       const funcArgs = [
         mockEnv.window, mockEnv.document, mockEnv.navigator, mockEnv.location,
         mockEnv.$response, mockEnv.$request, mockEnv.$notify, mockEnv.$done
@@ -91,11 +89,12 @@
       }
     }
   }
-  
+
   // 导出插件接口
-  exports.plugin = unpack;
-  exports.unpack = unpack;
-  
+  module.exports = {
+    plugin: unpack,
+    unpack: unpack
+  };
   // ====== 结束: 原始unpack-eval.js代码 ======
   
   // 将插件注册到全局解密插件库
@@ -106,12 +105,26 @@
       return code.includes('eval(') || code.includes('eval (');
     },
     plugin: function(code) {
-      // 使用原始模块的功能
-      return module.exports.plugin(code);
+      // 调用原始插件函数
+      try {
+        console.log("尝试解包Eval编码...");
+        const result = module.exports.plugin(code);
+        
+        // 如果解包失败，返回原始代码；否则返回解包后的结果
+        return result !== null ? result : code;
+      } catch (e) {
+        console.error("Eval解包插件错误:", e);
+        return code;
+      }
     },
     unpack: function(code) {
-      // 使用原始模块的unpack方法
-      return module.exports.unpack(code);
+      // 调用原始模块的unpack方法
+      try {
+        return module.exports.unpack(code);
+      } catch (e) {
+        console.error("Eval解包错误:", e);
+        return code;
+      }
     }
   };
   

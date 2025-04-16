@@ -1,5 +1,5 @@
 /**
- * JSJiami v6 解密工具包装器 - 将JSJiami v6解密工具转换为浏览器可用版本
+ * JSJiami v6解密工具包装器 - 专门用于解密JSJiami v6版本混淆的代码
  */
 // 创建自执行函数来隔离作用域
 (function() {
@@ -10,105 +10,102 @@
   // 以下粘贴原始jsjiami-v6-decoder.js插件代码
   // ====== 开始: 原始jsjiami-v6-decoder.js代码 ======
   
-  /**
-   * 解密由JSJiami v6加密的JavaScript代码
-   * @param {string} code - 要解密的代码
-   * @returns {string|null} - 解密后的代码或null（解密失败时）
-   */
   function plugin(code) {
     try {
-      // 检测是否是JSJiami v6加密
-      if (!code.includes('_0x') || !code.includes("function _0x")) {
+      // 检测是否为JSJiami v6编码
+      if (!isJSJiamiV6(code)) {
         return null;
       }
       
-      // 初始提取解密函数和数据
-      let hexArrays = {};
-      let shiftFunctions = {};
+      // 去除JSJiami特征标记
+      code = removeJSJiamiMarkers(code);
       
-      // 提取所有的十六进制数组定义
-      const hexArrayRegex = /var\s+(_0x[a-zA-Z0-9]+)\s*=\s*\[(['"].*?['"](?:\s*,\s*['"].*?['"])*)\];/g;
-      let match;
-      while ((match = hexArrayRegex.exec(code)) !== null) {
-        const arrayName = match[1];
-        const arrayContent = match[2];
-        try {
-          // 转换字符串数组为JavaScript数组
-          const arrayStr = `[${arrayContent}]`;
-          hexArrays[arrayName] = eval(arrayStr);
-        } catch (e) {
-          console.error("解析十六进制数组失败:", e);
-        }
-      }
+      // 提取并解析字符串数组
+      code = extractStringArrays(code);
       
-      // 查找并提取shift函数
-      const shiftFuncRegex = /function\s+(_0x[a-zA-Z0-9]+)\s*\(\s*(_0x[a-zA-Z0-9]+)(?:\s*,\s*(_0x[a-zA-Z0-9]+))?\s*\)\s*\{\s*(?:.*?\s*)?\1\.push\(\s*\1\.shift\(\)\s*\)/g;
-      while ((match = shiftFuncRegex.exec(code)) !== null) {
-        const funcName = match[1];
-        shiftFunctions[funcName] = true;
-      }
+      // 简化控制流程
+      code = simplifyControlFlow(code);
       
-      // 执行所有的shift函数操作
-      for (const funcName in shiftFunctions) {
-        if (hexArrays[funcName]) {
-          const array = hexArrays[funcName];
-          // 模拟数组的shift和push操作
-          for (let i = 0; i < array.length; i++) {
-            array.push(array.shift());
-          }
-        }
-      }
+      return code;
+    } catch (e) {
+      console.error("JSJiami v6解密错误:", e);
+      return null;
+    }
+  }
+  
+  // 检测是否为JSJiami v6编码
+  function isJSJiamiV6(code) {
+    // JSJiami v6的特征标记
+    return (code.includes('jsjiami.com.v6') || 
+           (code.includes('_0x') && !code.includes('jsjiami.com.v7'))) && 
+           (code.includes('var _0x') || code.includes('function _0x'));
+  }
+  
+  // 去除JSJiami的特征标记和注释
+  function removeJSJiamiMarkers(code) {
+    // 去除JSJiami的特征注释
+    code = code.replace(/\/\*\*[\s\S]*?jsjiami\.com\.v6[\s\S]*?\*\//g, "");
+    code = code.replace(/\/\/[\s\S]*?jsjiami\.com\.v6.*$/gm, "");
+    
+    // 去除最后的特征字符串
+    code = code.replace(/;[\s\r\n]*\/\*\s*_0x[a-f0-9]{4,8}\s*\*\/[\s\S]*$/i, ";");
+    
+    return code;
+  }
+  
+  // 提取并解析字符串数组
+  function extractStringArrays(code) {
+    // 查找v6版本常见的字符串数组定义模式
+    const arrayDefRegex = /var\s+(_0x[a-f0-9]{4,})\s*=\s*\[([^\]]*)\];/g;
+    let match;
+    
+    while ((match = arrayDefRegex.exec(code)) !== null) {
+      const arrayName = match[1];
+      const arrayContent = match[2];
       
-      // 替换所有对十六进制数组的引用
-      let decodedCode = code;
-      for (const arrayName in hexArrays) {
-        const array = hexArrays[arrayName];
-        const pattern = new RegExp(`${arrayName}\\[(\\d+)\\]`, 'g');
-        decodedCode = decodedCode.replace(pattern, (match, index) => {
+      // 尝试解析数组内容
+      try {
+        // 构造数组
+        const arrayStr = `[${arrayContent}]`;
+        const array = Function(`return ${arrayStr}`)();
+        
+        // 替换数组引用
+        const reference = new RegExp(arrayName + '\\[(\\d+)\\]', 'g');
+        code = code.replace(reference, (match, index) => {
           const idx = parseInt(index);
           if (idx >= 0 && idx < array.length) {
             return JSON.stringify(array[idx]);
           }
           return match;
         });
+      } catch (e) {
+        console.log(`无法解析数组: ${arrayName}`, e);
       }
-      
-      // 处理常见的解码函数
-      const decodeRegex = /function\s+(_0x[a-zA-Z0-9]+)\s*\(\s*(_0x[a-zA-Z0-9]+)(?:\s*,\s*[^)]+)?\s*\)\s*\{\s*(?:.*?\s*)?\2\s*=\s*\2\s*-\s*([0-9]+)\s*;/g;
-      while ((match = decodeRegex.exec(code)) !== null) {
-        const funcName = match[1];
-        const offset = parseInt(match[3]);
-        
-        const funcCallPattern = new RegExp(`${funcName}\\((['"])([^'"]+)\\1\\s*(?:,\\s*([^)]+))?\\)`, 'g');
-        decodedCode = decodedCode.replace(funcCallPattern, (match, quote, encoded, param) => {
-          try {
-            // 简单的字符偏移解码
-            let decoded = '';
-            for (let i = 0; i < encoded.length; i++) {
-              decoded += String.fromCharCode(encoded.charCodeAt(i) - offset);
-            }
-            return JSON.stringify(decoded);
-          } catch (e) {
-            return match;
-          }
-        });
-      }
-      
-      // 移除无用的数组声明和解码函数
-      decodedCode = decodedCode.replace(/var\s+_0x[a-zA-Z0-9]+\s*=\s*\[['"].*?['"](,\s*['"].*?['"])*\];/g, '');
-      decodedCode = decodedCode.replace(/function\s+_0x[a-zA-Z0-9]+\s*\([^)]*\)\s*\{[^}]*\1\.push\(\s*\1\.shift\(\)\s*\)[^}]*\}/g, '');
-      decodedCode = decodedCode.replace(/function\s+_0x[a-zA-Z0-9]+\s*\([^)]*\)\s*\{[^}]*\2\s*=\s*\2\s*-\s*([0-9]+)[^}]*\}/g, '');
-      
-      // 优化结果，移除多余的空行和注释
-      decodedCode = decodedCode.replace(/\/\/.*?(?:\r\n|\n|$)/g, '\n');
-      decodedCode = decodedCode.replace(/\/\*[\s\S]*?\*\//g, '');
-      decodedCode = decodedCode.replace(/\n\s*\n+/g, '\n\n');
-      
-      return decodedCode;
-    } catch (error) {
-      console.error("JSJiami v6 解密发生错误:", error);
-      return null;
     }
+    
+    return code;
+  }
+  
+  // 简化控制流程
+  function simplifyControlFlow(code) {
+    // v6版本常见的控制流混淆模式
+    
+    // 简化三元运算符
+    code = code.replace(/!!\[\]\s*\?\s*([^:]+)\s*:\s*([^;]+)/g, '$1');
+    
+    // 简化频繁使用的自增/自减操作
+    code = code.replace(/\(\+\+(_0x[a-f0-9]{4,})\s*,\s*(_0x[a-f0-9]{4,})\[\1\s*%\s*(_0x[a-f0-9]{4,})(?:\.length)?\]\)/g, 
+                       (match, counter, array, lengthVar) => {
+      return `${array}[++${counter} % ${lengthVar}]`;
+    });
+    
+    // 简化switch-case混淆
+    code = code.replace(/switch\s*\(\s*(_0x[a-f0-9]{4,})\s*=\s*(_0x[a-f0-9]{4,})(?:\[\d+\])?\s*\)/g,
+                       (match, switchVar, valueVar) => {
+      return `switch(${switchVar} = ${valueVar})`;
+    });
+    
+    return code;
   }
   
   // 导出插件接口
@@ -118,24 +115,18 @@
   
   // ====== 结束: 原始jsjiami-v6-decoder.js代码 ======
   
-  // 将插件注册到全局解密插件库（适配DCjs工具格式）
-  if (typeof window.plugins === 'undefined') {
-    window.plugins = {};
-  }
-  
-  // 注册到DCjs插件系统
-  window.plugins["sojson"] = {
-    name: "sojson", // 使用sojson名称以匹配工具期望的插件名
-    desc: "JSJiami/Sojson v6解密工具",
-    // 检测函数
+  // 将插件注册到全局解密插件库
+  window.DecodePlugins = window.DecodePlugins || {};
+  window.DecodePlugins.jsjiamiV6 = {
     detect: function(code) {
-      return code.includes('function _0x') && code.includes('var _0x') && code.includes('_0x.push(_0x.shift())');
+      // 使用isJSJiamiV6函数检测
+      return isJSJiamiV6(code);
     },
-    // 解密函数
-    run: function(code) {
-      return module.exports.plugin(code) || code;
+    plugin: function(code) {
+      // 使用原始模块的功能
+      return module.exports.plugin(code);
     }
   };
   
-  console.log("JSJiami/Sojson v6 解密插件已加载");
+  console.log("JSJiami v6解密插件已加载");
 })();

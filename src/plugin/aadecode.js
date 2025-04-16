@@ -32,7 +32,7 @@ function extractHeader(code) {
  * @param {string} code - 包含可能的头部注释和AA编码的完整代码
  * @returns {string|null} - 解码后的脚本（保留头部注释）或null（如果解码失败）
  */
-function aadecode(code) {
+function plugin(code) {
   try {
     // 提取头部注释和编码部分
     const { header, encodedPart } = extractHeader(code);
@@ -63,21 +63,5 @@ function aadecode(code) {
   }
 }
 
-/**
- * 插件主函数
- * @param {string} code - 要解码的代码
- * @returns {string|null} - 解码后的代码或null（解码失败时）
- */
-function pluginFunction(code) {
-  return aadecode(code);
-}
-
-// 添加插件属性到函数本身（满足main.js的调用模式）
-pluginFunction.plugin = function(code) {
-  return aadecode(code);
-};
-
-// CommonJS 模块导出
-module.exports = {
-  plugin: pluginFunction
-};
+// 直接导出plugin函数
+module.exports = plugin;

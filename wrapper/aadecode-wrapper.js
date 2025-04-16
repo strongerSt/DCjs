@@ -1,3 +1,4 @@
+
 /**
  * AADecode插件包装器 - 将Node.js的AADecode模块转换为浏览器可用版本
  */
@@ -6,41 +7,70 @@
 (function() {
   // 模拟Node.js环境
   const module = { exports: {} };
-  const exports = module.exports;
   
-  // 以下粘贴原始aadecode.js插件代码
   // ====== 开始: 原始aadecode.js代码 ======
-  // 您原始插件的代码将放在这里
-  
-  // 这只是一个假设的AADecode实现示例
-  function AADecode(code) {
-    // 解码逻辑
-    if (!code.includes('ﾟωﾟﾉ')) {
-      return null;
+  // AADecode Plugin (CommonJS版本) - 保留脚本头部注释信息
+
+  /**
+   * 识别并提取AADecode编码之前的注释和配置信息
+   * @param {string} code - 完整的代码字符串
+   * @returns {object} - 包含头部信息和编码部分的对象
+   */
+  function extractHeader(code) {
+    // 查找AADecode特征的起始位置
+    const aaStartIndex = code.search(/ﾟωﾟﾉ\s*=|ﾟдﾟ\s*=|ﾟДﾟ\s*=|ﾟΘﾟ\s*=/);
+    
+    if (aaStartIndex > 0) {
+      // 提取头部内容和AA编码部分
+      const header = code.substring(0, aaStartIndex).trim();
+      const encodedPart = code.substring(aaStartIndex);
+      
+      return {
+        header,
+        encodedPart
+      };
     }
     
-    // 简化版示例实现
-    return code.replace('ﾟωﾟﾉ', '/* 已解码 */');
+    // 如果没有找到AADecode特征，则返回完整代码作为编码部分
+    return {
+      header: '',
+      encodedPart: code
+    };
   }
-  
-  // 导出插件接口
-  exports.plugin = function(code) {
-    return AADecode(code);
-  };
-  
-  // ====== 结束: 原始aadecode.js代码 ======
-  
-  // 将插件注册到全局解密插件库
-  window.DecodePlugins = window.DecodePlugins || {};
-  window.DecodePlugins.aadecode = {
-    detect: function(code) {
-      return code.includes('ﾟωﾟﾉ') || code.includes('ﾟΘﾟ');
-    },
-    plugin: function(code) {
-      // 使用原始模块的功能
-      return module.exports.plugin(code);
+
+  /**
+   * 解码AA编码的JavaScript代码，同时保留原始脚本的头部注释
+   * @param {string} code - 包含可能的头部注释和AA编码的完整代码
+   * @returns {string|null} - 解码后的脚本（保留头部注释）或null（如果解码失败）
+   */
+  function plugin(code) {
+    try {
+      // 提取头部注释和编码部分
+      const { header, encodedPart } = extractHeader(code);
+      
+      // 检查是否为AA编码内容
+      if (!(encodedPart.includes('ﾟДﾟ') || encodedPart.includes('(ﾟΘﾟ)') || 
+            encodedPart.includes('ﾟωﾟﾉ') || encodedPart.includes('ﾟдﾟ'))) {
+        return null;
+      }
+      
+      // 应用AADecode解码逻辑
+      let decodePart = encodedPart;
+      decodePart = decodePart.replace(") ('_')", "");
+      decodePart = decodePart.replace("(ﾟДﾟ) ['_'] (", "return ");
+      
+      // 创建函数并执行解码
+      const x = new Function(decodePart);
+      const decodedContent = x();
+      
+      // 如果存在头部，则保留并拼接
+      if (header) {
+        return `${header}\n\n${decodedContent}`;
+      }
+      
+      return decodedContent;
+    } catch (error) {
+      console.error('AADecode解码错误:', error);
+      return null;
     }
-  };
-  
-  console.log("AADecode插件已加载");
-})();
+  }

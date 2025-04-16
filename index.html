@@ -811,3 +811,148 @@
                         addLogEntry(`文件解密错误: ${error.message}`, "错误");
                     }
                 };​​​​​​​​​​​​​​​​
+                
+            // 处理文件上传
+            function handleFileUpload() {
+                const file = fileInput.files[0];
+                if (!file) return;
+                
+                addLogEntry(`处理上传文件: ${file.name} (${formatBytes(file.size)})`);
+                
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const fileContent = e.target.result;
+                    const fileOutput = document.getElementById('file-output');
+                    const fileResultContainer = document.getElementById('file-result-container');
+                    const fileButtons = document.getElementById('file-buttons');
+                    
+                    try {
+                        const result = await autoDecrypt(fileContent);
+                        
+                        fileOutput.value = result.success ? result.code : (result.error || '解密失败');
+                        fileResultContainer.classList.remove('hidden');
+                        fileButtons.classList.remove('hidden');
+                    } catch (error) {
+                        fileOutput.value = `解密错误: ${error.message}`;
+                        fileResultContainer.classList.remove('hidden');
+                        fileButtons.classList.remove('hidden');
+                        addLogEntry(`文件解密错误: ${error.message}`, "错误");
+                    }
+                };
+                reader.readAsText(file);
+            }
+            
+            // 文件结果复制
+            document.getElementById('file-copy-btn').addEventListener('click', () => {
+                const outputText = document.getElementById('file-output').value;
+                if (outputText) {
+                    navigator.clipboard.writeText(outputText);
+                    addLogEntry("复制文件解密结果到剪贴板");
+                    alert('已复制到剪贴板');
+                }
+            });
+            
+            // 文件结果下载
+            document.getElementById('file-download-btn').addEventListener('click', () => {
+                const outputText = document.getElementById('file-output').value;
+                if (outputText) {
+                    const blob = new Blob([outputText], { type: 'text/javascript' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'decrypted_file.js';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    addLogEntry("下载文件解密结果");
+                }
+            });
+            
+            // URL输入处理
+            document.getElementById('url-fetch-btn').addEventListener('click', async () => {
+                const urlInput = document.getElementById('url-input').value;
+                const urlOutput = document.getElementById('url-output');
+                const urlResultContainer = document.getElementById('url-result-container');
+                const urlButtons = document.getElementById('url-buttons');
+                
+                if (!urlInput.trim()) {
+                    alert('请输入有效的URL');
+                    return;
+                }
+                
+                addLogEntry(`获取远程URL内容: ${urlInput}`);
+                
+                try {
+                    // 获取URL内容
+                    const response = await fetch(urlInput);
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误 ${response.status}`);
+                    }
+                    
+                    const code = await response.text();
+                    addLogEntry(`成功获取URL内容，长度: ${formatBytes(code.length)}`);
+                    
+                    const result = await autoDecrypt(code);
+                    
+                    urlOutput.value = result.success ? result.code : (result.error || '解密失败');
+                    urlResultContainer.classList.remove('hidden');
+                    urlButtons.classList.remove('hidden');
+                } catch (error) {
+                    urlOutput.value = `获取或解密URL错误: ${error.message}`;
+                    urlResultContainer.classList.remove('hidden');
+                    urlButtons.classList.remove('hidden');
+                    addLogEntry(`URL处理错误: ${error.message}`, "错误");
+                }
+            });
+            
+            // URL结果复制
+            document.getElementById('url-copy-btn').addEventListener('click', () => {
+                const outputText = document.getElementById('url-output').value;
+                if (outputText) {
+                    navigator.clipboard.writeText(outputText);
+                    addLogEntry("复制URL解密结果到剪贴板");
+                    alert('已复制到剪贴板');
+                }
+            });
+            
+            // URL结果下载
+            document.getElementById('url-download-btn').addEventListener('click', () => {
+                const outputText = document.getElementById('url-output').value;
+                if (outputText) {
+                    const blob = new Blob([outputText], { type: 'text/javascript' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'decrypted_url.js';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    addLogEntry("下载URL解密结果");
+                }
+            });
+            
+            // 辅助函数：格式化字节大小
+            function formatBytes(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+                
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+                
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            }
+            
+            // 初始化状态
+            document.getElementById('status-indicator').className = 'status-indicator';
+            document.getElementById('status-text').textContent = '准备就绪';
+            
+            // 添加初始日志
+            addLogEntry("解密工具初始化完成，支持自动检测多种加密类型");
+        });
+    </script>
+</body>
+</html>

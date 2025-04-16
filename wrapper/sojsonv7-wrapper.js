@@ -170,9 +170,16 @@
   
   // ====== 结束: 原始jsjiami-v7-decoder.js代码 ======
   
-  // 将插件注册到全局解密插件库
-  window.DecodePlugins = window.DecodePlugins || {};
-  window.DecodePlugins.jsjiami_v7 = {
+  // 将插件注册到全局解密插件库（适配DCjs工具格式）
+  if (typeof window.plugins === 'undefined') {
+    window.plugins = {};
+  }
+  
+  // 注册到DCjs插件系统
+  window.plugins["soJsonV7"] = {
+    name: "soJsonV7", // 使用soJsonV7名称以匹配工具期望的插件名
+    desc: "JSJiami/Sojson v7解密工具",
+    // 检测函数
     detect: function(code) {
       // 检测是否是JSJiami v7加密的代码
       const v7Features = [
@@ -190,11 +197,11 @@
       
       return featureCount >= 2;
     },
-    plugin: function(code) {
-      // 使用原始模块的功能
-      return module.exports.plugin(code);
+    // 解密函数
+    run: function(code) {
+      return module.exports.plugin(code) || code;
     }
   };
   
-  console.log("JSJiami v7 解密插件已加载");
+  console.log("JSJiami/Sojson v7 解密插件已加载");
 })();

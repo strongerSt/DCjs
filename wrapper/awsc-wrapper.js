@@ -1,159 +1,65 @@
-/**
- * Babel代码格式化工具包装器 - 将基于Babel的代码格式化工具转换为浏览器可用版本
- */
-// 创建自执行函数来隔离作用域
-(function() {
-  // 模拟Node.js环境
-  const module = { exports: {} };
-  const exports = module.exports;
-  
-  // 以下粘贴原始babel-beautifier.js插件代码
-  // ====== 开始: 原始babel-beautifier.js代码 ======
-  
-  function plugin(code) {
-    let ast = window.Babel.parse(code);
-    // Lint
-    window.Babel.traverse(ast, {
-      UnaryExpression: RemoveVoid,
-    });
-    window.Babel.traverse(ast, {
-      ConditionalExpression: { exit: LintConditionalAssign },
-    });
-    LintConditionalIf(ast);
-    window.Babel.traverse(ast, {
-      LogicalExpression: { exit: LintLogicalIf },
-    });
-    window.Babel.traverse(ast, {
-      IfStatement: { exit: LintIfStatement },
-    });
-    window.Babel.traverse(ast, {
-      IfStatement: { enter: LintIfTest },
-    });
-    window.Babel.traverse(ast, {
-      SwitchCase: { enter: LintSwitchCase },
-    });
-    window.Babel.traverse(ast, {
-      ReturnStatement: { enter: LintReturn },
-    });
-    window.Babel.traverse(ast, {
-      SequenceExpression: { exit: LintSequence },
-    });
-    window.Babel.traverse(ast, {
-      BlockStatement: { exit: LintBlock },
-    });
+// AWSC混淆解密插件
+console.log("AWSC解密插件加载中...");
 
-    code = window.Babel.generator(ast, {
-      comments: false,
-      jsescOption: { minimal: true },
-    }).code;
-    return code;
-  }
-  
-  function RemoveVoid(path) {
-    if (path.node.operator === 'void') {
-      path.replaceWith(path.node.argument);
-    }
-  }
+if(!window.DecodePlugins) {
+    window.DecodePlugins = {};
+}
 
-  function LintConditionalAssign(path) {
-    const t = window.Babel.types;
-    if (!t.isAssignmentExpression(path?.parent)) {
-      return;
-    }
-    let { test, consequent, alternate } = path.node;
-    let { operator, left } = path.parent;
-    consequent = t.assignmentExpression(operator, left, consequent);
-    alternate = t.assignmentExpression(operator, left, alternate);
-    path.parentPath.replaceWith(
-      t.conditionalExpression(test, consequent, alternate)
-    );
-  }
-
-  function LintConditionalIf(ast) {
-    const t = window.Babel.types;
-    function conditional(path) {
-      let { test, consequent, alternate } = path.node;
-      if (t.isSequenceExpression(path.parent)) {
-        if (!sequence(path.parentPath)) {
-          path.stop();
-        }
-        return;
-      }
-      if (t.isLogicalExpression(path.parent)) {
-        if (!logical(path.parentPath)) {
-          path.stop();
-        }
-        return;
-      }
-      if (!t.isExpressionStatement(path.parent)) {
-        console.error(`Unexpected parent type: ${path.parent.type}`);
-        path.stop();
-        return;
-      }
-      consequent = t.expressionStatement(consequent);
-      alternate = t.expressionStatement(alternate);
-      let statement = t.ifStatement(test, consequent, alternate);
-      path.replaceWithMultiple(statement);
-    }
-
-    function sequence(path) {
-      if (t.isLogicalExpression(path.parent)) {
-        return logical(path.parentPath);
-      }
-      let body = [];
-      for (const item of path.node.expressions) {
-        body.push(t.expressionStatement(item));
-      }
-      let node = t.blockStatement(body, []);
-      let replace_path = path;
-      if (t.isExpressionStatement(path.parent)) {
-        replace_path = path.parentPath;
-      } else if (!t.isBlockStatement(path.parent)) {
-        console.error(`Unexpected parent type: ${path.parent.type}`);
-        return false;
-      }
-      replace_path.replaceWith(node);
-      return true;
-    }
-
-    function logical(path) {
-      let { operator, left, right } = path.node;
-      if (operator !== '&&') {
-        console.error(`Unexpected logical operator: ${operator}`);
-        return false;
-      }
-      if (!t.isExpressionStatement(path.parent)) {
-        console.error(`Unexpected parent type: ${path.parent.type}`);
-        return false;
-      }
-      let node = t.ifStatement(left, t.expressionStatement(right));
-      path.parentPath.replaceWith(node);
-      return true;
-    }
-
-    window.Babel.traverse(ast, {
-      ConditionalExpression: { enter: conditional },
-    });
-  }
-  
-  // 导出插件接口
-  exports.plugin = function(code) {
-    return plugin(code);
-  };
-  
-  // ====== 结束: 原始babel-beautifier.js代码 ======
-  
-  // 将插件注册到全局解密插件库
-  window.DecodePlugins = window.DecodePlugins || {};
-  window.DecodePlugins.babelBeautifier = {
+window.DecodePlugins.awsc = {
     detect: function(code) {
-      return code.includes('void 0') || code.includes(';if(') || code.includes('&&');
+        if (!code || typeof code !== 'string') return false;
+        
+        // 检测AWSC特征 - 阿里安全AWSC特征
+        return code.indexOf('AWSC') !== -1 && 
+               code.indexOf('umidToken') !== -1;
     },
+    
     plugin: function(code) {
-      // 使用原始模块的功能
-      return module.exports.plugin(code);
+        try {
+            if (!this.detect(code)) {
+                return code;
+            }
+            
+            console.log("开始处理AWSC混淆代码");
+            
+            // 处理AWSC特定的混淆模式
+            // 1. 解码十六进制字符串
+            code = code.replace(/\\x([0-9A-Fa-f]{2})/g, function(match, p1) {
+                try {
+                    return String.fromCharCode(parseInt(p1, 16));
+                } catch (e) {
+                    return match;
+                }
+            });
+            
+            // 2. 处理Unicode转义序列
+            code = code.replace(/\\u([0-9a-fA-F]{4})/g, function(match, grp) {
+                return String.fromCharCode(parseInt(grp, 16));
+            });
+            
+            // 3. 处理AWSC特定函数和变量
+            var awscPatterns = [
+                [/"umidToken"\s*:\s*"([^"]+)"/g, function(match, token) {
+                    return match + " /* UMID令牌 */";
+                }],
+                [/"x_k"\s*:\s*"([^"]+)"/g, function(match, xk) {
+                    return match + " /* 加密密钥 */";
+                }]
+            ];
+            
+            for (var i = 0; i < awscPatterns.length; i++) {
+                var pattern = awscPatterns[i][0];
+                var replacement = awscPatterns[i][1];
+                code = code.replace(pattern, replacement);
+            }
+            
+            console.log("AWSC代码处理完成");
+            return code;
+        } catch (e) {
+            console.error("AWSC解密错误:", e);
+            return code; // 出错时返回原始代码
+        }
     }
-  };
-  
-  console.log("Babel代码格式化插件已加载");
-})();
+};
+
+console.log("AWSC解密插件加载完成");

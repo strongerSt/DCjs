@@ -1,132 +1,74 @@
 /**
- * Eval解包工具包装器 - 将Node.js的Eval解包模块转换为浏览器可用版本
+ * 简化版Eval解包工具包装器
  */
-
-// 创建自执行函数来隔离作用域
 (function() {
-  // 模拟Node.js环境
-  const module = { exports: {} };
+  // 创建全局插件注册对象
+  window.DecodePlugins = window.DecodePlugins || {};
   
-  // ====== 开始: 原始unpack-eval.js代码 ======
   /**
-   * 替换代码中的 eval 函数调用，捕获其参数
-   * @param {string} code - 包含 eval 调用的代码
-   * @returns {string} - 修改后的代码
+   * 替换eval调用为捕获函数
    */
-  function replaceEvalWithCapture(code) {
-    // 捕获 eval 的参数并返回它，而不是执行它
+  function replaceEval(code) {
     return code.replace(/eval\s*\(/g, '(function(x) { return x; })(');
   }
-
+  
   /**
-   * 创建模拟的浏览器环境
-   * @returns {Object} - 模拟的浏览器对象
+   * 解包eval加密的代码
    */
-  function createMockBrowser() {
-    return {
-      window: {
-        document: { createElement: () => ({}), addEventListener: () => {} },
-        navigator: { userAgent: "Mozilla/5.0" },
-        location: { href: "https://example.com" },
-        screen: { width: 1920, height: 1080 },
-        $response: {}, $request: {}, $done: () => {}, $notify: () => {}
-      },
-      document: { createElement: () => ({}), addEventListener: () => {} },
-      navigator: { userAgent: "Mozilla/5.0" },
-      location: { href: "https://example.com" },
-      screen: { width: 1920, height: 1080 },
-      console: { log: () => {}, error: () => {}, warn: () => {} },
-      $response: {}, $request: {}, $done: () => {}, $notify: () => {}
-    };
-  }
-
-  /**
-   * 解包 eval 加密的代码
-   * @param {string} code - 要解包的代码
-   * @returns {string|null} - 解包后的代码或null（解包失败时）
-   */
-  function unpack(code) {
-    // 如果不包含 eval，直接返回
+  function unpackEval(code) {
+    // 如果不含eval，返回null
     if (!code.includes('eval(') && !code.includes('eval (')) {
       return null;
     }
     
     try {
-      // 替换 eval 为一个捕获函数
-      const modifiedCode = replaceEvalWithCapture(code);
+      // 替换eval函数
+      const modifiedCode = replaceEval(code);
       
-      // 浏览器环境
-      const mockEnv = createMockBrowser();
+      // 创建简单的沙箱环境
+      const sandbox = {
+        document: {},
+        navigator: { userAgent: "Mozilla/5.0" },
+        location: {},
+        screen: {}
+      };
       
-      // 使用 Function 构造函数创建一个函数并执行
-      // 传入所有必要的全局变量
-      const funcParams = ['window', 'document', 'navigator', 'location', 
-                        '$response', '$request', '$notify', '$done'];
-      const funcArgs = [
-        mockEnv.window, mockEnv.document, mockEnv.navigator, mockEnv.location,
-        mockEnv.$response, mockEnv.$request, mockEnv.$notify, mockEnv.$done
-      ];
-      
-      // 创建并执行函数
-      const func = new Function(...funcParams, `return ${modifiedCode}`);
-      const result = func(...funcArgs);
-      
-      // 递归解包多层加密
-      if (typeof result === 'string' && result.includes('eval(')) {
-        return unpack(result);
-      }
-      return result;
-    } catch (error) {
-      console.error('解包错误:', error);
-      // 在出错的情况下，尝试更直接的方法
+      // 执行代码
       try {
-        // 简单地替换 eval 并执行
-        const simpleReplaced = code.replace(/eval\s*\(/g, '(');
-        return simpleReplaced;
-      } catch (e) {
-        console.error('备选解包方法也失败:', e);
-        return null;
+        const func = new Function('document', 'navigator', 'location', 'screen', 
+                                 `return ${modifiedCode}`);
+        const result = func(sandbox.document, sandbox.navigator, 
+                          sandbox.location, sandbox.screen);
+        
+        // 如果结果是字符串且包含eval，递归解包
+        if (typeof result === 'string' && result.includes('eval(')) {
+          return unpackEval(result);
+        }
+        return result;
+      } catch (innerError) {
+        // 如果执行失败，尝试直接替换eval
+        return code.replace(/eval\s*\(/g, '(');
       }
+    } catch (error) {
+      console.error('Eval解包失败:', error);
+      return code;
     }
   }
-
-  // 导出插件接口
-  module.exports = {
-    plugin: unpack,
-    unpack: unpack
-  };
-  // ====== 结束: 原始unpack-eval.js代码 ======
   
-  // 将插件注册到全局解密插件库
-  window.DecodePlugins = window.DecodePlugins || {};
+  // 注册插件
   window.DecodePlugins.unpackEval = {
+    // 检测函数
     detect: function(code) {
-      // 检测是否包含eval调用
       return code.includes('eval(') || code.includes('eval (');
     },
+    
+    // 解包函数
     plugin: function(code) {
-      // 调用原始插件函数
-      try {
-        console.log("尝试解包Eval编码...");
-        const result = module.exports.plugin(code);
-        
-        // 如果解包失败，返回原始代码；否则返回解包后的结果
-        return result !== null ? result : code;
-      } catch (e) {
-        console.error("Eval解包插件错误:", e);
-        return code;
-      }
-    },
-    unpack: function(code) {
-      // 调用原始模块的unpack方法
-      try {
-        return module.exports.unpack(code);
-      } catch (e) {
-        console.error("Eval解包错误:", e);
-        return code;
-      }
+      console.log("尝试解包Eval编码...");
+      const result = unpackEval(code);
+      return result !== null ? result : code;
     }
   };
   
-  console.log("Eval解包工具已加载");
+  console.log("简化版Eval解包工具已加载");
 })();

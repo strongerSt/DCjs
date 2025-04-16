@@ -1,8 +1,15 @@
+
 /**
  * Eval解包打包工具包装器 - 将基于Babel的Eval解包打包工具转换为浏览器可用版本
  */
 // 创建自执行函数来隔离作用域
 (function() {
+  // 检查Babel是否可用
+  if (!window.Babel) {
+    console.error("Eval插件加载失败: Babel库未找到");
+    return;
+  }
+
   // 模拟Node.js环境
   const module = { exports: {} };
   const exports = module.exports;
@@ -80,7 +87,7 @@
   
   // 将插件注册到全局解密插件库
   window.DecodePlugins = window.DecodePlugins || {};
-  window.DecodePlugins.evalTools = {
+  window.DecodePlugins.eval = {  // 注意这里改为eval而不是evalTools
     detect: function(code) {
       // 检测是否为eval包装的代码
       return code.includes('eval(') || 

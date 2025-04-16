@@ -74,3 +74,33 @@
       return null;
     }
   }
+
+  // 直接导出plugin函数
+  module.exports = plugin;
+  // ====== 结束: 原始aadecode.js代码 ======
+  
+  // 将插件注册到全局解密插件库
+  window.DecodePlugins = window.DecodePlugins || {};
+  window.DecodePlugins.aadecode = {
+    detect: function(code) {
+      // 检测是否包含AADecode的特征标记
+      return code.includes('ﾟωﾟﾉ') || code.includes('ﾟДﾟ') || 
+             code.includes('ﾟдﾟ') || code.includes('ﾟΘﾟ');
+    },
+    plugin: function(code) {
+      // 调用原始插件函数
+      try {
+        console.log("尝试解密AADecode编码...");
+        const result = module.exports(code);
+        
+        // 如果解码失败，返回原始代码；否则返回解码后的结果
+        return result !== null ? result : code;
+      } catch (e) {
+        console.error("AADecode插件错误:", e);
+        return code;
+      }
+    }
+  };
+  
+  console.log("AADecode插件已加载");
+})();

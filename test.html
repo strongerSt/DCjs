@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解密插件测试</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background: #222;
+            color: #eee;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            background: #333;
+            color: #eee;
+            border: 1px solid #555;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 8px;
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <h2>解密插件测试</h2>
+    
+    <div>
+        <h3>输入加密代码:</h3>
+        <textarea id="input-code" placeholder="在此粘贴需要解密的代码..."></textarea>
+    </div>
+    
+    <button id="decrypt-btn">解密</button>
+    
+    <div>
+        <h3>解密结果:</h3>
+        <textarea id="output-code" readonly></textarea>
+    </div>
+    
+    <div class="status" id="status">状态: 准备就绪</div>
+
+    <!-- 全局插件容器 -->
+    <script>
+        window.DecodePlugins = {};
+    </script>
+    
+    <!-- 加载测试插件包装器 -->
+    <script src="wrapper/aadecode-wrapper.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputCode = document.getElementById('input-code');
+            const outputCode = document.getElementById('output-code');
+            const decryptBtn = document.getElementById('decrypt-btn');
+            const statusDiv = document.getElementById('status');
+            
+            // 检查插件是否加载
+            setTimeout(() => {
+                if (window.DecodePlugins.aadecode) {
+                    statusDiv.textContent = '状态: 插件已加载';
+                } else {
+                    statusDiv.textContent = '状态: 警告 - 插件未加载';
+                }
+            }, 1000);
+            
+            // 解密按钮点击事件
+            decryptBtn.addEventListener('click', async function() {
+                const code = inputCode.value;
+                
+                if (!code.trim()) {
+                    statusDiv.textContent = '状态: 错误 - 请输入代码';
+                    return;
+                }
+                
+                if (!window.DecodePlugins.aadecode) {
+                    statusDiv.textContent = '状态: 错误 - 插件未加载';
+                    return;
+                }
+                
+                statusDiv.textContent = '状态: 正在解密...';
+                
+                try {
+                    // 尝试使用插件解密
+                    if (window.DecodePlugins.aadecode.detect(code)) {
+                        const result = await window.DecodePlugins.aadecode.plugin(code);
+                        if (result && result !== code) {
+                            outputCode.value = result;
+                            statusDiv.textContent = '状态: 成功 - 使用 aadecode 插件解密';
+                        } else {
+                            outputCode.value = code;
+                            statusDiv.textContent = '状态: 失败 - 插件无法解密此代码';
+                        }
+                    } else {
+                        outputCode.value = code;
+                        statusDiv.textContent = '状态: 未检测到 aadecode 加密';
+                    }
+                } catch (error) {
+                    outputCode.value = '';
+                    statusDiv.textContent = '状态: 错误 - ' + error.message;
+                    console.error('解密错误:', error);
+                }
+            });
+            
+            // 简单的调试信息
+            console.log('页面已加载，等待插件初始化...');
+        });
+    </script>
+</body>
+</html>

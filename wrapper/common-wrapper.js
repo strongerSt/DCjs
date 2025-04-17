@@ -59,5 +59,42 @@ window.DecodePlugins.common = {
             }
         });
         
-        // 处理八进制转义
-        result = result.replace(/\\([0-7]{1
+        // 处理字符串连接
+        result = result.replace(/(['"])([^'"]*)\1\s*\+\s*(['"])([^'"]*)\3/g, function(match, q1, s1, q3, s2) {
+            return q1 + s1 + s2 + q1;
+        });
+        
+        return result;
+    },
+    
+    // 移除死代码和无用注释
+    removeDeadCode: function(code) {
+        var result = code;
+        
+        // 移除典型的混淆注释
+        result = result.replace(/\/\*(?:.|\n)*?\*\//g, '');
+        
+        // 移除空函数
+        result = result.replace(/function\s+(_0x[a-f0-9]+)\s*\(\)\s*\{\s*\}/g, '');
+        
+        return result;
+    },
+    
+    // 简化常见混淆模式
+    simplifyCommonPatterns: function(code) {
+        var result = code;
+        
+        // 替换永真条件
+        result = result.replace(/if\s*\(true\)\s*\{([\s\S]*?)\}\s*else\s*\{[\s\S]*?\}/g, '$1');
+        
+        // 替换永假条件
+        result = result.replace(/if\s*\(false\)\s*\{[\s\S]*?\}\s*else\s*\{([\s\S]*?)\}/g, '$1');
+        
+        // 简化数组索引
+        result = result.replace(/\[\s*(['"])([^'"]*)\1\s*\]/g, '.$2');
+        
+        return result;
+    }
+};
+
+console.log("Common解密插件加载完成");

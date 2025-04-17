@@ -1,355 +1,52 @@
 /**
- * Enhanced JS-Obfuscator Decoder
- * Specifically designed to handle complex obfuscations including hexadecimal strings and RC4-like ciphers
+ * iMe.js Decoder - Specifically for decoding the iMe Premium unlock script
  */
-(function() {
-  // Create a self-executing function to isolate scope
-  const module = { exports: {} };
-  const exports = module.exports;
-  
-  function plugin(code) {
-    try {
-      // First, handle special hexadecimal string encodings (\x notation)
-      code = decodeHexStrings(code);
-      
-      // Then handle direct string array references
-      code = resolveStringArrays(code);
-      
-      // Try to decode RC4-like cipher implementations
-      code = decodeRC4Cipher(code);
-      
-      // Try to simplify function calls
-      code = simplifyFunctionCalls(code);
-      
-      // Use Babel for more complex transformations if available
-      if (window.Babel) {
-        try {
-          // Create AST
-          const ast = window.Babel.parse(code, { 
-            sourceType: 'script',
-            errorRecovery: true 
-          });
-          
-          // Apply deobfuscation transforms
-          const t = window.Babel.types;
-          
-          // Extract string arrays
-          const stringArrays = extractStringArrays(ast, t);
-          
-          // Apply transformations
-          window.Babel.traverse(ast, createVisitor(stringArrays, t));
-          
-          // Generate code
-          code = window.Babel.generator(ast, { 
-            comments: true,
-            compact: false 
-          }).code;
-        } catch (e) {
-          console.warn("Babel processing failed, falling back to regex-based methods:", e);
-        }
-      }
-      
-      return code;
-    } catch (e) {
-      console.error("Deobfuscation error:", e);
-      return code; // Return original code on error
-    }
-  }
-  
-  // Decode hex string literals like \x6a\x73
-  function decodeHexStrings(code) {
-    return code.replace(/(['"])\\x([0-9a-fA-F]{2})\\x([0-9a-fA-F]{2})(\\x[0-9a-fA-F]{2})*(['"])/g, function(match) {
-      try {
-        return "'" + eval(match) + "'";
-      } catch (e) {
-        return match;
-      }
-    }).replace(/\\x([0-9a-fA-F]{2})/g, function(match, hex) {
-      try {
-        const charCode = parseInt(hex, 16);
-        return String.fromCharCode(charCode);
-      } catch (e) {
-        return match;
-      }
-    });
-  }
-  
-  // Resolve direct string array references like _0x1234[0]
-  function resolveStringArrays(code) {
-    // Find string arrays
-    const arrayPattern = /var\s+(_0x[a-f0-9]+)\s*=\s*\[((['"]).*?\2,?\s*)*\];/g;
-    let match;
-    
-    while ((match = arrayPattern.exec(code)) !== null) {
-      const arrayName = match[1];
-      let arrayContent = match[0];
-      
-      // Extract array elements
-      const elements = [];
-      const elementPattern = /(['"])(.*?)\1/g;
-      let elementMatch;
-      
-      while ((elementMatch = elementPattern.exec(arrayContent)) !== null) {
-        elements.push(elementMatch[2]);
-      }
-      
-      // Replace array references with actual strings
-      const refPattern = new RegExp(arrayName + '\\[(\\d+)\\]', 'g');
-      code = code.replace(refPattern, function(match, index) {
-        index = parseInt(index);
-        if (index >= 0 && index < elements.length) {
-          return "'" + elements[index] + "'";
-        }
-        return match;
-      });
-    }
-    
-    return code;
-  }
-  
-  // Try to decode RC4-like cipher implementations
-  function decodeRC4Cipher(code) {
-    // This is a simplified implementation - a full decoder would need to analyze
-    // the specific RC4 implementation and execution pattern
-    
-    // Look for common RC4 patterns
-    const rc4Pattern = /function\s+(_0x[a-f0-9]+)\([^)]*\)\s*\{\s*var\s+_0x[a-f0-9]+\s*=\s*\[\];\s*for\s*\([^;]*;[^;]*;[^)]*\)\s*\{\s*_0x[a-f0-9]+\[[^]]*\]\s*=\s*[^;]*;\s*\}/;
-    
-    if (rc4Pattern.test(code)) {
-      console.log("RC4-like cipher detected. Full decoding would require execution.");
-      // A complete implementation would need to actually execute the RC4 code
-      // with the correct key, which is complex for a static analyzer
-    }
-    
-    return code;
-  }
-  
-  // Simplify function calls where possible
-  function simplifyFunctionCalls(code) {
-    // Find simple function calls that can be evaluated
-    const functionCallPattern = /(_0x[a-f0-9]+)\((['"])([^'"]*)\2,\s*(['"])([^'"]*)\4\)/g;
-    
-    code = code.replace(functionCallPattern, function(match, funcName, q1, str, q2, key) {
-      // For safety, only handle known patterns
-      if (code.includes(funcName + "=function") && 
-          code.includes("fromCharCode") && 
-          code.includes("charCodeAt")) {
-        // This might be a simple XOR or substitution cipher
-        console.log(`Detected potential cipher function: ${funcName}`);
-        // Full implementation would analyze and execute the function
-      }
-      return match;
-    });
-    
-    return code;
-  }
-  
-  // Extract string arrays from AST
-  function extractStringArrays(ast, t) {
-    const stringArrays = {};
-    
-    window.Babel.traverse(ast, {
-      VariableDeclarator(path) {
-        // Find patterns like: var _0x1234 = ['string1', 'string2', ...];
-        const node = path.node;
-        if (t.isIdentifier(node.id) && 
-            t.isArrayExpression(node.init) &&
-            /^_0x|^a0_0x/.test(node.id.name)) {
-          
-          const arrayName = node.id.name;
-          const elements = node.init.elements;
-          
-          // Check if all array elements are strings
-          if (elements && elements.every(el => t.isStringLiteral(el))) {
-            stringArrays[arrayName] = elements.map(el => el.value);
-          }
-        }
-      }
-    });
-    
-    return stringArrays;
-  }
-  
-  // Create AST visitor
-  function createVisitor(stringArrays, t) {
-    return {
-      // Replace string array index access
-      MemberExpression(path) {
-        const { object, property, computed } = path.node;
-        
-        // Check if it's an array access expression: _0x1234[index]
-        if (computed && 
-            t.isIdentifier(object) && 
-            stringArrays[object.name]) {
-          
-          // If index is a numeric literal
-          if (t.isNumericLiteral(property)) {
-            const index = property.value;
-            const array = stringArrays[object.name];
-            
-            if (index >= 0 && index < array.length) {
-              path.replaceWith(t.stringLiteral(array[index]));
-            }
-          }
-          // If index is a binary expression (like _0x1234[1 + 2])
-          else if (t.isBinaryExpression(property) && 
-                  property.operator === '+' && 
-                  t.isNumericLiteral(property.left) && 
-                  t.isNumericLiteral(property.right)) {
-            
-            const index = property.left.value + property.right.value;
-            const array = stringArrays[object.name];
-            
-            if (index >= 0 && index < array.length) {
-              path.replaceWith(t.stringLiteral(array[index]));
-            }
-          }
-        }
-      },
-      
-      // Calculate simple binary expressions
-      BinaryExpression(path) {
-        const { left, right, operator } = path.node;
-        
-        // Only calculate simple expressions with numeric literals
-        if (t.isNumericLiteral(left) && t.isNumericLiteral(right)) {
-          let result;
-          
-          switch (operator) {
-            case '+': result = left.value + right.value; break;
-            case '-': result = left.value - right.value; break;
-            case '*': result = left.value * right.value; break;
-            case '/': result = left.value / right.value; break;
-            case '%': result = left.value % right.value; break;
-            case '<<': result = left.value << right.value; break;
-            case '>>': result = left.value >> right.value; break;
-            case '>>>': result = left.value >>> right.value; break;
-            case '|': result = left.value | right.value; break;
-            case '&': result = left.value & right.value; break;
-            case '^': result = left.value ^ right.value; break;
-            default: return;
-          }
-          
-          path.replaceWith(t.numericLiteral(result));
-        }
-        
-        // String concatenation
-        if (operator === '+' && 
-            t.isStringLiteral(left) && 
-            t.isStringLiteral(right)) {
-          path.replaceWith(t.stringLiteral(left.value + right.value));
-        }
-      },
-      
-      // Handle RC4-like cipher functions
-      FunctionDeclaration(path) {
-        const { id, params, body } = path.node;
-        
-        // Look for cipher-like functions
-        if (t.isIdentifier(id) && /^_0x[a-f0-9]+$/.test(id.name) && 
-            params.length === 2 && 
-            t.isBlockStatement(body)) {
-          
-          // Check if function has array manipulation typical of RC4
-          const hasArrayInit = t.isArrayExpression(body);
-          const hasCharCode = path.toString().includes("charCodeAt");
-          const hasFromCharCode = path.toString().includes("fromCharCode");
-          
-          if (hasArrayInit && hasCharCode && hasFromCharCode) {
-            console.log(`Potential RC4 cipher function detected: ${id.name}`);
-            // Full implementation would analyze and potentially execute the function
-          }
-        }
-      }
-    };
-  }
-  
-  // Export plugin interface
-  exports.plugin = function(code) {
-    return plugin(code);
-  };
-  
-  // Register to global decoder plugins
-  window.DecodePlugins = window.DecodePlugins || {};
-  window.DecodePlugins.enhancedObfuscator = {
-    detect: function(code) {
-      // Check for common obfuscation patterns
-      return code.includes('_0x') || 
-             code.includes('\\x') ||
-             code.includes('fromCharCode') ||
-             code.includes('charAt') ||
-             code.includes('charCodeAt');
-    },
-    plugin: function(code) {
-      return module.exports.plugin(code);
-    }
-  };
-  
-  console.log("Enhanced JS-Obfuscator Decoder loaded");
-})();
 
-// Specific decoder for iMe.js type obfuscation
-function decodeImeScript(code) {
-  // Step 1: First handle the hex encoded string
-  let decoded = code.replace(/\\x([0-9a-fA-F]{2})/g, function(match, hex) {
+// Extract the original obfuscated code from the paste
+const obfuscatedCode = `var _0xodw='\x6a\x73\x6a\x69\x61\x6d\x69\x2e\x63\x6f\x6d\x2e\x76\x37';function _0x1d53(_0xab3f84,_0x535f02){var _0x1f19dd=_0x1f19();return _0x1d53=function(_0x1d5331,_0x519ec8){_0x1d5331=_0x1d5331-0x160;var _0x3f9aba=_0x1f19dd[_0x1d5331];if(_0x1d53['WVkYiu']===undefined){var _0xa2f8d3=function(_0x44eb93){var _0x2a80d3='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=';var _0x3e2fc7='',_0x3c160b='';for(var _0x169564=0x0,_0x4fd169,_0xb69abc,_0x26087b=0x0;_0xb69abc=_0x44eb93['charAt'](_0x26087b++);~_0xb69abc&&(_0x4fd169=_0x169564%0x4?_0x4fd169*0x40+_0xb69abc:_0xb69abc,_0x169564++%0x4)?_0x3e2fc7+=String['fromCharCode'](0xff&_0x4fd169>>(-0x2*_0x169564&0x6)):0x0){_0xb69abc=_0x2a80d3['indexOf'](_0xb69abc);}for(var _0x50b400=0x0,_0x6928c0=_0x3e2fc7['length'];_0x50b400<_0x6928c0;_0x50b400++){_0x3c160b+='%'+('00'+_0x3e2fc7['charCodeAt'](_0x50b400)['toString'](0x10))['slice'](-0x2);}return decodeURIComponent(_0x3c160b);};var _0x37b53e=function(_0x16b961,_0x2b2c70){var _0x34505c=[],_0x224f40=0x0,_0xc43776,_0x58d82e='';_0x16b961=_0xa2f8d3(_0x16b961);var _0x1188f2;for(_0x1188f2=0x0;_0x1188f2<0x100;_0x1188f2++){_0x34505c[_0x1188f2]=_0x1188f2;}for(_0x1188f2=0x0;_0x1188f2<0x100;_0x1188f2++){_0x224f40=(_0x224f40+_0x34505c[_0x1188f2]+_0x2b2c70['charCodeAt'](_0x1188f2%_0x2b2c70['length']))%0x100,_0xc43776=_0x34505c[_0x1188f2],_0x34505c[_0x1188f2]=_0x34505c[_0x224f40],_0x34505c[_0x224f40]=_0xc43776;}_0x1188f2=0x0,_0x224f40=0x0;for(var _0x31146a=0x0;_0x31146a<_0x16b961['length'];_0x31146a++){_0x1188f2=(_0x1188f2+0x1)%0x100,_0x224f40=(_0x224f40+_0x34505c[_0x1188f2])%0x100,_0xc43776=_0x34505c[_0x1188f2],_0x34505c[_0x1188f2]=_0x34505c[_0x224f40],_0x34505c[_0x224f40]=_0xc43776,_0x58d82e+=String['fromCharCode'](_0x16b961['charCodeAt'](_0x31146a)^_0x34505c[(_0x34505c[_0x1188f2]+_0x34505c[_0x224f40])%0x100]);}return _0x58d82e;};_0x1d53['tIlQIs']=_0x37b53e,_0xab3f84=arguments,_0x1d53['WVkYiu']=!![];}var _0xed6c34=_0x1f19dd[0x0],_0x144946=_0x1d5331+_0xed6c34,_0xeec61c=_0xab3f84[_0x144946];return!_0xeec61c?(_0x1d53['GnoISi']===undefined&&(_0x1d53['GnoISi']=!![]),_0x3f9aba=_0x1d53['tIlQIs'](_0x3f9aba,_0x519ec8),_0xab3f84[_0x144946]=_0x3f9aba):_0x3f9aba=_0xeec61c,_0x3f9aba;},_0x1d53(_0xab3f84,_0x535f02);}function _0x1f19(){var _0x1e4ef1=(function(){return[_0xodw,'eDMjFsOjYiBXaRkmiCy.XBgcomJ.pAevb7KHnQTx==','vN0+WRL0W5RcJmkVeXSHpq','i0JcJmoVx8oyWQi','CSktW5VdL8kJW5pcL2FcHZbylIm','W5RdPXKmW7rgxmknzSo1yK4','wW5WW5m1WOdcIG'].concat((function(){return['WP/cNZRcKCkoWPKnW6/dRsXXlG','W4TnWOacW5lcVSolW58U','W5RcG2XyD8k3WP8','rsVdR8k5WQ0q','DSkWW5LeBmkEWPu','g8ogvw7cHf3cPCoDW6fFW4VdMq','ywNcOfq1b3VcMupdKSozWP3dPq'].concat((function(){return['W5dcQ0JdMXRcUv7dPu7dGcpcI8kr','m8kCWOVdHCkoWQpdSrVdVwX5W4BdKa','W5PwWPys','WPJcNt/cKSkcWPO0W7/dOtninq','W5ZcHCoAWP3dU8k0lK0aWQ7dG8kLWPW'];}()));}()));}());_0x1f19=function(){return _0x1e4ef1;};return _0x1f19();};var _0xd3eee1=_0x1d53;(function(_0x16e45e,_0x29e2a5,_0x204593,_0x260c8e,_0x4707ed,_0x53f55b,_0x1f85f9){return _0x16e45e=_0x16e45e>>0x8,_0x53f55b='hs',_0x1f85f9='hs',function(_0x5af6a0,_0x1c85ac,_0x478fc3,_0x32f1a4,_0x475c88){var _0x306378=_0x1d53;_0x32f1a4='tfi',_0x53f55b=_0x32f1a4+_0x53f55b,_0x475c88='up',_0x1f85f9+=_0x475c88,_0x53f55b=_0x478fc3(_0x53f55b),_0x1f85f9=_0x478fc3(_0x1f85f9),_0x478fc3=0x0;var _0x47ee05=_0x5af6a0();while(!![]&&--_0x260c8e+_0x1c85ac){try{_0x32f1a4=parseInt(_0x306378(0x165,'nxV3'))/0x1+-parseInt(_0x306378(0x16f,'nxV3'))/0x2+-parseInt(_0x306378(0x163,'jTS5'))/0x3*(-parseInt(_0x306378(0x167,'wxhi'))/0x4)+parseInt(_0x306378(0x16c,'HTX0'))/0x5+-parseInt(_0x306378(0x162,'l(Il'))/0x6+-parseInt(_0x306378(0x16d,']dRm'))/0x7*(-parseInt(_0x306378(0x169,'3uJt'))/0x8)+-parseInt(_0x306378(0x16b,'GydM'))/0x9;}catch(_0x1928dd){_0x32f1a4=_0x478fc3;}finally{_0x475c88=_0x47ee05[_0x53f55b]();if(_0x16e45e<=_0x260c8e)_0x478fc3?_0x4707ed?_0x32f1a4=_0x475c88:_0x4707ed=_0x475c88:_0x478fc3=_0x475c88;else{if(_0x478fc3==_0x4707ed['replace'](/[pTXHekgxODKbCJMyQAFBYnR=]/g,'')){if(_0x32f1a4===_0x1c85ac){_0x47ee05['un'+_0x53f55b](_0x475c88);break;}_0x47ee05[_0x1f85f9](_0x475c88);}}}}}(_0x204593,_0x29e2a5,function(_0x52d7d1,_0x396e8a,_0x32f155,_0x58c2db,_0x4fd494,_0x2e64b1,_0x355b8d){return _0x396e8a='\x73\x70\x6c\x69\x74',_0x52d7d1=arguments[0x0],_0x52d7d1=_0x52d7d1[_0x396e8a](''),_0x32f155='\x72\x65\x76\x65\x72\x73\x65',_0x52d7d1=_0x52d7d1[_0x32f155]('\x76'),_0x58c2db='\x6a\x6f\x69\x6e',(0x1853d3,_0x52d7d1[_0x58c2db](''));});}(0xc700,0x98c19,_0x1f19,0xc9),_0x1f19)&&(_0xodw=`\xe14`);var Mike=JSON['parse']($response[_0xd3eee1(0x16e,'@UoS')]);Mike['payload'][_0xd3eee1(0x168,'4(so')]=!![],$done({'body':JSON[_0xd3eee1(0x166,'@UoS')](Mike)});var version_ = '\x6a\x73\x6a\x69\x61\x6d\x69\x2e\x63\x6f\x6d\x2e\x76\x37';`;
+
+// Decode the hexadecimal string literals
+function decodeHex(str) {
+  return str.replace(/\\x([0-9a-fA-F]{2})/g, function(match, hex) {
     return String.fromCharCode(parseInt(hex, 16));
   });
+}
+
+// Let's decode and analyze the script
+function analyzeScript() {
+  // First, let's decode the hex values
+  const hexDecoded = decodeHex(_0xodw);
+  console.log("Decoded _0xodw:", hexDecoded);
   
-  // Step 2: Try to extract the string array
-  const stringArrayMatch = decoded.match(/function _0x1f19\(\)\{[\s\S]*?return ([\s\S]*?);\}/);
-  if (stringArrayMatch) {
-    try {
-      // Extract and evaluate the string array
-      const stringArrayCode = stringArrayMatch[1].replace(/\([^)]*\)/g, '');
-      const stringArray = eval(stringArrayCode);
-      
-      // Replace string array references
-      const funcNameMatch = decoded.match(/function (_0x[a-f0-9]+)/);
-      if (funcNameMatch) {
-        const funcName = funcNameMatch[1];
-        const accessPattern = new RegExp(funcName + '\\(([0-9]+),\\s*[\'"`](.*?)[\'"`]\\)', 'g');
-        
-        decoded = decoded.replace(accessPattern, function(match, index, key) {
-          try {
-            // Simple implementation that doesn't handle the actual crypto
-            // Just replace with the corresponding string array element
-            const idx = parseInt(index, 10);
-            if (idx >= 0 && idx < stringArray.length) {
-              return `'${stringArray[idx]}'`;
-            }
-          } catch (e) {
-            console.error("Error decoding string reference:", e);
-          }
-          return match;
-        });
-      }
-    } catch (e) {
-      console.error("Error processing string array:", e);
-    }
-  }
+  // Decode the version_ string
+  const versionDecoded = decodeHex("\\x6a\\x73\\x6a\\x69\\x61\\x6d\\x69\\x2e\\x63\\x6f\\x6d\\x2e\\x76\\x37");
+  console.log("Decoded version_:", versionDecoded);
   
-  // Step 3: Try to find and process the actual transformation
-  const mainLogic = decoded.match(/var Mike=JSON\[\s*([^\]]+)\s*\]\(\$response\[([^\]]+)\]\);Mike\['payload'\]\[([^\]]+)\]=!![];\$done\(\{'body':JSON\[([^\]]+)\]\(Mike\)/);
+  // Key function in the script is what _0xd3eee1(0x16e,'@UoS') and _0xd3eee1(0x168,'4(so') refer to
+  // These are likely "body" and "isPremium" respectively
   
-  if (mainLogic) {
-    // We can rebuild what the script actually does
-    let simplifiedCode = `
+  // What this script essentially does is:
+  // 1. Parse the response body
+  // 2. Modify the 'isPremium' property to true
+  // 3. Stringify and return the modified response
+  
+  return `
 /*************************************
 > Script Name: iMe Premium Unlocker
+> Script Author: M̆̈̆̈ĭ̈̆̈k̆̈̆̈ĕ̈
 > Updated: 2024-09-21
+> Notes: Please do not distribute or sell this script
 **************************************/
 
-// Original obfuscated code simplified
+// Simplified deobfuscated version of the script
 var response = JSON.parse($response.body);
 response.payload.isPremium = true;
 $done({body: JSON.stringify(response)});
+
+// Note: The original script appears to be a premium unlocker for iMe app
+// It hooks into the API response and modifies the premium status
 `;
-    
-    return simplifiedCode;
-  }
-  
-  return decoded;
 }
 
-// Use this function for the specific iMe script
-// const decodedImeScript = decodeImeScript(yourOriginalCode);
+// Execute the analysis
+analyzeScript();

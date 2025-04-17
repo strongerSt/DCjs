@@ -1,5 +1,5 @@
-// SOJSON v7混淆解密插件 - 专门版
-console.log("SOJSON v7解密插件(专门版)加载中...");
+// SOJSON v7混淆解密插件 - 专家版 (基于Flightradar24解密器)
+console.log("SOJSON v7解密插件(专家版)加载中...");
 
 if(!window.DecodePlugins) {
     window.DecodePlugins = {};
@@ -9,12 +9,12 @@ window.DecodePlugins.sojsonv7 = {
     detect: function(code) {
         if (!code || typeof code !== 'string') return false;
         
-        // 更精确地检测jsjiami.com.v7特定混淆特征
-        return (code.indexOf('jsjiami.com.v7') !== -1 || 
+        // 检测jsjiami.com.v7特定混淆特征
+        return code.indexOf('jsjiami.com.v7') !== -1 || 
+               code.indexOf('\\x6a\\x73\\x6a\\x69\\x61\\x6d\\x69') !== -1 ||
                (code.indexOf('_0x') !== -1 && 
                 code.indexOf('function _0x') !== -1 && 
-                code.indexOf('gsMCfG') !== -1)) && 
-               code.indexOf('\\x') !== -1;  // 特别关注十六进制编码
+                code.indexOf('gsMCfG') !== -1);
     },
     
     plugin: function(code) {
@@ -25,27 +25,26 @@ window.DecodePlugins.sojsonv7 = {
             
             console.log("开始处理SOJSON v7加密代码");
             
-            // 首先处理十六进制编码的字符串
-            var hexResult = this.decodeHexStrings(code);
-            if (hexResult !== code) {
-                console.log("成功解码十六进制字符串");
-                code = hexResult;
-            }
+            // 1. 解码十六进制编码的字符串 (如版本字符串)
+            code = this.decodeHexStrings(code);
             
-            // 处理_0x46b1函数
-            code = this.process_0x46b1Function(code);
+            // 2. 创建解密上下文
+            window._sojsonv7_context = {
+                decodedStrings: new Map()
+            };
             
-            // 提取并处理字符串数组
+            // 3. 添加钩子函数
+            code = this.addHooks(code);
+            
+            // 4. 处理字符串数组和常用模式
             code = this.processStringArrays(code);
+            code = this.processCommonPatterns(code);
             
-            // 处理解码函数
-            code = this.processDecodeFunctions(code);
-            
-            // 处理特定的模式 - 针对示例代码中的模式
-            code = this.processSpecificPatterns(code);
-            
-            // 清理代码
+            // 5. 清理代码
             code = this.cleanCode(code);
+            
+            // 6. 添加带注释的解密工具函数
+            code = this.addHelperComments(code);
             
             console.log("SOJSON v7代码处理完成");
             return code;
@@ -57,160 +56,192 @@ window.DecodePlugins.sojsonv7 = {
     
     // 解码\\x形式的十六进制字符串
     decodeHexStrings: function(code) {
-        // 匹配 '\\x6a\\x73\\x6a\\x69\\x61...' 形式的字符串
-        var hexStringRegex = /['"]\\x([0-9a-fA-F]{2})(?:\\x([0-9a-fA-F]{2}))*['"]/g;
-        
-        return code.replace(hexStringRegex, function(match) {
+        // 1. 处理版本字符串
+        code = code.replace(/var\s+version_\s*=\s*['"]\\x([0-9a-fA-F]{2})((?:\\x[0-9a-fA-F]{2})+)['"]/g, function(match, firstHex, restHex) {
             try {
-                // 去掉引号
-                match = match.substring(1, match.length - 1);
-                
-                // 将每个 \\x 替换为实际字符
-                var decodedStr = match.replace(/\\x([0-9a-fA-F]{2})/g, function(_, hex) {
-                    return String.fromCharCode(parseInt(hex, 16));
+                let decoded = String.fromCharCode(parseInt(firstHex, 16));
+                restHex.split('\\x').forEach(hex => {
+                    if (hex.length >= 2) {
+                        const charCode = parseInt(hex.substring(0, 2), 16);
+                        decoded += String.fromCharCode(charCode);
+                    }
                 });
                 
-                return '"' + decodedStr + '"';
+                console.log("解码版本字符串: " + decoded);
+                return "var version_ = '" + decoded + "'; // 已解码";
             } catch (e) {
-                console.log("十六进制解码错误:", e);
+                console.log("解码版本字符串失败:", e);
                 return match;
             }
         });
+        
+        // 2. 处理其他十六进制字符串
+        code = code.replace(/(['"])\\x([0-9a-fA-F]{2})((?:\\x[0-9a-fA-F]{2})+)(['"])/g, function(match, q1, firstHex, restHex, q2) {
+            try {
+                let decoded = String.fromCharCode(parseInt(firstHex, 16));
+                restHex.split('\\x').forEach(hex => {
+                    if (hex.length >= 2) {
+                        const charCode = parseInt(hex.substring(0, 2), 16);
+                        decoded += String.fromCharCode(charCode);
+                    }
+                });
+                
+                return q1 + decoded + q2;
+            } catch (e) {
+                return match;
+            }
+        });
+        
+        return code;
     },
     
-    // 处理 _0x46b1 或类似函数
-    process_0x46b1Function: function(code) {
-        // 尝试查找类似 function _0x46b1() { ... } 的函数
-        var funcRegex = /function\s+(_0x[a-f0-9]+)\s*\(\s*\)\s*\{\s*var\s+(_0x[a-f0-9]+)\s*=\s*\[((?:'[^']*'|"[^"]*"|\s*,\s*)*)\]/;
-        var match = funcRegex.exec(code);
-        
-        if (match) {
-            try {
-                var funcName = match[1];
-                var arrVarName = match[2];
-                var arrContent = match[3];
-                
-                // 处理数组内容
-                var array;
-                try {
-                    var arrayStr = "[" + arrContent + "]";
-                    array = new Function("return " + arrayStr)();
-                    console.log("成功提取 " + funcName + " 函数的数组");
-                    
-                    // 查找 _0x46b1(0x18f) 这样的调用并替换
-                    var callRegex = new RegExp(funcName + '\\((0x[0-9a-fA-F]+)\\)', 'g');
-                    code = code.replace(callRegex, function(_, index) {
-                        var idx = parseInt(index, 16) - 0x18f; // 根据示例代码调整
-                        if (idx >= 0 && idx < array.length) {
-                            return JSON.stringify(array[idx]);
-                        }
-                        return _;
-                    });
-                    
-                    console.log("替换了 " + funcName + " 函数调用");
-                } catch (e) {
-                    console.log("处理 " + funcName + " 数组时出错:", e);
-                }
-            } catch (e) {
-                console.log("处理 _0x46b1 函数时出错:", e);
+    // 添加各种钩子函数来监控解密过程
+    addHooks: function(code) {
+        // 1. 钩子Base64解码函数
+        code = code.replace(
+            /var\s+(_0x[a-f0-9]+)\s*=\s*function\s*\((_0x[a-f0-9]+)\)\s*\{\s*var\s+(_0x[a-f0-9]+)\s*=\s*['"]abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\+\/=['"][\s\S]+?return\s+(?:decodeURIComponent|String\.fromCharCode)\((_0x[a-f0-9]+)\);?\s*\}/,
+            function(match, funcName) {
+                console.log(`找到Base64解码函数: ${funcName}`);
+                return match + `
+// Base64解码函数已标注
+// ${funcName} 是Base64解码函数`;
             }
-        }
+        );
+        
+        // 2. 钩子主解码函数 (_0x1fca)
+        code = code.replace(
+            /function\s+(_0x[a-f0-9]+)\s*\((_0x[a-f0-9]+),\s*(_0x[a-f0-9]+)\)\s*\{([\s\S]+?)return\s+(_0x[a-f0-9]+);?\s*\}/,
+            function(match, funcName, arg1, arg2, body, returnVar) {
+                console.log(`找到主解码函数: ${funcName}`);
+                return match + `
+// 主解码函数已标注
+// ${funcName} 是主要的字符串解码函数，参数为 ${arg1}, ${arg2}`;
+            }
+        );
+        
+        // 3. 钩子字符串数组生成函数 (_0x46b1)
+        code = code.replace(
+            /function\s+(_0x[a-f0-9]+)\s*\(\s*\)\s*\{[\s\S]+?return\s+(_0x[a-f0-9]+);?\s*\}/,
+            function(match, funcName, returnVar) {
+                console.log(`找到字符串数组生成函数: ${funcName}`);
+                return match + `
+// 字符串数组生成函数已标注
+// ${funcName} 返回包含加密字符串的数组`;
+            }
+        );
         
         return code;
     },
     
     // 处理字符串数组
     processStringArrays: function(code) {
-        // 处理 var _0x30a670=['a','b','c'] 形式的数组
-        var arrayRegex = /var\s+(_0x[a-f0-9]{4,})\s*=\s*\[\s*([^\]]+)\s*\]/g;
-        var match;
-        
-        while ((match = arrayRegex.exec(code)) !== null) {
+        // 1. 尝试提取字符串数组
+        var arrayMatch = code.match(/var\s+(_0x[a-f0-9]+)\s*=\s*\[\s*([^\]]+)\s*\]/);
+        if (arrayMatch) {
+            var arrayName = arrayMatch[1];
+            var arrayContent = arrayMatch[2];
+            
             try {
-                var arrayName = match[1];
-                var arrayStr = "[" + match[2] + "]";
-                var array;
+                var arrayStr = "[" + arrayContent + "]";
+                var array = new Function("return " + arrayStr)();
                 
-                try {
-                    array = new Function("return " + arrayStr)();
-                } catch (e) {
-                    console.log("解析字符串数组失败:", e);
-                    continue;
-                }
+                console.log(`找到字符串数组 ${arrayName}，包含 ${array.length} 项`);
                 
-                // 替换直接索引引用
+                // 尝试替换直接的数组引用
                 for (var i = 0; i < array.length; i++) {
                     if (typeof array[i] === 'string') {
                         var pattern = new RegExp(arrayName + '\\[' + i + '\\]', 'g');
                         var replacement = JSON.stringify(array[i]);
-                        code = code.replace(pattern, replacement);
+                        code = code.replace(pattern, replacement + " /* 索引" + i + " */");
                     }
                 }
-                
-                console.log("处理了字符串数组: " + arrayName);
             } catch (e) {
                 console.log("处理字符串数组时出错:", e);
             }
         }
         
-        return code;
-    },
-    
-    // 处理解码函数
-    processDecodeFunctions: function(code) {
-        // 查找 _0x1fca 类型的函数
-        var decodeFuncRegex = /function\s+(_0x[a-f0-9]+)\s*\(\s*(_0x[a-f0-9]+)\s*,\s*(_0x[a-f0-9]+)\s*\)\s*\{[^}]+return\s+[^;]+;?\s*\}/g;
-        var match;
-        
-        while ((match = decodeFuncRegex.exec(code)) !== null) {
-            var funcName = match[1];
-            console.log("找到解码函数: " + funcName);
+        // 2. 处理索引转换函数
+        var converterMatch = code.match(/(_0x[a-f0-9]+)\s*=\s*function\s*\((_0x[a-f0-9]+),\s*(_0x[a-f0-9]+)\)\s*\{\s*\1\s*=\s*\2\s*-\s*(0x[a-f0-9]+);?\s*return\s+_0x[a-f0-9]+\[\1\];?\s*\}/);
+        if (converterMatch) {
+            var converterName = converterMatch[1];
+            var offset = converterMatch[4];
             
-            // 查找这个函数的调用
-            var callRegex = new RegExp('var\\s+[^=]+=\\s*' + funcName + '\\(([^,]+),\\s*([^)]+)\\)', 'g');
-            code = code.replace(callRegex, function(fullMatch) {
-                // 这里我们只是标记这个调用，但并不尝试执行替换
-                // 因为这些函数通常很复杂，需要完整的执行环境
-                console.log("找到 " + funcName + " 函数调用");
-                return fullMatch;
+            console.log(`找到索引转换函数 ${converterName}，偏移量 ${offset}`);
+            
+            // 尝试替换函数调用
+            var callPattern = new RegExp(converterName + '\\((0x[a-f0-9]+),\\s*_0x[a-f0-9]+\\)', 'g');
+            code = code.replace(callPattern, function(match, hexIndex) {
+                try {
+                    var idx = parseInt(hexIndex, 16) - parseInt(offset, 16);
+                    return `_0x46b1()[${idx}] /* ${hexIndex}->${idx} */`;
+                } catch (e) {
+                    return match;
+                }
             });
         }
         
         return code;
     },
     
-    // 处理特定的模式 - 专门针对示例中的模式
-    processSpecificPatterns: function(code) {
-        // 处理 gsMCfG 相关的代码模式
-        if (code.indexOf('gsMCfG') !== -1) {
-            // 这里添加特定于 gsMCfG 模式的处理
-            console.log("检测到 gsMCfG 特征模式");
-            
-            // 处理 _0x451932 函数 (常见的Base64/解码函数)
-            var base64FuncRegex = /var\s+(_0x[a-f0-9]+)\s*=\s*function\s*\((_0x[a-f0-9]+)\)\s*\{\s*var\s+(_0x[a-f0-9]+)\s*=\s*['"]abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\+\/=['"]/;
-            var base64Match = base64FuncRegex.exec(code);
-            
-            if (base64Match) {
-                var base64FuncName = base64Match[1];
-                console.log("找到Base64解码函数: " + base64FuncName);
-                
-                // 我们标记但不执行实际替换，因为这需要完整执行环境
+    // 处理常见模式
+    processCommonPatterns: function(code) {
+        // 1. 处理 gsMCfG 条件检查
+        code = code.replace(/if\s*\(_0x[a-f0-9]+\[['"]gsMCfG['"]\]\s*===\s*undefined\)\s*\{([\s\S]+?)\}/g, 
+            function(match, initBlock) {
+                return "/* 初始化块 开始 */\n" + match + "\n/* 初始化块 结束 */";
             }
-        }
+        );
+        
+        // 2. 处理自调用函数
+        code = code.replace(/\(function\s*\((_0x[a-f0-9]+),\s*(_0x[a-f0-9]+),\s*(_0x[a-f0-9]+)(?:[\s\S]+?)\}\)\((0x[a-f0-9]+),\s*(0x[a-f0-9]+),\s*(_0x[a-f0-9]+)(?:[\s\S]+?)\)/g,
+            function(match) {
+                return "/* 主要加密逻辑自调用函数 开始 */\n" + match + "\n/* 主要加密逻辑自调用函数 结束 */";
+            }
+        );
+        
+        // 3. 处理字符串操作
+        code = code.replace(/String\['fromCharCode'\]\(([^)]+)\)/g, function(match, args) {
+            try {
+                // 只处理简单情况
+                if (/^\d+$/.test(args)) {
+                    const result = String.fromCharCode(parseInt(args));
+                    return `'${result}' /* fromCharCode(${args}) */`;
+                }
+            } catch (e) {}
+            return match;
+        });
         
         return code;
     },
     
     // 清理代码
     cleanCode: function(code) {
-        // 移除版本标记
-        code = code.replace(/var\s+version_\s*=\s*(['"])\\x[^'"]*\1;?\s*/g, '');
-        
-        // 去除注释标记
-        code = code.replace(/\/\*\*[\s\S]*?jsjiami\.com\.v7[\s\S]*?\*\//g, "");
+        // 移除多余的分号和空行
+        code = code.replace(/;{2,}/g, ';');
+        code = code.replace(/\n{3,}/g, '\n\n');
         
         return code;
+    },
+    
+    // 添加解密辅助注释
+    addHelperComments: function(code) {
+        return `/* 
+ * SOJSON v7 (jsjiami.com.v7) 解密处理版本
+ * 此代码已被解密工具处理
+ * 关键函数和数组已经标注
+ */
+
+${code}
+
+/*
+ * 此代码经过部分解密处理
+ * SOJSON v7混淆特点:
+ * 1. 使用_0x1fca等函数解码字符串
+ * 2. 使用_0x46b1等函数生成字符串数组
+ * 3. 使用\\x编码隐藏关键字符串
+ * 4. 使用Base64/RC4组合加密部分数据
+ */`;
     }
 };
 
-console.log("SOJSON v7解密插件(专门版)加载完成");
+console.log("SOJSON v7解密插件(专家版)加载完成");
